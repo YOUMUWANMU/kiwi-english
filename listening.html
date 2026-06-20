@@ -134,7 +134,7 @@
   <a class="back-btn" href="index.html">←</a>
   <div style="flex:1">
     <div class="topbar-title">NZ听力训练</div>
-    <div class="topbar-sub">英式发音为基础 · 适应课堂英语</div>
+    <div class="topbar-sub">美式发音为基础 · 适应课堂英语</div>
   </div>
   <span class="session-badge" id="session-badge">本次 0 题</span>
 </div>
@@ -264,7 +264,7 @@ const DICTATION = {
     { en: "Make sure you write your name on the top.", zh: "确保在顶部写上你的名字。", note: "Make sure you... 用来强调一个重要的注意事项。" }
   ],
   B1: [
-    { en: "I'd like everyone to summarise the main idea in one sentence.", zh: "我想请每个人用一句话总结主要观点。", note: "summarise（英式拼写，美式是summarize）= 总结。" },
+    { en: "I'd like everyone to summarize the main idea in one sentence.", zh: "我想请每个人用一句话总结主要观点。", note: "summarize = 总结。（英式拼写是 summarise，多数美剧/课本用 summarize。）" },
     { en: "Before we move on, does anyone have any questions about what we've covered so far?", zh: "在我们继续之前，有人对我们已经讲过的内容有疑问吗？", note: "move on = 继续往下讲；covered so far = 目前讲过的内容。" }
   ]
 };
@@ -309,8 +309,8 @@ const DIALOGUES = {
     {
       title: "科学课量取液体",
       lines: [
-        { spk: "Teacher", en: "Now measure fifty millilitres of water using the cylinder." },
-        { spk: "Student", en: "Sorry, fifty millilitres?" },
+        { spk: "Teacher", en: "Now measure fifty milliliters of water using the cylinder." },
+        { spk: "Student", en: "Sorry, fifty milliliters?" },
         { spk: "Teacher", en: "Yes, that's right. Pour carefully." }
       ],
       q: "How much water should the student measure?",
@@ -373,7 +373,7 @@ const DAILY = [
   { en: "Schools in New Zealand often have a 'mufti day' where students can wear normal clothes instead of their uniform.", zh: "新西兰学校经常会有 \"mufti day\"，那天学生可以穿便服而不是校服。", note: "🌏 文化小知识：mufti day通常是为了给慈善活动筹款，学生捐一点小钱就能换来不穿校服的\"特权\"。" },
   { en: "Kia ora is a Maori greeting that means hello, and it's used everywhere in New Zealand, even in shops and schools.", zh: "Kia ora 是一句毛利语问候语，意思是\"你好\"，在新西兰的商店、学校等到处都能听到。", note: "🌏 文化小知识：除了\"你好\"，Kia ora 有时也可以表示感谢或认同，是新西兰文化里非常核心的一句话。" },
   { en: "Rugby is hugely popular in New Zealand, and many schools have their own teams.", zh: "橄榄球在新西兰非常受欢迎，很多学校都有自己的球队。", note: "🌏 文化小知识：新西兰国家橄榄球队 All Blacks 是全民偶像级别的存在，几乎人人都认识。" },
-  { en: "If a Kiwi says 'sweet as', it just means 'that's great' or 'no problem'.", zh: "如果一个新西兰人说 \"sweet as\"，意思就是\"很好/没问题\"。", note: "🌏 文化小知识：sweet as 是新西兰本地很有代表性的口头禅，平时练习仍以标准英式表达为主，这个算是一个有趣的本地小知识。" }
+  { en: "If a Kiwi says 'sweet as', it just means 'that's great' or 'no problem'.", zh: "如果一个新西兰人说 \"sweet as\"，意思就是\"很好/没问题\"。", note: "🌏 文化小知识：sweet as 是新西兰本地很有代表性的口头禅，平时练习仍以标准美式表达为主，这个算是一个有趣的本地小知识。" }
 ];
 
 /* ---------- 通用 ---------- */
@@ -387,10 +387,10 @@ function speak(text, slow) {
   if (!window.speechSynthesis) { alert('当前设备不支持语音朗读'); return; }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-GB';
+  u.lang = 'en-US';
   u.rate = slow ? 0.62 : 0.95;
   const voices = speechSynthesis.getVoices();
-  const gb = voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en'));
+  const gb = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
   if (gb) u.voice = gb;
   speechSynthesis.speak(u);
   return u;
@@ -399,12 +399,12 @@ function speak(text, slow) {
 function speakSequence(lines, onDone) {
   speechSynthesis.cancel();
   const voices = speechSynthesis.getVoices();
-  const gb = voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en'));
+  const gb = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
   let i = 0;
   function next() {
     if (i >= lines.length) { onDone && onDone(); return; }
     const u = new SpeechSynthesisUtterance(lines[i].en);
-    u.lang = 'en-GB';
+    u.lang = 'en-US';
     u.rate = 0.95;
     if (gb) u.voice = gb;
     u.onend = () => { i++; next(); };
