@@ -739,15 +739,8 @@
 })();
 
 function speakPhrase() {
-  const u = new SpeechSynthesisUtterance("Could I sit here, please?");
-  u.lang = 'en-US';
-  u.rate = 0.9;
-  const voices = speechSynthesis.getVoices();
-  const gb = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
-  if (gb) u.voice = gb;
-  speechSynthesis.speak(u);
+  KIWI.speak("Could I sit here, please?", { rate: 0.9 });
 }
-speechSynthesis.onvoiceschanged = () => {};
 </script>
 </body>
 </html>

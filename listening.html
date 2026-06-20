@@ -385,28 +385,19 @@ function bumpSession() {
 
 function speak(text, slow) {
   if (!window.speechSynthesis) { alert('当前设备不支持语音朗读'); return; }
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = slow ? 0.62 : 0.95;
-  const voices = speechSynthesis.getVoices();
-  const gb = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
-  if (gb) u.voice = gb;
-  speechSynthesis.speak(u);
-  return u;
+  return KIWI.speak(text, { rate: slow ? 0.62 : 0.95 });
 }
 
 function speakSequence(lines, onDone) {
   speechSynthesis.cancel();
-  const voices = speechSynthesis.getVoices();
-  const gb = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
+  const voice = KIWI.pickBestEnVoice();
   let i = 0;
   function next() {
     if (i >= lines.length) { onDone && onDone(); return; }
     const u = new SpeechSynthesisUtterance(lines[i].en);
     u.lang = 'en-US';
     u.rate = 0.95;
-    if (gb) u.voice = gb;
+    if (voice) u.voice = voice;
     u.onend = () => { i++; next(); };
     speechSynthesis.speak(u);
   }

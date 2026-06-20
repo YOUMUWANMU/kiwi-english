@@ -952,15 +952,7 @@ function analyzePronunciation(text) {
 }
 
 function speakText(text) {
-  if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = 0.92;
-  const voices = speechSynthesis.getVoices();
-  const gb = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
-  if (gb) u.voice = gb;
-  speechSynthesis.speak(u);
+  KIWI.speak(text, { rate: 0.92 });
 }
 
 /* ============ 按住录音（Web Speech Recognition） ============ */

@@ -8,6 +8,82 @@ window.KIWI = (function () {
   // ⚠️ 部署后需要把这里填成你的 Worker URL，没填则走演示模式
   const WORKER_URL = 'https://kiwi-english-api.zh08243080.workers.dev';
 
+  // ====== TTS Voice 优先级选择 ======
+  // 浏览器自带的 TTS 声音质量参差不齐。这里按"自然度"降序列出已知的优质 voice，
+  // 强制优先挑选 Samantha / Siri / Microsoft Neural 这类接近真人的，避免随机选到机械音。
+  // macOS / iOS 自带的系统级 voice 在 Chrome / Safari 都能调用到。
+  const VOICE_PRIORITY = [
+    // macOS / iOS Siri 系列（最新最自然）
+    /^Siri/i,
+    // macOS / iOS Premium / Enhanced 高清版（用户需下载）
+    /^Samantha.*Premium/i,
+    /^Ava.*Premium/i,
+    /^Allison.*Premium/i,
+    /^Susan.*Premium/i,
+    /^Evan.*Premium/i,
+    // macOS / iOS 默认高质量 voice
+    /^Samantha/i,
+    /^Ava/i,
+    /^Allison/i,
+    /^Susan/i,
+    /^Evan/i,
+    /^Karen/i,
+    /^Alex$/i,
+    /^Victoria/i,
+    // Microsoft Edge 神经网络 voice（Windows / Edge）
+    /Aria.*Online.*Natural/i,
+    /Jenny.*Online.*Natural/i,
+    /Guy.*Online.*Natural/i,
+    /Davis.*Online.*Natural/i,
+    // Google Chrome 自带
+    /Google US English/i,
+  ];
+
+  let _cachedVoice = null;
+
+  function pickBestEnVoice() {
+    if (_cachedVoice) return _cachedVoice;
+    if (!window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) return null;  // Chrome 首次调用可能为空，需要等 voiceschanged
+
+    // 按优先级匹配
+    for (const pattern of VOICE_PRIORITY) {
+      const v = voices.find(v => pattern.test(v.name) && v.lang.toLowerCase().startsWith('en'));
+      if (v) { _cachedVoice = v; return v; }
+    }
+    // fallback：任何 en-US，再fallback到任何en-*
+    _cachedVoice = voices.find(v => v.lang === 'en-US')
+                || voices.find(v => v.lang.toLowerCase().startsWith('en'))
+                || null;
+    return _cachedVoice;
+  }
+
+  // 朗读英文文本（统一入口，所有页面用这个）
+  function speak(text, opts = {}) {
+    if (!window.speechSynthesis || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = opts.rate ?? 0.92;
+    u.pitch = opts.pitch ?? 1.0;
+    const v = pickBestEnVoice();
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+    return u;
+  }
+
+  // 浏览器加载 voice 列表是异步的，监听一下刷新缓存
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      _cachedVoice = null;
+      pickBestEnVoice();
+    };
+    // 立即触发一次
+    setTimeout(pickBestEnVoice, 100);
+  }
+  // ====== /TTS ======
+
   function getToken() { return localStorage.getItem(TOKEN_KEY); }
   function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
   function clearAuth() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); }
@@ -83,6 +159,7 @@ window.KIWI = (function () {
 
   return {
     WORKER_URL, api, requireAuth, reportEvent,
-    getToken, setToken, getUser, setUser, clearAuth, logout
+    getToken, setToken, getUser, setUser, clearAuth, logout,
+    speak, pickBestEnVoice
   };
 })();
