@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>口语陪练 · Kiwi English</title>
+<script src="auth.js"></script>
 <style>
   :root {
     --kiwi: #3d7a3a;
@@ -456,6 +457,35 @@
     flex-shrink: 0;
     display: none;
   }
+
+  /* 按住录音 */
+  .voice-row { display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:8px; }
+  .btn-hold-record {
+    width:100%; padding:14px 20px; background:var(--kiwi); color:#fff; border:none; border-radius:24px;
+    font-size:15px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    user-select:none; touch-action:none; transition:background .15s, transform .1s;
+  }
+  .btn-hold-record:hover { background:var(--kiwi-dark); }
+  .btn-hold-record.recording { background:var(--danger); transform:scale(1.02); animation:recordPulse 1.2s ease-in-out infinite; }
+  .btn-hold-record.cancel-zone { background:#7a8475; }
+  .btn-hold-record .hold-icon { font-size:20px; }
+  @keyframes recordPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.35); }
+    50%      { box-shadow: 0 0 0 12px rgba(192,57,43,0); }
+  }
+  .voice-hint { font-size:11px; color:var(--text-3); }
+  .voice-hint.recording { color:var(--danger); font-weight:500; }
+  .voice-hint.cancel-zone { color:var(--danger); }
+
+  /* AI回复隐藏文本时的占位 */
+  .msg-audio-only .msg-bubble { background:var(--bg); border-style:dashed; color:var(--text-3); font-style:italic; cursor:pointer; }
+  .msg-audio-only .msg-bubble:hover { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); }
+  .msg-replay-icon { font-size:14px; margin-right:6px; }
+  .msg-expand-btn {
+    background:transparent; border:none; color:var(--text-3); font-size:11px; padding:2px 4px;
+    cursor:pointer; text-decoration:underline;
+  }
+  .msg-expand-btn:hover { color:var(--kiwi); }
 </style>
 </head>
 <body>
@@ -523,10 +553,16 @@
 
 <!-- 输入区 -->
 <div class="input-area">
-  <div class="input-row">
+  <div class="input-row" id="text-input-row">
     <input class="text-input" id="text-input" placeholder="用英语回复Liam..." />
-    <button class="btn-record" id="record-btn" onclick="toggleRecord()" title="按住说话">🎤</button>
     <button class="btn-send" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+  <div class="voice-row" id="voice-row" style="display:none">
+    <button class="btn-hold-record" id="hold-record-btn">
+      <span class="hold-icon">🎤</span>
+      <span class="hold-text">按住说英语</span>
+    </button>
+    <div class="voice-hint" id="voice-hint">松开发送 · 上滑取消</div>
   </div>
   <div class="quick-phrases">
     <button class="quick-btn" onclick="usePhrase(this)">Could I sit here?</button>
@@ -539,8 +575,6 @@
 </div>
 
 <script>
-const WORKER_URL = 'https://kiwi-english-api.zh08243080.workers.dev';
-
 const SCENARIOS = {
   canteen: {
     badge: '🏫 食堂',
@@ -612,15 +646,64 @@ const SCENARIOS = {
 
 let currentScenario = 'canteen';
 let conversationHistory = [];
-let isRecording = false;
-let mediaRecorder = null;
-let audioChunks = [];
 let isWaitingForAI = false;
+let currentSettings = { aiTextMode: 'show', replyMode: 'voice' };
+let currentUserType = 'child';
+let sessionStartTs = Date.now();
+let sessionTurns = 0;
+
+// 初始化：检查登录 + 拉取设置 + 应用UI
+(async function init() {
+  try {
+    const me = await KIWI.requireAuth('any');
+    currentUserType = me.type;
+    // 拉取这个孩子的训练设置（家长账号则全部默认）
+    if (me.type === 'child' && KIWI.WORKER_URL) {
+      try {
+        const r = await KIWI.api('/api/settings');
+        currentSettings = r.settings || currentSettings;
+      } catch {}
+    }
+    applySettingsToUI();
+  } catch (e) {
+    // requireAuth已经跳转，这里不用处理
+  }
+})();
+
+function applySettingsToUI() {
+  const textRow = document.getElementById('text-input-row');
+  const voiceRow = document.getElementById('voice-row');
+  const mode = currentSettings.replyMode;
+  if (mode === 'text') {
+    textRow.style.display = 'flex';
+    voiceRow.style.display = 'none';
+  } else {
+    // voice（默认）
+    textRow.style.display = 'none';
+    voiceRow.style.display = 'flex';
+  }
+  // 初始消息也按设置渲染
+  rerenderFirstMessage();
+}
+
+function rerenderFirstMessage() {
+  const s = SCENARIOS[currentScenario];
+  const chatArea = document.getElementById('chat-area');
+  // 找到首条 ai 消息并按设置重渲染
+  const firstAi = chatArea.querySelector('.msg.ai');
+  if (firstAi && conversationHistory.length === 0) {
+    chatArea.innerHTML = '';
+    addAIMessage(s.firstMsg, s.firstMsgZh, /*alreadyInHistory*/false);
+    conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+  }
+}
 
 function switchScenario(chip) {
   document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
   chip.classList.add('active');
   const scenario = chip.dataset.scenario;
+  // 切换前若有对话历史，上报一次会话事件
+  if (sessionTurns > 0) reportSpeakingSession();
   currentScenario = scenario;
   const s = SCENARIOS[scenario];
   document.getElementById('current-badge').textContent = s.badge;
@@ -632,15 +715,10 @@ function switchScenario(chip) {
   updateQuickPhrases(s.quickPhrases);
   document.getElementById('feedback-card').classList.remove('show');
   conversationHistory = [];
-  const chatArea = document.getElementById('chat-area');
-  chatArea.innerHTML = `
-    <div class="msg ai">
-      <div class="msg-avatar">${s.avatar}</div>
-      <div class="msg-body">
-        <div class="msg-bubble">${s.firstMsg}</div>
-        <div class="msg-zh">${s.firstMsgZh}</div>
-      </div>
-    </div>`;
+  sessionStartTs = Date.now();
+  sessionTurns = 0;
+  document.getElementById('chat-area').innerHTML = '';
+  addAIMessage(s.firstMsg, s.firstMsgZh, /*alreadyInHistory*/false);
   conversationHistory.push({ role: 'assistant', content: s.firstMsg });
 }
 
@@ -652,8 +730,13 @@ function updateQuickPhrases(phrases) {
 }
 
 function usePhrase(btn) {
-  document.getElementById('text-input').value = btn.textContent;
-  document.getElementById('text-input').focus();
+  if (currentSettings.replyMode === 'text') {
+    document.getElementById('text-input').value = btn.textContent;
+    document.getElementById('text-input').focus();
+  } else {
+    // 语音模式下，点快捷词直接发送（辅助用途）
+    sendUserText(btn.textContent);
+  }
 }
 
 async function sendMessage() {
@@ -661,7 +744,13 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text || isWaitingForAI) return;
   input.value = '';
+  await sendUserText(text);
+}
+
+async function sendUserText(text) {
+  if (!text || isWaitingForAI) return;
   addUserMessage(text);
+  sessionTurns += 1;
   await getAIResponse(text);
 }
 
@@ -715,7 +804,7 @@ async function getAIResponse(userText) {
   addTypingIndicator();
   const s = SCENARIOS[currentScenario];
 
-  if (!WORKER_URL) {
+  if (!KIWI.WORKER_URL) {
     await new Promise(r => setTimeout(r, 1200));
     removeTypingIndicator();
     const demoReplies = getDemoReply(currentScenario, userText);
@@ -725,20 +814,17 @@ async function getAIResponse(userText) {
   }
 
   try {
-    const res = await fetch(`${WORKER_URL}/api/chat`, {
+    const data = await KIWI.api('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         system: s.systemPrompt,
         messages: conversationHistory,
         max_tokens: 150
       })
     });
-    const data = await res.json();
     removeTypingIndicator();
     const reply = data.content?.[0]?.text || "Sorry, could you say that again?";
-    const zh = await translateToZh(reply);
-    addAIMessage(reply, zh);
+    addAIMessage(reply, '');
     conversationHistory.push({ role: 'assistant', content: reply });
     speakText(reply);
   } catch (e) {
@@ -750,7 +836,6 @@ async function getAIResponse(userText) {
 }
 
 function getDemoReply(scenario, userText) {
-  const lower = userText.toLowerCase();
   const replies = {
     canteen: [
       { en: "Yes, of course! Sit down, mate. I'm Liam, by the way. Have you just started here?", zh: "当然可以！坐下吧。顺便说一下我是Liam。你刚开始在这里上学吗？" },
@@ -782,23 +867,59 @@ function getDemoReply(scenario, userText) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-async function translateToZh(text) {
-  return '';
-}
-
-function addAIMessage(enText, zhText) {
+let _aiMsgCounter = 0;
+function addAIMessage(enText, zhText, _alreadyInHistory) {
   const chatArea = document.getElementById('chat-area');
   const s = SCENARIOS[currentScenario];
+  const mode = currentSettings.aiTextMode;
+  const msgId = 'ai-msg-' + (++_aiMsgCounter);
   const div = document.createElement('div');
   div.className = 'msg ai';
+  // 把英文文本存在 data 上方便重放和展开
+  div.dataset.en = enText;
+  div.dataset.zh = zhText || '';
+
+  let bubbleInner = '';
+  if (mode === 'show') {
+    bubbleInner = `<div class="msg-bubble">${escHtml(enText)}</div>
+      ${zhText ? `<div class="msg-zh">${escHtml(zhText)}</div>` : ''}`;
+  } else if (mode === 'audio_only_expandable') {
+    bubbleInner = `
+      <div class="msg-bubble" onclick="replayMessage('${msgId}')">
+        <span class="msg-replay-icon">🔊</span>点击重放
+      </div>
+      <button class="msg-expand-btn" onclick="expandMessage('${msgId}')">查看文本</button>`;
+  } else { // audio_only
+    bubbleInner = `
+      <div class="msg-bubble" onclick="replayMessage('${msgId}')">
+        <span class="msg-replay-icon">🔊</span>点击重放
+      </div>`;
+  }
+
+  div.id = msgId;
   div.innerHTML = `
     <div class="msg-avatar">${s.avatar}</div>
-    <div class="msg-body">
-      <div class="msg-bubble">${escHtml(enText)}</div>
-      ${zhText ? `<div class="msg-zh">${escHtml(zhText)}</div>` : ''}
-    </div>`;
+    <div class="msg-body">${bubbleInner}</div>`;
   chatArea.appendChild(div);
   chatArea.scrollTop = chatArea.scrollHeight;
+  // 自动朗读
+  speakText(enText);
+}
+
+function replayMessage(msgId) {
+  const div = document.getElementById(msgId);
+  if (!div) return;
+  speakText(div.dataset.en);
+}
+
+function expandMessage(msgId) {
+  const div = document.getElementById(msgId);
+  if (!div) return;
+  const en = div.dataset.en, zh = div.dataset.zh;
+  const body = div.querySelector('.msg-body');
+  body.innerHTML = `
+    <div class="msg-bubble">${escHtml(en)}</div>
+    ${zh ? `<div class="msg-zh">${escHtml(zh)}</div>` : ''}`;
 }
 
 function analyzePronunciation(text) {
@@ -810,7 +931,7 @@ function analyzePronunciation(text) {
     goodPoints.push('礼貌用语使用正确 👍');
   }
   if (/\bcool\b/i.test(text)) {
-    tips.push('🌏 文化小知识：新西兰本地人也常说 "sweet as" 表示"挺好/没问题"，算是一个有趣的本地说法');
+    tips.push('🌏 文化小知识：新西兰本地人也常说 "sweet as" 表示"挺好/没问题"');
   }
   if (/\b(hi|hello)\b/i.test(text)) {
     tips.push('🌏 文化小知识：新西兰学校里同学间也会用毛利语问候 "Kia ora"');
@@ -842,48 +963,140 @@ function speakText(text) {
   speechSynthesis.speak(u);
 }
 
-async function toggleRecord() {
-  if (!isRecording) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        document.getElementById('text-input').value = '[正在识别语音...]';
-        await new Promise(r => setTimeout(r, 800));
-        document.getElementById('text-input').value = 'Could I sit here, please?';
-        document.getElementById('text-input').focus();
-      };
-      mediaRecorder.start();
-      isRecording = true;
-      const btn = document.getElementById('record-btn');
-      btn.textContent = '⏹';
-      btn.classList.add('recording');
-      btn.title = '点击停止录音';
-    } catch (e) {
-      alert('请允许麦克风权限来使用语音功能');
+/* ============ 按住录音（Web Speech Recognition） ============ */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isHolding = false;
+let holdStartY = 0;
+let recognizedText = '';
+let cancelRecording = false;
+
+function initRecognition() {
+  if (!SpeechRecognition) return null;
+  const rec = new SpeechRecognition();
+  rec.lang = 'en-GB';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  rec.onresult = (e) => {
+    let finalT = '';
+    for (let i = 0; i < e.results.length; i++) {
+      finalT += e.results[i][0].transcript;
     }
-  } else {
-    mediaRecorder?.stop();
-    isRecording = false;
-    const btn = document.getElementById('record-btn');
-    btn.textContent = '🎤';
-    btn.classList.remove('recording');
-    btn.title = '按住说话';
+    recognizedText = finalT;
+    document.getElementById('voice-hint').textContent = '识别中：' + (recognizedText || '...');
+  };
+  rec.onerror = (e) => {
+    console.warn('语音识别错误:', e.error);
+  };
+  return rec;
+}
+
+const holdBtn = document.getElementById('hold-record-btn');
+const voiceHint = document.getElementById('voice-hint');
+
+function startHold(e) {
+  if (isWaitingForAI || isHolding) return;
+  e.preventDefault();
+  if (!SpeechRecognition) {
+    alert('当前浏览器不支持语音识别。建议用 Chrome 或 Safari。');
+    return;
+  }
+  isHolding = true;
+  recognizedText = '';
+  cancelRecording = false;
+  holdStartY = (e.touches ? e.touches[0].clientY : e.clientY);
+  holdBtn.classList.add('recording');
+  holdBtn.querySelector('.hold-text').textContent = '正在录音…';
+  voiceHint.classList.add('recording');
+  voiceHint.textContent = '识别中...（松开发送 · 上滑取消）';
+  recognition = initRecognition();
+  if (recognition) {
+    try { recognition.start(); } catch (e) { console.warn(e); }
   }
 }
 
+function moveHold(e) {
+  if (!isHolding) return;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY);
+  const dy = holdStartY - y;
+  if (dy > 50) {
+    cancelRecording = true;
+    holdBtn.classList.add('cancel-zone');
+    voiceHint.classList.add('cancel-zone');
+    voiceHint.textContent = '↑ 松开取消';
+  } else {
+    cancelRecording = false;
+    holdBtn.classList.remove('cancel-zone');
+    voiceHint.classList.remove('cancel-zone');
+    voiceHint.textContent = '识别中...（松开发送 · 上滑取消）';
+  }
+}
+
+function endHold(e) {
+  if (!isHolding) return;
+  if (e) e.preventDefault();
+  isHolding = false;
+  holdBtn.classList.remove('recording', 'cancel-zone');
+  holdBtn.querySelector('.hold-text').textContent = '按住说英语';
+  voiceHint.classList.remove('recording', 'cancel-zone');
+  voiceHint.textContent = '松开发送 · 上滑取消';
+  if (recognition) {
+    try { recognition.stop(); } catch (e) {}
+  }
+  // 等识别结果稳定后再决定
+  setTimeout(() => {
+    if (cancelRecording) {
+      voiceHint.textContent = '已取消';
+      setTimeout(() => { voiceHint.textContent = '松开发送 · 上滑取消'; }, 1200);
+      return;
+    }
+    const text = recognizedText.trim();
+    if (!text) {
+      voiceHint.textContent = '没听清，再试一次';
+      setTimeout(() => { voiceHint.textContent = '松开发送 · 上滑取消'; }, 1500);
+      return;
+    }
+    sendUserText(text);
+  }, 200);
+}
+
+holdBtn.addEventListener('mousedown', startHold);
+holdBtn.addEventListener('touchstart', startHold, { passive: false });
+window.addEventListener('mousemove', moveHold);
+window.addEventListener('touchmove', moveHold, { passive: false });
+window.addEventListener('mouseup', endHold);
+window.addEventListener('touchend', endHold);
+window.addEventListener('touchcancel', endHold);
+
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 speechSynthesis.onvoiceschanged = () => {};
 
-const s = SCENARIOS[currentScenario];
-conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+/* 事件上报 */
+function reportSpeakingSession() {
+  const duration = Math.round((Date.now() - sessionStartTs) / 1000);
+  KIWI.reportEvent({
+    module: 'speaking',
+    sub: currentScenario,
+    turns: sessionTurns,
+    durationSec: duration,
+  });
+  sessionStartTs = Date.now();
+  sessionTurns = 0;
+}
+
+window.addEventListener('beforeunload', () => {
+  if (sessionTurns > 0) reportSpeakingSession();
+});
+
+// 初始化首条AI消息（会在applySettingsToUI后被rerender）
+(function pushInitialMsg() {
+  const s = SCENARIOS[currentScenario];
+  conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+})();
 </script>
 </body>
 </html>

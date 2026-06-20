@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家长后台 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --sky: #2563a8; --sky-light: #e8f0fb;
+    --fern: #5a9e57;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .logo { display:flex; align-items:center; gap:8px; font-weight:600; font-size:15px; color:var(--kiwi-dark); text-decoration:none; }
+  .logo-icon { width:30px; height:30px; background:var(--kiwi); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .role-badge { background:var(--gold-light); color:#7a5a0a; font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; border:1px solid #f5d89a; }
+  .top-spacer { flex:1; }
+  .logout-btn { background:transparent; border:none; color:var(--text-3); font-size:13px; cursor:pointer; padding:6px 10px; border-radius:var(--radius-sm); }
+  .logout-btn:hover { color:var(--danger); background:var(--danger-light); }
+
+  /* 孩子切换 */
+  .kid-switcher { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; }
+  .kid-switcher::-webkit-scrollbar { display:none; }
+  .kid-chip { display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg); border:1px solid var(--border); border-radius:24px; cursor:pointer; transition:all .15s; flex-shrink:0; }
+  .kid-chip:hover { border-color:var(--fern); }
+  .kid-chip.active { background:var(--kiwi); border-color:var(--kiwi); color:#fff; }
+  .kid-chip-avatar { font-size:22px; line-height:1; }
+  .kid-chip-name { font-size:13px; font-weight:500; }
+  .add-kid-chip { display:flex; align-items:center; gap:6px; padding:8px 14px; background:transparent; border:1px dashed var(--border); border-radius:24px; color:var(--text-3); font-size:13px; cursor:pointer; flex-shrink:0; }
+  .add-kid-chip:hover { border-color:var(--kiwi); color:var(--kiwi-dark); }
+
+  .content { max-width:760px; margin:0 auto; padding:18px 16px 0; }
+
+  /* hero卡片 */
+  .hero-card { background:var(--kiwi-dark); color:#fff; border-radius:var(--radius); padding:22px; margin-bottom:14px; }
+  .hero-row { display:flex; align-items:center; gap:14px; }
+  .hero-avatar { width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:36px; flex-shrink:0; }
+  .hero-name { font-size:18px; font-weight:600; margin-bottom:4px; }
+  .hero-sub { font-size:12px; color:#b8d9b6; }
+  .hero-stats { display:flex; gap:16px; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,.15); }
+  .hero-stat { flex:1; }
+  .hero-stat-num { font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+  .hero-stat-label { font-size:11px; color:#9fd49c; }
+  .streak-badge { background:rgba(248,200,80,.2); color:#f8c850; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; display:inline-flex; align-items:center; gap:3px; margin-top:4px; }
+
+  /* 模块卡片网格 */
+  .modules-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+  @media (max-width: 600px) { .modules-grid { grid-template-columns:1fr; } }
+  .mod-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+  .mod-card-icon { font-size:22px; margin-bottom:6px; }
+  .mod-card-label { font-size:11px; color:var(--text-3); font-weight:500; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+  .mod-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:10px; }
+  .mod-card-stat { display:flex; align-items:baseline; gap:6px; margin-bottom:4px; }
+  .mod-card-num { font-size:20px; font-weight:700; color:var(--kiwi-dark); line-height:1; }
+  .mod-card-unit { font-size:11px; color:var(--text-3); }
+  .mod-card-sub { font-size:11px; color:var(--text-2); margin-top:6px; }
+
+  /* 趋势图卡片 */
+  .panel-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+  .panel-title { font-size:14px; font-weight:600; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .panel-title-sub { font-size:12px; font-weight:400; color:var(--text-3); }
+
+  .trend-chart { height:160px; position:relative; padding-top:10px; }
+  .trend-bars { display:flex; height:130px; align-items:flex-end; gap:8px; padding:0 4px; }
+  .trend-bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .trend-bar { width:100%; max-width:36px; background:var(--kiwi); border-radius:4px 4px 0 0; min-height:2px; position:relative; transition:opacity .15s; }
+  .trend-bar:hover { opacity:.7; }
+  .trend-bar-empty { background:var(--border); }
+  .trend-bar-value { font-size:10px; color:var(--text-3); margin-bottom:2px; }
+  .trend-label { font-size:10px; color:var(--text-3); }
+  .trend-label.today { color:var(--kiwi); font-weight:600; }
+
+  /* 错误列表 */
+  .errors-list { display:flex; flex-direction:column; gap:8px; }
+  .error-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--gold-light); border:1px solid #f5d89a; border-radius:var(--radius-sm); }
+  .error-icon { font-size:14px; flex-shrink:0; }
+  .error-pattern { flex:1; font-size:13px; color:#7a5a0a; font-family:'SF Mono','Menlo',monospace; }
+  .error-count { font-size:12px; font-weight:600; color:#7a5a0a; background:#fff; padding:2px 8px; border-radius:10px; flex-shrink:0; }
+  .empty-msg { text-align:center; padding:24px 12px; color:var(--text-3); font-size:13px; }
+
+  /* 训练设置 */
+  .settings-area { display:flex; flex-direction:column; gap:18px; }
+  .setting-block { display:flex; flex-direction:column; gap:8px; }
+  .setting-label { font-size:13px; font-weight:600; color:var(--text); }
+  .setting-desc { font-size:11px; color:var(--text-3); line-height:1.5; }
+  .setting-options { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:4px; }
+  @media (max-width: 600px) { .setting-options { grid-template-columns:1fr; } }
+  .setting-opt { padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); cursor:pointer; transition:all .15s; }
+  .setting-opt:hover { border-color:var(--fern); }
+  .setting-opt.active { background:var(--kiwi-light); border-color:var(--kiwi); }
+  .setting-opt-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:3px; }
+  .setting-opt.active .setting-opt-title { color:var(--kiwi-dark); }
+  .setting-opt-desc { font-size:11px; color:var(--text-3); line-height:1.4; }
+  .setting-save-row { display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-top:6px; padding-top:14px; border-top:1px solid var(--border); }
+  .setting-save-status { font-size:12px; }
+  .setting-save-btn { padding:9px 18px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; }
+  .setting-save-btn:hover { background:var(--kiwi-dark); }
+
+  /* 模块分布 */
+  .distribution { display:flex; height:32px; border-radius:8px; overflow:hidden; background:var(--bg); margin-bottom:10px; }
+  .dist-seg { display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:500; transition:opacity .15s; }
+  .dist-seg:hover { opacity:.85; }
+  .dist-listening { background:var(--sky); }
+  .dist-speaking { background:var(--kiwi); }
+  .dist-writing { background:var(--gold); }
+  .dist-legend { display:flex; gap:14px; font-size:11px; color:var(--text-2); flex-wrap:wrap; }
+  .dist-legend-item { display:flex; align-items:center; gap:5px; }
+  .dist-dot { width:9px; height:9px; border-radius:50%; }
+
+  .loading-screen { text-align:center; padding:60px 20px; color:var(--text-3); }
+
+  /* 添加孩子弹窗 */
+  .modal-mask { display:none; position:fixed; inset:0; background:rgba(26,31,23,0.6); z-index:50; align-items:center; justify-content:center; padding:16px; }
+  .modal-mask.show { display:flex; }
+  .modal { background:var(--surface); border-radius:var(--radius); padding:22px; max-width:380px; width:100%; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-size:16px; font-weight:600; margin-bottom:14px; }
+  .field { margin-bottom:12px; }
+  .field-label { font-size:12px; font-weight:500; color:var(--text-2); margin-bottom:6px; }
+  input[type=text] { width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); outline:none; font-family:inherit; color:var(--text); }
+  input:focus { border-color:var(--kiwi); background:#fff; }
+  .avatar-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+  .avatar-btn { aspect-ratio:1; border:2px solid var(--border); border-radius:50%; background:var(--bg); font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .avatar-btn.selected { border-color:var(--kiwi); background:var(--kiwi-light); }
+  .pin-row { display:flex; gap:8px; justify-content:center; }
+  .pin-box { width:46px; height:50px; border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-size:20px; font-weight:600; background:var(--bg); }
+  .modal-actions { display:flex; gap:8px; margin-top:14px; }
+  .btn-cancel { flex:1; padding:11px; background:var(--bg); border:1px solid var(--border); color:var(--text-2); border-radius:var(--radius-sm); font-size:14px; cursor:pointer; }
+  .btn-submit { flex:1; padding:11px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; }
+  .error-msg { color:var(--danger); font-size:13px; background:var(--danger-light); border:1px solid #f5c0b8; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:12px; display:none; }
+  .error-msg.show { display:block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="logo" href="parent.html">
+    <div class="logo-icon">🥝</div>
+    Kiwi English
+  </a>
+  <span class="role-badge">家长视角</span>
+  <div class="top-spacer"></div>
+  <button class="logout-btn" onclick="KIWI.logout()">退出</button>
+</div>
+
+<div class="kid-switcher" id="kid-switcher"></div>
+
+<div class="content" id="content">
+  <div class="loading-screen">加载中…</div>
+</div>
+
+<!-- 添加孩子弹窗 -->
+<div class="modal-mask" id="add-kid-modal">
+  <div class="modal">
+    <div class="modal-title">添加新孩子</div>
+    <div class="error-msg" id="add-kid-error"></div>
+    <div class="field">
+      <div class="field-label">选一个头像</div>
+      <div class="avatar-grid" id="avatar-grid"></div>
+    </div>
+    <div class="field">
+      <div class="field-label">孩子的名字</div>
+      <input type="text" id="add-kid-name" placeholder="比如：明明" maxlength="20">
+    </div>
+    <div class="field">
+      <div class="field-label">设置 4 位 PIN</div>
+      <div class="pin-row">
+        <input class="pin-box" data-idx="0" inputmode="numeric" maxlength="1" type="password">
+        <input class="pin-box" data-idx="1" inputmode="numeric" maxlength="1" type="password">
+        <input class="pin-box" data-idx="2" inputmode="numeric" maxlength="1" type="password">
+        <input class="pin-box" data-idx="3" inputmode="numeric" maxlength="1" type="password">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddKidModal()">取消</button>
+      <button class="btn-submit" onclick="submitAddKid()">添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AVATARS = ['🦊','🐱','🐶','🐼','🐻','🐯','🐰','🦁','🐸','🐧','🦄','🐨'];
+let currentUser = null;
+let currentChildId = null;
+let selectedAvatar = null;
+
+async function init() {
+  try {
+    currentUser = await KIWI.requireAuth('parent');
+  } catch { return; }
+
+  renderKidSwitcher();
+  if (currentUser.children && currentUser.children.length > 0) {
+    currentChildId = currentUser.children[0].id;
+    await loadKidStats(currentChildId);
+  } else {
+    showNoKidsHint();
+  }
+}
+
+function renderKidSwitcher() {
+  const switcher = document.getElementById('kid-switcher');
+  const kids = currentUser.children || [];
+  let html = kids.map(k =>
+    `<div class="kid-chip ${k.id === currentChildId ? 'active' : ''}" onclick="switchKid('${k.id}')">
+      <div class="kid-chip-avatar">${k.avatar}</div>
+      <div class="kid-chip-name">${escHtml(k.name)}</div>
+    </div>`
+  ).join('');
+  html += `<div class="add-kid-chip" onclick="openAddKidModal()">+ 添加孩子</div>`;
+  switcher.innerHTML = html;
+}
+
+async function switchKid(id) {
+  currentChildId = id;
+  renderKidSwitcher();
+  await loadKidStats(id);
+}
+
+function showNoKidsHint() {
+  document.getElementById('content').innerHTML = `
+    <div class="loading-screen" style="padding:80px 20px">
+      <div style="font-size:42px;margin-bottom:14px">👶</div>
+      <div style="font-size:14px;color:var(--text-2);margin-bottom:18px">还没有添加孩子<br>点上方"+ 添加孩子"开始</div>
+    </div>`;
+}
+
+async function loadKidStats(childId) {
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="loading-screen">加载学习数据…</div>`;
+  try {
+    const data = await KIWI.api('/api/stats?child=' + encodeURIComponent(childId));
+    renderDashboard(data);
+  } catch (e) {
+    content.innerHTML = `<div class="loading-screen">加载失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderDashboard(data) {
+  const { child, progress, trend, topErrors, derived } = data;
+  const totalSessions = progress.listening.sessions + progress.speaking.sessions + progress.writing.sessions;
+  const last7Minutes = trend.reduce((s, d) => s + (d.minutes || 0), 0);
+  const last7Sessions = trend.reduce((s, d) => s + (d.sessions || 0), 0);
+  const todayMinutes = trend[trend.length - 1].minutes;
+
+  // 模块占比
+  const lsRatio = totalSessions ? progress.listening.sessions / totalSessions : 0;
+  const spRatio = totalSessions ? progress.speaking.sessions / totalSessions : 0;
+  const wrRatio = totalSessions ? progress.writing.sessions / totalSessions : 0;
+
+  // 趋势图最大值
+  const maxMinutes = Math.max(...trend.map(d => d.minutes || 0), 1);
+
+  document.getElementById('content').innerHTML = `
+    <div class="hero-card">
+      <div class="hero-row">
+        <div class="hero-avatar">${child.avatar}</div>
+        <div>
+          <div class="hero-name">${escHtml(child.name)}</div>
+          <div class="hero-sub">今天 ${todayMinutes || 0} 分钟 · 累计 ${Math.round(progress.totalMinutes)} 分钟</div>
+          ${progress.streak.current > 0 ? `<div class="streak-badge">🔥 连续打卡 ${progress.streak.current} 天</div>` : ''}
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">${last7Minutes}</div>
+          <div class="hero-stat-label">近7天分钟</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">${last7Sessions}</div>
+          <div class="hero-stat-label">近7天次数</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">${progress.streak.bestStreak || 0}</div>
+          <div class="hero-stat-label">最高连续天数</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modules-grid">
+      <div class="mod-card">
+        <div class="mod-card-icon">🎧</div>
+        <div class="mod-card-label">听力</div>
+        <div class="mod-card-title">课堂指令 / 场景对话</div>
+        <div class="mod-card-stat">
+          <div class="mod-card-num">${progress.listening.sessions}</div>
+          <div class="mod-card-unit">次练习</div>
+        </div>
+        <div class="mod-card-sub">${derived.listeningAcc !== null ? `准确率 ${derived.listeningAcc}%` : '暂无数据'}</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-card-icon">🎤</div>
+        <div class="mod-card-label">口语</div>
+        <div class="mod-card-title">AI 角色对话</div>
+        <div class="mod-card-stat">
+          <div class="mod-card-num">${progress.speaking.sessions}</div>
+          <div class="mod-card-unit">次对话</div>
+        </div>
+        <div class="mod-card-sub">${progress.speaking.turns} 轮交流</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-card-icon">✏️</div>
+        <div class="mod-card-label">写作</div>
+        <div class="mod-card-title">AI 批改</div>
+        <div class="mod-card-stat">
+          <div class="mod-card-num">${progress.writing.sessions}</div>
+          <div class="mod-card-unit">篇作文</div>
+        </div>
+        <div class="mod-card-sub">${derived.writingAvg !== null ? `平均 ${derived.writingAvg} 分` : '暂无数据'}</div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">📈 近7天训练时长 <span class="panel-title-sub">单位：分钟</span></div>
+      <div class="trend-chart">
+        <div class="trend-bars">
+          ${trend.map((d, i) => {
+            const h = d.minutes > 0 ? Math.max(4, (d.minutes / maxMinutes) * 110) : 2;
+            const isToday = i === trend.length - 1;
+            return `<div class="trend-bar-col">
+              ${d.minutes > 0 ? `<div class="trend-bar-value">${d.minutes}</div>` : ''}
+              <div class="trend-bar ${d.minutes === 0 ? 'trend-bar-empty' : ''}" style="height:${h}px"></div>
+              <div class="trend-label ${isToday ? 'today' : ''}">${labelOf(d.date, isToday)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">📊 模块训练分布 <span class="panel-title-sub">累计 ${totalSessions} 次</span></div>
+      ${totalSessions > 0 ? `
+        <div class="distribution">
+          ${lsRatio > 0 ? `<div class="dist-seg dist-listening" style="width:${lsRatio * 100}%">${Math.round(lsRatio * 100)}%</div>` : ''}
+          ${spRatio > 0 ? `<div class="dist-seg dist-speaking" style="width:${spRatio * 100}%">${Math.round(spRatio * 100)}%</div>` : ''}
+          ${wrRatio > 0 ? `<div class="dist-seg dist-writing" style="width:${wrRatio * 100}%">${Math.round(wrRatio * 100)}%</div>` : ''}
+        </div>
+        <div class="dist-legend">
+          <div class="dist-legend-item"><div class="dist-dot dist-listening"></div>听力 ${progress.listening.sessions}次</div>
+          <div class="dist-legend-item"><div class="dist-dot dist-speaking"></div>口语 ${progress.speaking.sessions}次</div>
+          <div class="dist-legend-item"><div class="dist-dot dist-writing"></div>写作 ${progress.writing.sessions}次</div>
+        </div>
+      ` : '<div class="empty-msg">还没有训练数据，让孩子开始练习吧</div>'}
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">⚠️ 高频写作错误 <span class="panel-title-sub">Top 5</span></div>
+      ${topErrors && topErrors.length > 0 ? `
+        <div class="errors-list">
+          ${topErrors.map(e => `
+            <div class="error-row">
+              <span class="error-icon">📝</span>
+              <span class="error-pattern">${escHtml(e.pattern)}</span>
+              <span class="error-count">${e.count} 次</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<div class="empty-msg">还没有写作记录，没法分析错误</div>'}
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">⚙️ 训练设置 <span class="panel-title-sub">仅家长可改</span></div>
+      <div id="settings-area" class="settings-area"><div class="empty-msg">加载中…</div></div>
+    </div>
+  `;
+
+  loadAndRenderSettings(child.id);
+}
+
+async function loadAndRenderSettings(childId) {
+  try {
+    const data = await KIWI.api('/api/settings?child=' + encodeURIComponent(childId));
+    renderSettings(childId, data.settings);
+  } catch (e) {
+    document.getElementById('settings-area').innerHTML = `<div class="empty-msg">加载失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderSettings(childId, settings) {
+  const area = document.getElementById('settings-area');
+  area.innerHTML = `
+    <div class="setting-block">
+      <div class="setting-label">🗣️ AI 说话时文本提示</div>
+      <div class="setting-desc">控制 AI 角色回复时是否显示英文文本和中文翻译。模式越高，听力训练强度越大。</div>
+      <div class="setting-options" data-key="aiTextMode">
+        <div class="setting-opt ${settings.aiTextMode === 'show' ? 'active' : ''}" data-val="show">
+          <div class="setting-opt-title">🟢 简单模式</div>
+          <div class="setting-opt-desc">显示英文 + 中文翻译</div>
+        </div>
+        <div class="setting-opt ${settings.aiTextMode === 'audio_only_expandable' ? 'active' : ''}" data-val="audio_only_expandable">
+          <div class="setting-opt-title">🟠 进阶模式</div>
+          <div class="setting-opt-desc">只听语音，点击可展开文本</div>
+        </div>
+        <div class="setting-opt ${settings.aiTextMode === 'audio_only' ? 'active' : ''}" data-val="audio_only">
+          <div class="setting-opt-title">🔴 沉浸模式</div>
+          <div class="setting-opt-desc">纯听，完全不显示文本</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-block">
+      <div class="setting-label">⌨️ 孩子回复方式</div>
+      <div class="setting-desc">控制孩子如何回复 AI。强制语音模式可以最有效地训练开口能力。</div>
+      <div class="setting-options" data-key="replyMode">
+        <div class="setting-opt ${settings.replyMode === 'text' ? 'active' : ''}" data-val="text">
+          <div class="setting-opt-title">⌨️ 仅文本</div>
+          <div class="setting-opt-desc">只能打字回复</div>
+        </div>
+        <div class="setting-opt ${settings.replyMode === 'voice' ? 'active' : ''}" data-val="voice">
+          <div class="setting-opt-title">🎤 仅语音</div>
+          <div class="setting-opt-desc">必须按住麦克风说话（强制开口）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-save-row">
+      <span class="setting-save-status" id="setting-status"></span>
+      <button class="setting-save-btn" onclick="saveSettings('${childId}')">保存设置</button>
+    </div>
+  `;
+
+  // 选项点击切换
+  area.querySelectorAll('.setting-options').forEach(group => {
+    group.querySelectorAll('.setting-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        group.querySelectorAll('.setting-opt').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
+    });
+  });
+}
+
+async function saveSettings(childId) {
+  const statusEl = document.getElementById('setting-status');
+  const settings = {};
+  document.querySelectorAll('#settings-area .setting-options').forEach(group => {
+    const key = group.dataset.key;
+    const active = group.querySelector('.setting-opt.active');
+    if (active) settings[key] = active.dataset.val;
+  });
+
+  statusEl.textContent = '保存中…';
+  statusEl.style.color = 'var(--text-3)';
+  try {
+    await KIWI.api('/api/settings', {
+      method: 'POST',
+      body: JSON.stringify({ childId, settings })
+    });
+    statusEl.textContent = '✓ 已保存';
+    statusEl.style.color = 'var(--kiwi)';
+    setTimeout(() => { statusEl.textContent = ''; }, 2000);
+  } catch (e) {
+    statusEl.textContent = '失败：' + e.message;
+    statusEl.style.color = 'var(--danger)';
+  }
+}
+
+function labelOf(dateStr, isToday) {
+  if (isToday) return '今天';
+  const d = new Date(dateStr);
+  const wk = ['日','一','二','三','四','五','六'][d.getDay()];
+  return '周' + wk;
+}
+
+/* ===== 添加孩子弹窗 ===== */
+function openAddKidModal() {
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = AVATARS.map(a =>
+    `<button class="avatar-btn" data-avatar="${a}" onclick="pickAvatar(this)">${a}</button>`
+  ).join('');
+  selectedAvatar = null;
+  document.getElementById('add-kid-name').value = '';
+  document.querySelectorAll('#add-kid-modal .pin-box').forEach(b => b.value = '');
+  document.getElementById('add-kid-error').classList.remove('show');
+  document.getElementById('add-kid-modal').classList.add('show');
+}
+function closeAddKidModal() {
+  document.getElementById('add-kid-modal').classList.remove('show');
+}
+function pickAvatar(btn) {
+  document.querySelectorAll('#add-kid-modal .avatar-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAvatar = btn.dataset.avatar;
+}
+async function submitAddKid() {
+  const name = document.getElementById('add-kid-name').value.trim();
+  const pin = Array.from(document.querySelectorAll('#add-kid-modal .pin-box')).map(b => b.value).join('');
+  const err = document.getElementById('add-kid-error');
+  err.classList.remove('show');
+  if (!selectedAvatar) { err.textContent = '请选头像'; err.classList.add('show'); return; }
+  if (!name) { err.textContent = '请填名字'; err.classList.add('show'); return; }
+  if (pin.length !== 4) { err.textContent = '请设置4位PIN'; err.classList.add('show'); return; }
+
+  try {
+    const r = await KIWI.api('/api/auth/add-child', {
+      method: 'POST',
+      body: JSON.stringify({ name, avatar: selectedAvatar, pin })
+    });
+    // 刷新user信息
+    currentUser = await KIWI.api('/api/auth/me');
+    currentChildId = r.id;
+    renderKidSwitcher();
+    closeAddKidModal();
+    await loadKidStats(r.id);
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.add('show');
+  }
+}
+
+/* 弹窗内 PIN 联动 */
+document.querySelectorAll('#add-kid-modal .pin-box').forEach((box, idx, arr) => {
+  box.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    if (e.target.value && idx < arr.length - 1) arr[idx + 1].focus();
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus();
+  });
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+init();
+</script>
+</body>
+</html>

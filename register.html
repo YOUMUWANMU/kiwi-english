@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注册 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --fern: #5a9e57;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:24px 16px 60px; }
+  .container { max-width:480px; margin:0 auto; }
+  .brand { text-align:center; margin-bottom:24px; }
+  .brand-logo { font-size:42px; margin-bottom:8px; }
+  .brand-name { font-size:20px; font-weight:600; color:var(--kiwi-dark); }
+  .brand-tag { font-size:12px; color:var(--text-3); margin-top:4px; }
+  .step-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:14px; }
+  .step-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--kiwi); margin-bottom:6px; }
+  .step-title { font-size:18px; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .step-sub { font-size:13px; color:var(--text-3); margin-bottom:18px; line-height:1.5; }
+
+  .field { margin-bottom:12px; }
+  .field-label { font-size:12px; font-weight:500; color:var(--text-2); margin-bottom:6px; }
+  input[type=email], input[type=password], input[type=text] {
+    width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--bg); outline:none; font-family:inherit; color:var(--text); transition:border-color .15s;
+  }
+  input:focus { border-color:var(--kiwi); background:#fff; }
+
+  .pin-row { display:flex; gap:8px; justify-content:center; margin:8px 0; }
+  .pin-box { width:50px; height:54px; border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-size:22px; font-weight:600; background:var(--bg); color:var(--text); }
+  .pin-box:focus { border-color:var(--kiwi); background:#fff; }
+
+  .avatar-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:6px; }
+  .avatar-btn { aspect-ratio:1; border:2px solid var(--border); border-radius:50%; background:var(--bg); font-size:24px; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+  .avatar-btn:hover { border-color:var(--fern); }
+  .avatar-btn.selected { border-color:var(--kiwi); background:var(--kiwi-light); transform:scale(1.05); }
+
+  .btn-primary { display:block; width:100%; padding:13px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:500; cursor:pointer; transition:background .15s; }
+  .btn-primary:hover { background:var(--kiwi-dark); }
+  .btn-primary:disabled { background:var(--border); color:var(--text-3); cursor:not-allowed; }
+  .btn-secondary { display:block; width:100%; padding:11px; background:transparent; color:var(--kiwi); border:1px solid var(--kiwi); border-radius:var(--radius-sm); font-size:14px; cursor:pointer; margin-top:10px; }
+  .btn-skip { display:block; text-align:center; font-size:13px; color:var(--text-3); margin-top:14px; text-decoration:none; }
+
+  .error-msg { color:var(--danger); font-size:13px; background:var(--danger-light); border:1px solid #f5c0b8; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:12px; display:none; }
+  .error-msg.show { display:block; }
+  .success-msg { color:var(--kiwi-dark); font-size:13px; background:var(--kiwi-light); border:1px solid #b8d9b6; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:12px; display:none; }
+  .success-msg.show { display:block; }
+
+  .children-list { margin-top:14px; }
+  .child-row { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--kiwi-light); border:1px solid #b8d9b6; border-radius:var(--radius-sm); margin-bottom:8px; }
+  .child-row-avatar { width:36px; height:36px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .child-row-info { flex:1; }
+  .child-row-name { font-size:14px; font-weight:500; color:var(--kiwi-dark); }
+  .child-row-sub { font-size:11px; color:var(--text-3); }
+
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  .pin-hint { font-size:11px; color:var(--text-3); text-align:center; margin-top:6px; }
+  .stack-actions { margin-top:18px; display:flex; flex-direction:column; gap:8px; }
+
+  .demo-banner { background:var(--gold-light); border:1px solid #f5d89a; padding:10px 12px; border-radius:var(--radius-sm); margin-bottom:14px; font-size:12px; color:#7a5a0a; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="brand">
+    <div class="brand-logo">🥝</div>
+    <div class="brand-name">Kiwi English</div>
+    <div class="brand-tag">新西兰 Year 9 生存训练营</div>
+  </div>
+
+  <div id="demo-banner" class="demo-banner" style="display:none">
+    ⚠️ 当前未连接后端服务（WORKER_URL未配置），处于演示模式，注册数据不会保存。
+  </div>
+
+  <!-- 步骤1：家长注册 -->
+  <div class="panel active step-card" id="panel-parent">
+    <div class="step-label">第 1 步 / 共 2 步</div>
+    <div class="step-title">创建家长账号</div>
+    <div class="step-sub">家长账号用于管理孩子和查看学习报告。一台设备一个家庭账号即可。</div>
+
+    <div class="error-msg" id="parent-error"></div>
+
+    <div class="field">
+      <div class="field-label">家长邮箱</div>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <div class="field-label">密码（至少6位）</div>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <div class="field-label">确认密码</div>
+      <input type="password" id="password2" placeholder="再输入一次" autocomplete="new-password">
+    </div>
+    <button class="btn-primary" onclick="submitParent()">下一步：添加孩子 →</button>
+    <a href="login.html" class="btn-skip">已有账号？返回登录</a>
+  </div>
+
+  <!-- 步骤2：添加孩子 -->
+  <div class="panel step-card" id="panel-child">
+    <div class="step-label">第 2 步 / 共 2 步</div>
+    <div class="step-title">添加孩子</div>
+    <div class="step-sub">为每个孩子选一个头像、起个名字、设置 4 位 PIN 码。孩子每次打开 App 用这个 PIN 登录。</div>
+
+    <div class="error-msg" id="child-error"></div>
+    <div class="success-msg" id="child-success"></div>
+
+    <div id="children-list" class="children-list"></div>
+
+    <div class="field">
+      <div class="field-label">选一个头像</div>
+      <div class="avatar-grid" id="avatar-grid"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">孩子的名字</div>
+      <input type="text" id="child-name" placeholder="比如：明明" maxlength="20">
+    </div>
+
+    <div class="field">
+      <div class="field-label">设置 4 位 PIN 码</div>
+      <div class="pin-row">
+        <input class="pin-box" data-idx="0" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+        <input class="pin-box" data-idx="1" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+        <input class="pin-box" data-idx="2" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+        <input class="pin-box" data-idx="3" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+      </div>
+      <div class="pin-hint">建议用孩子能记住的数字，比如生日</div>
+    </div>
+
+    <div class="stack-actions">
+      <button class="btn-primary" onclick="submitChild()">添加这个孩子</button>
+      <button class="btn-secondary" onclick="goToLogin()" id="finish-btn" style="display:none">完成，去登录 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AVATARS = ['🦊','🐱','🐶','🐼','🐻','🐯','🐰','🦁','🐸','🐧','🦄','🐨'];
+let selectedAvatar = null;
+let addedChildren = [];
+
+function renderAvatars() {
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = AVATARS.map((a, i) =>
+    `<button class="avatar-btn" data-avatar="${a}" onclick="pickAvatar(this)">${a}</button>`
+  ).join('');
+}
+renderAvatars();
+
+function pickAvatar(btn) {
+  document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAvatar = btn.dataset.avatar;
+}
+
+// PIN 输入框联动
+document.querySelectorAll('.pin-box').forEach((box, idx, arr) => {
+  box.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    if (e.target.value && idx < arr.length - 1) arr[idx + 1].focus();
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus();
+  });
+});
+
+function getPIN() {
+  return Array.from(document.querySelectorAll('.pin-box')).map(b => b.value).join('');
+}
+function clearPIN() {
+  document.querySelectorAll('.pin-box').forEach(b => b.value = '');
+  document.querySelector('.pin-box').focus();
+}
+
+function showError(panel, msg) {
+  document.getElementById(panel + '-error').textContent = msg;
+  document.getElementById(panel + '-error').classList.add('show');
+  document.getElementById(panel + '-success') && document.getElementById(panel + '-success').classList.remove('show');
+}
+function clearError(panel) {
+  document.getElementById(panel + '-error').classList.remove('show');
+}
+function showSuccess(panel, msg) {
+  document.getElementById(panel + '-success').textContent = msg;
+  document.getElementById(panel + '-success').classList.add('show');
+  document.getElementById(panel + '-error').classList.remove('show');
+}
+
+async function submitParent() {
+  clearError('parent');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const password2 = document.getElementById('password2').value;
+
+  if (!email) return showError('parent', '请输入邮箱');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('parent', '邮箱格式不正确');
+  if (password.length < 6) return showError('parent', '密码至少6位');
+  if (password !== password2) return showError('parent', '两次密码不一致');
+
+  if (!KIWI.WORKER_URL) {
+    document.getElementById('demo-banner').style.display = 'block';
+    // 演示模式：直接进入下一步
+    switchPanel('child');
+    return;
+  }
+
+  try {
+    const r = await KIWI.api('/api/auth/register-parent', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    KIWI.setToken(r.token);
+    switchPanel('child');
+  } catch (e) {
+    showError('parent', e.message);
+  }
+}
+
+async function submitChild() {
+  clearError('child');
+  const name = document.getElementById('child-name').value.trim();
+  const pin = getPIN();
+
+  if (!selectedAvatar) return showError('child', '请选择头像');
+  if (!name) return showError('child', '请输入孩子的名字');
+  if (pin.length !== 4) return showError('child', '请设置4位PIN码');
+
+  if (!KIWI.WORKER_URL) {
+    addedChildren.push({ name, avatar: selectedAvatar });
+    renderAddedChildren();
+    resetChildForm();
+    showSuccess('child', `已添加 ${name}（演示模式，未保存）`);
+    document.getElementById('finish-btn').style.display = 'block';
+    return;
+  }
+
+  try {
+    const r = await KIWI.api('/api/auth/add-child', {
+      method: 'POST',
+      body: JSON.stringify({ name, avatar: selectedAvatar, pin })
+    });
+    addedChildren.push({ name: r.name, avatar: r.avatar });
+    renderAddedChildren();
+    resetChildForm();
+    showSuccess('child', `已添加 ${r.name}！可以继续添加，或点下面完成。`);
+    document.getElementById('finish-btn').style.display = 'block';
+  } catch (e) {
+    showError('child', e.message);
+  }
+}
+
+function renderAddedChildren() {
+  const list = document.getElementById('children-list');
+  if (addedChildren.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = '<div style="font-size:12px;color:var(--text-3);margin-bottom:8px">已添加：</div>' +
+    addedChildren.map(c =>
+      `<div class="child-row">
+        <div class="child-row-avatar">${c.avatar}</div>
+        <div class="child-row-info">
+          <div class="child-row-name">${escHtml(c.name)}</div>
+          <div class="child-row-sub">已设置PIN</div>
+        </div>
+      </div>`
+    ).join('');
+}
+
+function resetChildForm() {
+  document.getElementById('child-name').value = '';
+  clearPIN();
+  selectedAvatar = null;
+  document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  window.scrollTo({ top: 0 });
+}
+
+function goToLogin() {
+  window.location.href = 'login.html';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 演示模式提示
+if (!KIWI.WORKER_URL) {
+  document.getElementById('demo-banner').style.display = 'block';
+}
+</script>
+</body>
+</html>

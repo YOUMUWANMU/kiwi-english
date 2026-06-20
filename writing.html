@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>写作批改 · Kiwi English</title>
+<script src="auth.js"></script>
 <style>
   :root {
     --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
@@ -193,7 +194,12 @@
 </div>
 
 <script>
-const WORKER_URL = 'https://kiwi-english-api.zh08243080.workers.dev';
+let _writingStartTs = Date.now();
+let _writingLastSubmittedAt = 0;
+
+(async function init() {
+  try { await KIWI.requireAuth('any'); } catch {}
+})();
 
 const PROMPTS = [
   {
@@ -250,8 +256,9 @@ async function submitWriting() {
   const prompt = PROMPTS[selectedPromptIndex];
   document.getElementById('loading-mask').classList.add('show');
   document.getElementById('result-section').classList.remove('show');
+  _writingStartTs = Date.now();
 
-  if (!WORKER_URL) {
+  if (!KIWI.WORKER_URL) {
     await new Promise(r => setTimeout(r, 1800));
     document.getElementById('loading-mask').classList.remove('show');
     showDemoResult(essay);
@@ -259,14 +266,21 @@ async function submitWriting() {
   }
 
   try {
-    const res = await fetch(`${WORKER_URL}/api/writing`, {
+    const data = await KIWI.api('/api/writing', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ essay, prompt: prompt.text, level: 1 })
     });
-    const data = await res.json();
     document.getElementById('loading-mask').classList.remove('show');
     showResult(data);
+    // 上报事件
+    const duration = Math.round((Date.now() - _writingStartTs) / 1000);
+    KIWI.reportEvent({
+      module: 'writing',
+      sub: 'prompt_' + selectedPromptIndex,
+      score: data.score,
+      durationSec: duration,
+      errors: data.corrections || []
+    });
   } catch (e) {
     document.getElementById('loading-mask').classList.remove('show');
     showDemoResult(essay);

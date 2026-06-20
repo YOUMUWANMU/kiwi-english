@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NZ听力训练 · Kiwi English</title>
+<script src="auth.js"></script>
 <style>
   :root {
     --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
@@ -244,6 +245,10 @@
 </div>
 
 <script>
+(async function init() {
+  try { await KIWI.requireAuth('any'); } catch {}
+})();
+
 /* ---------- 内容数据 ---------- */
 const DICTATION = {
   A1: [
@@ -512,6 +517,15 @@ function checkDictation() {
   document.getElementById('dictation-input').disabled = true;
   document.getElementById('dictation-next-btn').style.display = '';
   bumpSession();
+  KIWI.reportEvent({
+    module: 'listening',
+    sub: 'dictation',
+    level: currentLevel,
+    correct: isCorrect ? 1 : 0,
+    total: 1,
+    score: isCorrect ? 10 : 5,
+    durationSec: 30,
+  });
 }
 
 function nextDictation() {
@@ -572,6 +586,16 @@ function answerDialogue(btn, index) {
   document.getElementById('dialogue-transcript').classList.add('show');
   document.getElementById('dialogue-next-btn').style.display = '';
   bumpSession();
+  const isCorrect = index === d.correct;
+  KIWI.reportEvent({
+    module: 'listening',
+    sub: 'dialogue',
+    level: currentLevel,
+    correct: isCorrect ? 1 : 0,
+    total: 1,
+    score: isCorrect ? 10 : 5,
+    durationSec: 60,
+  });
 }
 
 function nextDialogue() {

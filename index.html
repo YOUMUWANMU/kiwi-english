@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kiwi English · 新西兰Year 9生存训练营</title>
 <meta name="description" content="专为赴新西兰Year 9学生设计的英语训练平台">
+<script src="auth.js"></script>
 <style>
   :root {
     --kiwi: #3d7a3a;
@@ -90,6 +91,13 @@
     font-size: 13px;
     color: var(--text-3);
   }
+
+  .logout-mini {
+    background: transparent; border: none; color: var(--text-3);
+    font-size: 16px; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px; line-height: 1;
+  }
+  .logout-mini:hover { color: var(--danger); background: var(--danger-light); }
 
   /* 英雄区 */
   .hero {
@@ -536,8 +544,8 @@
     Kiwi English
   </a>
   <div class="nav-right">
-    <span class="phase-badge">第一阶段</span>
-    <span class="progress-mini">第3天</span>
+    <span class="phase-badge" id="user-greeting">第一阶段</span>
+    <button class="logout-mini" onclick="KIWI.logout()" title="退出登录">⏻</button>
   </div>
 </nav>
 
@@ -716,6 +724,20 @@
 </div>
 
 <script>
+(async function init() {
+  try {
+    const me = await KIWI.requireAuth('any');
+    if (me.type === 'parent') {
+      // 家长登进index跳到parent
+      window.location.href = 'parent.html';
+      return;
+    }
+    if (me.name && me.avatar) {
+      document.getElementById('user-greeting').textContent = me.avatar + ' ' + me.name;
+    }
+  } catch {}
+})();
+
 function speakPhrase() {
   const u = new SpeechSynthesisUtterance("Could I sit here, please?");
   u.lang = 'en-GB';

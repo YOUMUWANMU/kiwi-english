@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --fern: #5a9e57;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:40px 16px; display:flex; align-items:flex-start; justify-content:center; }
+  .container { max-width:440px; width:100%; }
+  .brand { text-align:center; margin-bottom:28px; }
+  .brand-logo { font-size:42px; margin-bottom:8px; }
+  .brand-name { font-size:20px; font-weight:600; color:var(--kiwi-dark); }
+  .brand-tag { font-size:12px; color:var(--text-3); margin-top:4px; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:14px; }
+
+  .card-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:14px; text-align:center; }
+
+  /* 孩子头像选择 */
+  .kids-row { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  .kid-tile { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; padding:8px; border-radius:var(--radius-sm); transition:background .15s; min-width:80px; }
+  .kid-tile:hover { background:var(--kiwi-light); }
+  .kid-avatar { width:68px; height:68px; border-radius:50%; background:var(--kiwi-light); display:flex; align-items:center; justify-content:center; font-size:38px; border:2px solid transparent; transition:border-color .15s; }
+  .kid-tile:hover .kid-avatar { border-color:var(--fern); }
+  .kid-name { font-size:13px; font-weight:500; color:var(--text-2); }
+
+  .no-kids { text-align:center; color:var(--text-3); font-size:13px; padding:14px 0; }
+
+  /* 家长登录入口 */
+  .parent-entry { padding:14px 18px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); display:flex; align-items:center; gap:12px; cursor:pointer; transition:all .15s; text-decoration:none; color:inherit; }
+  .parent-entry:hover { border-color:var(--kiwi); background:var(--kiwi-light); }
+  .parent-icon { width:36px; height:36px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .parent-text { flex:1; }
+  .parent-title { font-size:14px; font-weight:500; color:var(--text); }
+  .parent-sub { font-size:11px; color:var(--text-3); margin-top:1px; }
+  .parent-arrow { color:var(--text-3); }
+
+  /* PIN 弹窗 */
+  .modal-mask { display:none; position:fixed; inset:0; background:rgba(26,31,23,0.6); z-index:50; align-items:center; justify-content:center; padding:16px; }
+  .modal-mask.show { display:flex; }
+  .modal { background:var(--surface); border-radius:var(--radius); padding:24px; max-width:340px; width:100%; }
+  .modal-header { text-align:center; margin-bottom:16px; }
+  .modal-avatar { width:64px; height:64px; border-radius:50%; background:var(--kiwi-light); display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 8px; }
+  .modal-name { font-size:15px; font-weight:500; color:var(--text); }
+  .modal-prompt { font-size:13px; color:var(--text-3); margin-top:4px; }
+
+  .pin-row { display:flex; gap:8px; justify-content:center; margin:14px 0; }
+  .pin-box { width:50px; height:54px; border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-size:22px; font-weight:600; background:var(--bg); color:var(--text); }
+  .pin-box:focus { border-color:var(--kiwi); background:#fff; }
+
+  .modal-actions { display:flex; gap:8px; margin-top:14px; }
+  .btn-cancel { flex:1; padding:11px; background:var(--bg); border:1px solid var(--border); color:var(--text-2); border-radius:var(--radius-sm); font-size:14px; cursor:pointer; }
+  .btn-submit { flex:1; padding:11px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; }
+  .btn-submit:disabled { background:var(--border); color:var(--text-3); cursor:not-allowed; }
+
+  .error-msg { color:var(--danger); font-size:13px; background:var(--danger-light); border:1px solid #f5c0b8; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:12px; display:none; text-align:center; }
+  .error-msg.show { display:block; }
+
+  /* 家长登录表单 */
+  .field { margin-bottom:12px; }
+  .field-label { font-size:12px; font-weight:500; color:var(--text-2); margin-bottom:6px; }
+  input[type=email], input[type=password] {
+    width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--bg); outline:none; font-family:inherit; color:var(--text); transition:border-color .15s;
+  }
+  input:focus { border-color:var(--kiwi); background:#fff; }
+
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  .footer-link { text-align:center; font-size:13px; color:var(--text-3); margin-top:18px; }
+  .footer-link a { color:var(--kiwi); text-decoration:none; font-weight:500; }
+
+  .loading { text-align:center; padding:30px 0; color:var(--text-3); font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="brand">
+    <div class="brand-logo">🥝</div>
+    <div class="brand-name">Kiwi English</div>
+    <div class="brand-tag">新西兰 Year 9 生存训练营</div>
+  </div>
+
+  <!-- 选择身份 -->
+  <div class="panel active" id="panel-select">
+    <div class="card">
+      <div class="card-title">我是谁？</div>
+      <div id="kids-area" class="loading">加载中...</div>
+    </div>
+
+    <a href="#" class="parent-entry" onclick="switchPanel('parent'); return false;">
+      <div class="parent-icon">👨‍👩</div>
+      <div class="parent-text">
+        <div class="parent-title">我是家长</div>
+        <div class="parent-sub">查看孩子的学习报告</div>
+      </div>
+      <div class="parent-arrow">→</div>
+    </a>
+
+    <div class="footer-link" id="register-link" style="display:none">
+      还没有账号？<a href="register.html">立即注册</a>
+    </div>
+  </div>
+
+  <!-- 家长登录表单 -->
+  <div class="panel" id="panel-parent">
+    <div class="card">
+      <div class="card-title">家长登录</div>
+      <div class="error-msg" id="parent-error"></div>
+      <div class="field">
+        <div class="field-label">邮箱</div>
+        <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <div class="field-label">密码</div>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="switchPanel('select')">← 返回</button>
+        <button class="btn-submit" onclick="submitParentLogin()">登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 孩子PIN输入弹窗 -->
+<div class="modal-mask" id="pin-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-avatar" id="pin-avatar">🦊</div>
+      <div class="modal-name" id="pin-name">孩子</div>
+      <div class="modal-prompt">输入你的 4 位 PIN</div>
+    </div>
+    <div class="error-msg" id="pin-error"></div>
+    <div class="pin-row">
+      <input class="pin-box" data-idx="0" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+      <input class="pin-box" data-idx="1" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+      <input class="pin-box" data-idx="2" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+      <input class="pin-box" data-idx="3" inputmode="numeric" maxlength="1" type="password" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePinModal()">取消</button>
+      <button class="btn-submit" id="pin-submit" onclick="submitChildPIN()">登录</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentChildId = null;
+let currentChildName = null;
+let currentChildAvatar = null;
+
+// 如果已经登录，根据角色直接跳转
+async function checkExistingSession() {
+  const token = KIWI.getToken();
+  if (!token || !KIWI.WORKER_URL) return false;
+  try {
+    const me = await KIWI.api('/api/auth/me');
+    KIWI.setUser(me);
+    if (me.type === 'parent') window.location.href = 'parent.html';
+    else window.location.href = 'index.html';
+    return true;
+  } catch (e) {
+    KIWI.clearAuth();
+    return false;
+  }
+}
+
+async function loadChildren() {
+  const area = document.getElementById('kids-area');
+  if (!KIWI.WORKER_URL) {
+    area.innerHTML = `
+      <div class="kids-row">
+        <div class="kid-tile" onclick="demoLogin('🥝','演示')"><div class="kid-avatar">🥝</div><div class="kid-name">演示模式</div></div>
+      </div>`;
+    document.getElementById('register-link').style.display = 'block';
+    return;
+  }
+  try {
+    const data = await KIWI.api('/api/auth/list-children');
+    if (!data.hasAccount) {
+      // 还没有家长账号 → 跳到注册页
+      window.location.href = 'register.html';
+      return;
+    }
+    if (!data.children || data.children.length === 0) {
+      area.innerHTML = `<div class="no-kids">还没有添加孩子<br><br><a href="register.html" style="color:var(--kiwi);font-weight:500;text-decoration:none">→ 家长登录后添加孩子</a></div>`;
+      return;
+    }
+    area.innerHTML = '<div class="kids-row">' + data.children.map(c =>
+      `<div class="kid-tile" onclick="openPinModal('${c.id}','${escAttr(c.name)}','${c.avatar}')">
+        <div class="kid-avatar">${c.avatar}</div>
+        <div class="kid-name">${escHtml(c.name)}</div>
+      </div>`
+    ).join('') + '</div>';
+  } catch (e) {
+    area.innerHTML = `<div class="no-kids">加载失败：${escHtml(e.message)}<br><a href="register.html" style="color:var(--kiwi)">→ 去注册</a></div>`;
+  }
+}
+
+function demoLogin(avatar, name) {
+  KIWI.setUser({ type: 'child', id: 'demo', name, avatar });
+  KIWI.setToken('demo-token');
+  window.location.href = 'index.html';
+}
+
+function openPinModal(id, name, avatar) {
+  currentChildId = id;
+  currentChildName = name;
+  currentChildAvatar = avatar;
+  document.getElementById('pin-avatar').textContent = avatar;
+  document.getElementById('pin-name').textContent = name;
+  document.getElementById('pin-error').classList.remove('show');
+  clearPIN();
+  document.getElementById('pin-modal').classList.add('show');
+  setTimeout(() => document.querySelector('#pin-modal .pin-box').focus(), 100);
+}
+
+function closePinModal() {
+  document.getElementById('pin-modal').classList.remove('show');
+  currentChildId = null;
+}
+
+async function submitChildPIN() {
+  const pin = Array.from(document.querySelectorAll('#pin-modal .pin-box')).map(b => b.value).join('');
+  if (pin.length !== 4) {
+    showPinError('请输入4位PIN');
+    return;
+  }
+  try {
+    const r = await KIWI.api('/api/auth/login-child', {
+      method: 'POST',
+      body: JSON.stringify({ id: currentChildId, pin })
+    });
+    KIWI.setToken(r.token);
+    KIWI.setUser({ type: 'child', id: r.id, name: r.name, avatar: r.avatar });
+    window.location.href = 'index.html';
+  } catch (e) {
+    showPinError(e.message);
+    clearPIN();
+  }
+}
+
+function showPinError(msg) {
+  const el = document.getElementById('pin-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function clearPIN() {
+  document.querySelectorAll('#pin-modal .pin-box').forEach(b => b.value = '');
+}
+
+async function submitParentLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errEl = document.getElementById('parent-error');
+  errEl.classList.remove('show');
+
+  if (!email || !password) {
+    errEl.textContent = '请输入邮箱和密码';
+    errEl.classList.add('show');
+    return;
+  }
+  if (!KIWI.WORKER_URL) {
+    errEl.textContent = '后端未配置（WORKER_URL为空），无法登录';
+    errEl.classList.add('show');
+    return;
+  }
+
+  try {
+    const r = await KIWI.api('/api/auth/login-parent', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    KIWI.setToken(r.token);
+    KIWI.setUser({ type: 'parent', email: r.parentEmail });
+    window.location.href = 'parent.html';
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+  }
+}
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// PIN 输入框联动（弹窗内的）
+document.querySelectorAll('#pin-modal .pin-box').forEach((box, idx, arr) => {
+  box.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    if (e.target.value && idx < arr.length - 1) arr[idx + 1].focus();
+    if (idx === arr.length - 1 && e.target.value) {
+      // 自动提交
+      setTimeout(submitChildPIN, 100);
+    }
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus();
+  });
+});
+
+// 回车提交家长登录
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitParentLogin();
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+// 初始化
+(async () => {
+  const redirected = await checkExistingSession();
+  if (!redirected) loadChildren();
+})();
+</script>
+</body>
+</html>
