@@ -1,0 +1,13 @@
+name = "kiwi-english-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+[vars]
+ENVIRONMENT = "production"
+
+# 在Cloudflare Dashboard的 Workers & Pages > kiwi-english-api > Settings > Variables 里设置：
+# ANTHROPIC_API_KEY = "sk-ant-..."

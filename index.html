@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiwi English · 新西兰Year 9生存训练营</title>
+<meta name="description" content="专为赴新西兰Year 9学生设计的英语训练平台">
+<style>
+  :root {
+    --kiwi: #3d7a3a;
+    --kiwi-light: #e8f5e8;
+    --kiwi-dark: #2a5528;
+    --sky: #2563a8;
+    --sky-light: #e8f0fb;
+    --fern: #5a9e57;
+    --gold: #c8820a;
+    --gold-light: #fef3dc;
+    --bg: #f7f8f5;
+    --surface: #ffffff;
+    --text: #1a1f17;
+    --text-2: #4a5245;
+    --text-3: #7a8475;
+    --border: #dde3d8;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* 顶部导航 */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--kiwi-dark);
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--kiwi);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .phase-badge {
+    background: var(--kiwi-light);
+    color: var(--kiwi-dark);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #b8d9b6;
+  }
+
+  .progress-mini {
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  /* 英雄区 */
+  .hero {
+    padding: 40px 24px 32px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--kiwi);
+    margin-bottom: 12px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .hero-title em {
+    font-style: normal;
+    color: var(--kiwi);
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--text-2);
+    margin-bottom: 24px;
+  }
+
+  /* 进度条 */
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .timeline-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .timeline-count {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .timeline-track {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 12px;
+  }
+
+  .timeline-seg {
+    height: 6px;
+    border-radius: 3px;
+    flex: 1;
+  }
+
+  .seg-done { background: var(--kiwi); }
+  .seg-active { background: var(--fern); opacity: 0.5; }
+  .seg-todo { background: var(--border); }
+
+  .timeline-phases {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .phase-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .phase-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-2);
+    display: block;
+  }
+
+  .phase-time {
+    font-size: 10px;
+    color: var(--text-3);
+  }
+
+  .phase-item.active .phase-name { color: var(--kiwi); }
+
+  /* 模块网格 */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+
+  .modules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.15s, transform 0.1s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module-card:hover {
+    border-color: var(--kiwi);
+    transform: translateY(-1px);
+  }
+
+  .module-card.primary {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    border-color: var(--kiwi);
+    background: var(--kiwi-light);
+  }
+
+  .module-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .icon-speaking { background: #e8f5e8; }
+  .icon-listening { background: #e8f0fb; }
+  .icon-writing { background: #fef3dc; }
+  .icon-reading { background: #fce8e8; }
+  .icon-subject { background: #e8f5f8; }
+  .icon-culture { background: #f5e8f8; }
+
+  .module-info { flex: 1; }
+
+  .module-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .module-desc {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+
+  .module-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-top: 6px;
+  }
+
+  .tag-hot { background: #fde8e8; color: #c0392b; }
+  .tag-new { background: var(--kiwi-light); color: var(--kiwi-dark); }
+  .tag-locked { background: var(--bg); color: var(--text-3); border: 1px solid var(--border); }
+
+  .module-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .module-progress-fill {
+    height: 100%;
+    background: var(--kiwi);
+    border-radius: 2px;
+  }
+
+  /* 今日任务 */
+  .today-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+
+  .today-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .today-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .today-date {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .task-list { padding: 6px 0; }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.1s;
+  }
+
+  .task-item:last-child { border-bottom: none; }
+  .task-item:hover { background: var(--bg); }
+
+  .task-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-done { background: var(--kiwi); }
+  .dot-active { background: var(--fern); }
+  .dot-todo { background: var(--border); }
+
+  .task-text {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .task-text.done {
+    text-decoration: line-through;
+    color: var(--text-3);
+  }
+
+  .task-duration {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .task-btn {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--kiwi-dark);
+    background: var(--kiwi-light);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* 每日一句 */
+  .daily-phrase {
+    background: var(--kiwi-dark);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 28px;
+    color: white;
+  }
+
+  .daily-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9fd49c;
+    margin-bottom: 10px;
+  }
+
+  .daily-en {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .daily-zh {
+    font-size: 14px;
+    color: #b8d9b6;
+    margin-bottom: 14px;
+  }
+
+  .daily-context {
+    font-size: 12px;
+    color: #7fb87c;
+    background: rgba(255,255,255,0.08);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 3px solid #5a9e57;
+  }
+
+  .daily-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .btn-play {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-play:hover { background: rgba(255,255,255,0.22); }
+
+  .btn-practice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--fern);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-practice:hover { background: var(--kiwi); }
+
+  /* 底部导航 */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 0;
+    text-decoration: none;
+    color: var(--text-3);
+    font-size: 10px;
+    cursor: pointer;
+    transition: color 0.1s;
+  }
+
+  .nav-item.active { color: var(--kiwi); }
+
+  .nav-icon { font-size: 22px; line-height: 1; }
+
+  /* 内容区底部留白 */
+  .content {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px 100px;
+  }
+
+  /* 统计卡片 */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--kiwi-dark);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">🥝</div>
+    Kiwi English
+  </a>
+  <div class="nav-right">
+    <span class="phase-badge">第一阶段</span>
+    <span class="progress-mini">第3天</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">新西兰 Year 9 生存训练营</div>
+  <h1 class="hero-title">你好，<em>18个月后</em>走进Hamilton的教室</h1>
+  <p class="hero-sub">现在开始练，到那天你就是那个第一个说出"Kia ora!"的中国同学。</p>
+
+  <div class="timeline-card">
+    <div class="timeline-header">
+      <span class="timeline-label">18个月训练路线</span>
+      <span class="timeline-count">已完成 3 / 540 天</span>
+    </div>
+    <div class="timeline-track">
+      <div class="timeline-seg seg-done" style="flex:1"></div>
+      <div class="timeline-seg seg-active" style="flex:5"></div>
+      <div class="timeline-seg seg-todo" style="flex:6"></div>
+      <div class="timeline-seg seg-todo" style="flex:6"></div>
+    </div>
+    <div class="timeline-phases">
+      <div class="phase-item active">
+        <span class="phase-name">生存基础</span>
+        <span class="phase-time">月1–6</span>
+      </div>
+      <div class="phase-item">
+        <span class="phase-name">融入加速</span>
+        <span class="phase-time">月7–12</span>
+      </div>
+      <div class="phase-item">
+        <span class="phase-name">独立自信</span>
+        <span class="phase-time">月13–18</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- 今日一句 -->
+  <div class="daily-phrase">
+    <div class="daily-label">🇳🇿 今日NZ场景用语</div>
+    <div class="daily-en">"Could I sit here, please?"</div>
+    <div class="daily-zh">请问我可以坐这里吗？</div>
+    <div class="daily-context">📍 场景：第一天进食堂，所有位子都有人，你需要问一个同学能否坐旁边。</div>
+    <div class="daily-actions">
+      <button class="btn-play" onclick="speakPhrase()">▶ 听NZ发音</button>
+      <button class="btn-practice" onclick="window.location.href='speaking.html'">🎤 开口练习 →</button>
+    </div>
+  </div>
+
+  <!-- 统计 -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">3</div>
+      <div class="stat-label">连续打卡天</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">47</div>
+      <div class="stat-label">已学场景句</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">12</div>
+      <div class="stat-label">口语练习次</div>
+    </div>
+  </div>
+
+  <!-- 今日任务 -->
+  <div class="today-card">
+    <div class="today-header">
+      <span class="today-title">今日训练</span>
+      <span class="today-date">第3天 · 生存基础</span>
+    </div>
+    <div class="task-list">
+      <a class="task-item" href="listening.html">
+        <div class="task-dot dot-done"></div>
+        <span class="task-text done">听力：食堂点餐对话</span>
+        <span class="task-duration">✓</span>
+      </a>
+      <a class="task-item" href="speaking.html">
+        <div class="task-dot dot-active"></div>
+        <span class="task-text">口语：练习"Could I sit here?"</span>
+        <button class="task-btn">开始</button>
+      </a>
+      <a class="task-item" href="subject.html">
+        <div class="task-dot dot-todo"></div>
+        <span class="task-text">学科英语：体育课10个指令词</span>
+        <span class="task-duration">~8分钟</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 六大模块 -->
+  <div class="section-title">全部模块</div>
+  <div class="modules-grid">
+
+    <a class="module-card primary" href="speaking.html">
+      <div class="module-icon icon-speaking">🎤</div>
+      <div class="module-info">
+        <div class="module-name">口语陪练</div>
+        <div class="module-desc">AI扮演同学/老师，真实场景对话练习，发音实时反馈</div>
+        <span class="module-tag tag-hot">最重要</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="listening.html">
+      <div class="module-icon icon-listening">🎧</div>
+      <div class="module-info">
+        <div class="module-name">NZ听力</div>
+        <div class="module-desc">今日一听/课堂听写/场景理解/精听训练</div>
+        <span class="module-tag tag-new">新解锁</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="writing.html">
+      <div class="module-icon icon-writing">✏️</div>
+      <div class="module-info">
+        <div class="module-name">写作批改</div>
+        <div class="module-desc">AI批改短文，邮件、日记、Essay</div>
+        <span class="module-tag tag-new">新解锁</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="subject.html">
+      <div class="module-icon icon-subject">📚</div>
+      <div class="module-info">
+        <div class="module-name">学科英语</div>
+        <div class="module-desc">体育/科学/数学/音乐课专用词汇</div>
+        <div class="module-progress"><div class="module-progress-fill" style="width:5%"></div></div>
+      </div>
+    </a>
+
+    <a class="module-card" href="reading.html">
+      <div class="module-icon icon-reading">📖</div>
+      <div class="module-info">
+        <div class="module-name">分级阅读</div>
+        <div class="module-desc">NZ主题文章，从简单开始读</div>
+        <span class="module-tag tag-locked">🔒 第2周解锁</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="culture.html">
+      <div class="module-icon icon-culture">🌿</div>
+      <div class="module-info">
+        <div class="module-name">Kiwi文化</div>
+        <div class="module-desc">毛利文化、NZ俚语、学校规则</div>
+        <span class="module-tag tag-locked">🔒 第3周解锁</span>
+      </div>
+    </a>
+
+  </div>
+
+</div>
+
+<!-- 底部导航 -->
+<div class="bottom-nav">
+  <div class="nav-item active">
+    <span class="nav-icon">🏠</span>
+    首页
+  </div>
+  <a class="nav-item" href="speaking.html">
+    <span class="nav-icon">🎤</span>
+    口语
+  </a>
+  <a class="nav-item" href="listening.html">
+    <span class="nav-icon">🎧</span>
+    听力
+  </a>
+  <a class="nav-item" href="writing.html">
+    <span class="nav-icon">✏️</span>
+    写作
+  </a>
+  <div class="nav-item" onclick="alert('进度报告功能即将开放')">
+    <span class="nav-icon">📊</span>
+    报告
+  </div>
+</div>
+
+<script>
+function speakPhrase() {
+  const u = new SpeechSynthesisUtterance("Could I sit here, please?");
+  u.lang = 'en-GB';
+  u.rate = 0.9;
+  const voices = speechSynthesis.getVoices();
+  const gb = voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en'));
+  if (gb) u.voice = gb;
+  speechSynthesis.speak(u);
+}
+speechSynthesis.onvoiceschanged = () => {};
+</script>
+</body>
+</html>

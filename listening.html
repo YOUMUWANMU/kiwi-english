@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ听力训练 · Kiwi English</title>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --sky: #2563a8; --sky-light: #e8f0fb;
+    --fern: #5a9e57;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:24px; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .back-btn { font-size:20px; text-decoration:none; color:var(--text-2); line-height:1; }
+  .topbar-title { font-size:15px; font-weight:600; }
+  .topbar-sub { font-size:12px; color:var(--text-3); }
+  .session-badge { font-size:11px; font-weight:500; color:var(--kiwi-dark); background:var(--kiwi-light); padding:3px 9px; border-radius:10px; border:1px solid #b8d9b6; white-space:nowrap; }
+
+  /* 模式切换 */
+  .mode-tabs { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 16px; display:flex; gap:8px; overflow-x:auto; position:sticky; top:53px; z-index:19; scrollbar-width:none; }
+  .mode-tabs::-webkit-scrollbar { display:none; }
+  .mode-tab { white-space:nowrap; padding:7px 13px; border-radius:20px; border:1px solid var(--border); font-size:13px; cursor:pointer; background:var(--bg); color:var(--text-2); flex-shrink:0; transition:all .15s; }
+  .mode-tab.active { background:var(--kiwi); border-color:var(--kiwi); color:#fff; font-weight:500; }
+
+  /* 等级选择 */
+  .level-picker { display:flex; gap:8px; padding:12px 16px 0; }
+  .level-chip { flex:1; text-align:center; padding:9px 8px; border-radius:var(--radius-sm); border:1px solid var(--border); font-size:12px; cursor:pointer; background:var(--surface); color:var(--text-2); transition:all .15s; }
+  .level-chip strong { display:block; font-size:14px; margin-bottom:2px; }
+  .level-chip.active { border-color:var(--kiwi); background:var(--kiwi-light); color:var(--kiwi-dark); }
+
+  .content { max-width:680px; margin:0 auto; padding:16px; }
+
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* 通用卡片 */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+
+  /* 播放控制 */
+  .play-row { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .btn-play-main { display:flex; align-items:center; gap:8px; background:var(--kiwi); color:#fff; border:none; padding:11px 18px; border-radius:24px; font-size:14px; font-weight:500; cursor:pointer; transition:background .15s; }
+  .btn-play-main:hover { background:var(--kiwi-dark); }
+  .btn-play-secondary { display:flex; align-items:center; gap:6px; background:var(--bg); color:var(--text-2); border:1px solid var(--border); padding:11px 14px; border-radius:24px; font-size:13px; cursor:pointer; transition:all .15s; }
+  .btn-play-secondary:hover { border-color:var(--kiwi); color:var(--kiwi-dark); }
+  .btn-play-secondary.toggled { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); }
+
+  /* 听写 */
+  .dictation-hint { font-size:12px; color:var(--text-3); margin-bottom:10px; }
+  .dictation-input { width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:14px; outline:none; background:var(--bg); color:var(--text); font-family:inherit; transition:border-color .15s; margin-bottom:10px; }
+  .dictation-input:focus { border-color:var(--kiwi); background:#fff; }
+  .btn-check { width:100%; padding:12px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; transition:background .15s; }
+  .btn-check:hover { background:var(--kiwi-dark); }
+  .btn-check:disabled { background:var(--border); color:var(--text-3); cursor:not-allowed; }
+
+  .dictation-result { display:none; margin-top:14px; padding:14px; border-radius:var(--radius-sm); }
+  .dictation-result.show { display:block; }
+  .dictation-result.correct { background:var(--kiwi-light); border:1px solid #b8d9b6; }
+  .dictation-result.wrong { background:var(--danger-light); border:1px solid #f5c0b8; }
+  .result-verdict { font-size:14px; font-weight:600; margin-bottom:8px; }
+  .result-verdict.correct { color:var(--kiwi-dark); }
+  .result-verdict.wrong { color:var(--danger); }
+  .result-answer { font-size:14px; color:var(--text); margin-bottom:4px; line-height:1.6; }
+  .result-zh { font-size:12px; color:var(--text-3); margin-bottom:8px; }
+  .result-note { font-size:12px; color:var(--text-2); background:rgba(255,255,255,0.6); padding:8px 10px; border-radius:6px; }
+
+  .btn-next { width:100%; padding:11px; background:transparent; color:var(--kiwi); border:1px solid var(--kiwi); border-radius:var(--radius-sm); font-size:14px; cursor:pointer; margin-top:12px; transition:all .15s; }
+  .btn-next:hover { background:var(--kiwi-light); }
+
+  /* 场景对话 */
+  .dialogue-title { font-size:13px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .dialogue-status { font-size:13px; color:var(--text-2); margin-bottom:14px; min-height:18px; }
+  .dialogue-status.playing { color:var(--kiwi); font-weight:500; }
+  .transcript { display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+  .transcript.show { display:block; }
+  .transcript-line { font-size:13px; line-height:1.7; margin-bottom:6px; }
+  .transcript-line b { color:var(--kiwi-dark); }
+  .transcript-zh { font-size:12px; color:var(--text-3); margin-bottom:10px; }
+
+  .question-box { margin-top:16px; }
+  .question-text { font-size:14px; font-weight:500; color:var(--text); margin-bottom:12px; }
+  .option-btn { display:block; width:100%; text-align:left; padding:11px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--text-2); font-size:13px; cursor:pointer; margin-bottom:8px; transition:all .15s; }
+  .option-btn:hover { border-color:var(--kiwi); }
+  .option-btn.selected-correct { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); font-weight:500; }
+  .option-btn.selected-wrong { background:var(--danger-light); border-color:#f5c0b8; color:var(--danger); }
+  .option-btn.disabled { pointer-events:none; opacity:.6; }
+  .option-btn.reveal-correct { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); }
+
+  /* 精听 */
+  .intensive-progress { display:flex; gap:4px; margin-bottom:14px; }
+  .progress-dot { flex:1; height:4px; border-radius:2px; background:var(--border); }
+  .progress-dot.done { background:var(--kiwi); }
+  .progress-dot.current { background:var(--fern); }
+  .sentence-counter { font-size:12px; color:var(--text-3); margin-bottom:10px; }
+  .sentence-box { background:var(--bg); border-radius:var(--radius-sm); padding:18px; min-height:70px; display:flex; align-items:center; justify-content:center; text-align:center; margin-bottom:14px; }
+  .sentence-en { font-size:16px; font-weight:500; color:var(--text); line-height:1.6; }
+  .sentence-en.hidden-text { color:transparent; text-shadow:0 0 8px rgba(0,0,0,0.25); user-select:none; }
+  .sentence-zh { font-size:13px; color:var(--text-3); margin-top:8px; display:none; }
+  .sentence-zh.show { display:block; }
+  .intensive-controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .nav-row { display:flex; gap:8px; }
+  .btn-nav { flex:1; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; color:var(--text-2); cursor:pointer; transition:all .15s; }
+  .btn-nav:hover { border-color:var(--kiwi); color:var(--kiwi-dark); }
+  .btn-nav:disabled { opacity:.4; cursor:not-allowed; }
+
+  /* 今日一听 */
+  .daily-card { background:var(--kiwi-dark); border-radius:var(--radius); padding:22px; color:#fff; margin-bottom:14px; }
+  .daily-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#9fd49c; margin-bottom:12px; }
+  .daily-en { font-size:18px; font-weight:600; line-height:1.5; margin-bottom:10px; min-height:27px; }
+  .daily-en.hidden-text { filter:blur(5px); user-select:none; }
+  .daily-zh { font-size:13px; color:#b8d9b6; margin-bottom:14px; display:none; line-height:1.6; }
+  .daily-zh.show { display:block; }
+  .daily-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .daily-note { margin-top:14px; padding:12px 14px; background:rgba(255,255,255,0.1); border-radius:8px; border-left:3px solid #5a9e57; font-size:12px; color:#cfe8cd; line-height:1.6; display:none; }
+  .daily-note.show { display:block; }
+
+  .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
+  .stat-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; text-align:center; }
+  .stat-box .n { font-size:18px; font-weight:700; color:var(--kiwi-dark); line-height:1; margin-bottom:3px; }
+  .stat-box .l { font-size:10px; color:var(--text-3); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">←</a>
+  <div style="flex:1">
+    <div class="topbar-title">NZ听力训练</div>
+    <div class="topbar-sub">英式发音为基础 · 适应课堂英语</div>
+  </div>
+  <span class="session-badge" id="session-badge">本次 0 题</span>
+</div>
+
+<div class="mode-tabs">
+  <div class="mode-tab active" data-mode="daily" onclick="switchMode(this)">🎯 今日一听</div>
+  <div class="mode-tab" data-mode="dictation" onclick="switchMode(this)">✍️ 课堂听写</div>
+  <div class="mode-tab" data-mode="dialogue" onclick="switchMode(this)">💬 场景理解</div>
+  <div class="mode-tab" data-mode="intensive" onclick="switchMode(this)">🔍 精听训练</div>
+</div>
+
+<div class="level-picker" id="level-picker" style="display:none">
+  <div class="level-chip active" data-level="A1" onclick="switchLevel(this)"><strong>A1</strong>入门</div>
+  <div class="level-chip" data-level="A2" onclick="switchLevel(this)"><strong>A2</strong>进阶</div>
+  <div class="level-chip" data-level="B1" onclick="switchLevel(this)"><strong>B1</strong>提高</div>
+</div>
+
+<div class="content">
+
+  <!-- 今日一听 -->
+  <div class="panel active" id="panel-daily">
+    <div class="daily-card">
+      <div class="daily-label">🎧 今日NZ生活片段</div>
+      <div class="daily-en hidden-text" id="daily-en">·····················</div>
+      <div class="daily-zh" id="daily-zh"></div>
+      <div class="daily-actions">
+        <button class="btn-play-secondary" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);color:#fff" onclick="playDaily()">▶ 播放</button>
+        <button class="btn-play-secondary" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);color:#fff" onclick="revealDaily()">👁 显示文字</button>
+        <button class="btn-play-secondary" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);color:#fff" onclick="nextDaily()">下一条 →</button>
+      </div>
+      <div class="daily-note" id="daily-note"></div>
+    </div>
+    <div class="dictation-hint">每天2分钟，听一个新西兰校园生活小片段，顺便了解一个文化小知识。先听，再点"显示文字"对照。</div>
+  </div>
+
+  <!-- 课堂听写 -->
+  <div class="panel" id="panel-dictation">
+    <div class="stat-row">
+      <div class="stat-box"><div class="n" id="dict-correct">0</div><div class="l">答对</div></div>
+      <div class="stat-box"><div class="n" id="dict-total">0</div><div class="l">已练</div></div>
+      <div class="stat-box"><div class="n" id="dict-index">1</div><div class="l">本组第几题</div></div>
+    </div>
+    <div class="card">
+      <div class="dialogue-title">听一句，写下你听到的内容</div>
+      <div class="play-row">
+        <button class="btn-play-main" onclick="playDictation(false)">▶ 播放</button>
+        <button class="btn-play-secondary" onclick="playDictation(true)">🐢 慢速</button>
+      </div>
+      <div class="dictation-hint">提示：可以多听几遍，标点符号不影响判断对错。</div>
+      <input class="dictation-input" id="dictation-input" placeholder="在这里输入你听到的句子..." autocomplete="off">
+      <button class="btn-check" id="dictation-check-btn" onclick="checkDictation()">检查</button>
+      <div class="dictation-result" id="dictation-result">
+        <div class="result-verdict" id="dictation-verdict"></div>
+        <div class="result-answer" id="dictation-answer"></div>
+        <div class="result-zh" id="dictation-zh"></div>
+        <div class="result-note" id="dictation-note"></div>
+      </div>
+      <button class="btn-next" id="dictation-next-btn" style="display:none" onclick="nextDictation()">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 场景理解 -->
+  <div class="panel" id="panel-dialogue">
+    <div class="card">
+      <div class="dialogue-title" id="dialogue-title">食堂找座位</div>
+      <div class="play-row">
+        <button class="btn-play-main" id="dialogue-play-btn" onclick="playDialogue()">▶ 播放对话</button>
+        <button class="btn-play-secondary" onclick="toggleTranscript()">📝 查看文字稿</button>
+      </div>
+      <div class="dialogue-status" id="dialogue-status">点击播放，听完整段对话，然后回答下面的问题。</div>
+
+      <div class="transcript" id="dialogue-transcript"></div>
+
+      <div class="question-box">
+        <div class="question-text" id="dialogue-question"></div>
+        <div id="dialogue-options"></div>
+      </div>
+      <button class="btn-next" id="dialogue-next-btn" style="display:none" onclick="nextDialogue()">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 精听训练 -->
+  <div class="panel" id="panel-intensive">
+    <div class="card">
+      <div class="dialogue-title" id="intensive-title">A Day at School</div>
+      <div class="intensive-progress" id="intensive-progress"></div>
+      <div class="sentence-counter" id="sentence-counter">第 1 / 5 句</div>
+      <div class="sentence-box">
+        <div>
+          <div class="sentence-en hidden-text" id="sentence-en">······························</div>
+          <div class="sentence-zh" id="sentence-zh"></div>
+        </div>
+      </div>
+      <div class="intensive-controls">
+        <button class="btn-play-main" onclick="playSentence(false)">▶ 正常速度</button>
+        <button class="btn-play-secondary" onclick="playSentence(true)">🐢 慢速</button>
+        <button class="btn-play-secondary" id="toggle-subtitle-btn" onclick="toggleSubtitle()">👁 显示字幕</button>
+        <button class="btn-play-secondary" id="toggle-zh-btn" onclick="toggleZh()">中 显示中文</button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-nav" id="sentence-prev-btn" onclick="prevSentence()">← 上一句</button>
+        <button class="btn-nav" id="sentence-next-btn" onclick="nextSentence()">下一句 →</button>
+      </div>
+    </div>
+    <div class="dictation-hint">精听练习：先听原速，再听慢速；实在听不出来再看字幕。逐句过完整段就算完成。</div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- 内容数据 ---------- */
+const DICTATION = {
+  A1: [
+    { en: "Get into pairs, please.", zh: "请两人一组。", note: "体育课、小组活动开始前最常听到的指令之一。" },
+    { en: "Open your books to page ten.", zh: "把书打开到第十页。", note: "几乎每节课都会用到的课堂用语。" },
+    { en: "Put your hand up if you have a question.", zh: "如果有问题就举手。", note: "课堂礼仪：有问题先举手，不要直接打断老师。" },
+    { en: "Line up at the door.", zh: "在门口排队。", note: "下课/集合时常用，搭配 \"quietly\"（安静地）使用更礼貌。" },
+    { en: "Hand it in by Friday.", zh: "周五之前交上来。", note: "hand in = 交（作业），是非常高频的课堂动词短语。" }
+  ],
+  A2: [
+    { en: "Could you please pass me the scissors?", zh: "能把剪刀递给我吗？", note: "Could you please... 是课堂里最礼貌的请求句型。" },
+    { en: "We're going to work in groups of four today.", zh: "今天我们要四人一组进行活动。", note: "work in groups of + 数字，描述分组方式。" },
+    { en: "Make sure you write your name on the top.", zh: "确保在顶部写上你的名字。", note: "Make sure you... 用来强调一个重要的注意事项。" }
+  ],
+  B1: [
+    { en: "I'd like everyone to summarise the main idea in one sentence.", zh: "我想请每个人用一句话总结主要观点。", note: "summarise（英式拼写，美式是summarize）= 总结。" },
+    { en: "Before we move on, does anyone have any questions about what we've covered so far?", zh: "在我们继续之前，有人对我们已经讲过的内容有疑问吗？", note: "move on = 继续往下讲；covered so far = 目前讲过的内容。" }
+  ]
+};
+
+const DIALOGUES = {
+  A1: [
+    {
+      title: "食堂找座位",
+      lines: [
+        { spk: "Liam", en: "Hi! Is this seat free?" },
+        { spk: "You", en: "Yes, go ahead." },
+        { spk: "Liam", en: "Thanks! I'm Liam. What's your name?" }
+      ],
+      q: "Why does Liam sit down next to you?",
+      opts: ["He is asking for help", "The seat was free and available", "He wants to borrow a pen", "He is the teacher"],
+      correct: 1
+    },
+    {
+      title: "体育课分组",
+      lines: [
+        { spk: "Teacher", en: "Everyone, get into pairs and stand on the white line." },
+        { spk: "Student", en: "Which line, the one near the wall?" },
+        { spk: "Teacher", en: "Yes, that one. We'll start with stretching." }
+      ],
+      q: "What should students do first?",
+      opts: ["Run around the field", "Get into pairs and stand on the line", "Sit down and rest", "Go back to the classroom"],
+      correct: 1
+    }
+  ],
+  A2: [
+    {
+      title: "课堂没听清",
+      lines: [
+        { spk: "Teacher", en: "Today we are going to learn about photosynthesis." },
+        { spk: "Student", en: "Sorry, could you repeat that word?" },
+        { spk: "Teacher", en: "Of course. Photosynthesis - it's how plants make food from sunlight." }
+      ],
+      q: "What does the student ask the teacher to do?",
+      opts: ["Speak louder", "Repeat a word", "Give more homework", "Open a window"],
+      correct: 1
+    },
+    {
+      title: "科学课量取液体",
+      lines: [
+        { spk: "Teacher", en: "Now measure fifty millilitres of water using the cylinder." },
+        { spk: "Student", en: "Sorry, fifty millilitres?" },
+        { spk: "Teacher", en: "Yes, that's right. Pour carefully." }
+      ],
+      q: "How much water should the student measure?",
+      opts: ["15 ml", "50 ml", "500 ml", "5 ml"],
+      correct: 1
+    }
+  ],
+  B1: [
+    {
+      title: "小组报告任务",
+      lines: [
+        { spk: "Teacher", en: "For this task, I want you to work in groups of four. Each group will research one country and prepare a short presentation." },
+        { spk: "Student", en: "How long should the presentation be?" },
+        { spk: "Teacher", en: "About three minutes per group, with time for questions afterwards." }
+      ],
+      q: "How long is each group's presentation?",
+      opts: ["One minute", "Three minutes", "Ten minutes", "The whole class period"],
+      correct: 1
+    },
+    {
+      title: "作文要求",
+      lines: [
+        { spk: "Teacher", en: "Your essay should be at least three hundred words and submitted online before Friday." },
+        { spk: "Student", en: "Can we choose our own topic?" },
+        { spk: "Teacher", en: "Yes, as long as it relates to what we discussed in class this week." }
+      ],
+      q: "What is the minimum word count for the essay?",
+      opts: ["100 words", "200 words", "300 words", "500 words"],
+      correct: 2
+    }
+  ]
+};
+
+const INTENSIVE = {
+  A1: { title: "A Day at School", sentences: [
+    { en: "My name is Liam and I am in Year 9.", zh: "我叫Liam，今年读九年级。" },
+    { en: "Every morning, I walk to school with my friend.", zh: "每天早上我和朋友一起走路去学校。" },
+    { en: "Our first class is usually English or maths.", zh: "我们的第一节课通常是英语或数学。" },
+    { en: "At lunchtime, we eat in the canteen.", zh: "午餐时间我们在食堂吃饭。" },
+    { en: "After school, I like to play rugby with my friends.", zh: "放学后我喜欢和朋友们一起打橄榄球。" }
+  ]},
+  A2: { title: "Science Class", sentences: [
+    { en: "Today we did an experiment in science class.", zh: "今天我们在科学课上做了一个实验。" },
+    { en: "We had to measure water and mix it with another liquid.", zh: "我们需要量取水并把它和另一种液体混合。" },
+    { en: "The teacher reminded us to wear our safety goggles.", zh: "老师提醒我们要戴上安全护目镜。" },
+    { en: "It was a bit difficult to follow all the instructions in English.", zh: "用英语听懂所有的指令有点难。" },
+    { en: "But by the end, I understood the whole experiment.", zh: "但到最后，我理解了整个实验。" }
+  ]},
+  B1: { title: "Joining a Club", sentences: [
+    { en: "Last week, I decided to join the school's drama club.", zh: "上周，我决定加入学校的戏剧社。" },
+    { en: "At first, I was nervous because everyone spoke so quickly.", zh: "一开始我很紧张，因为大家说话都很快。" },
+    { en: "The teacher in charge was very patient and encouraged me to take part.", zh: "负责的老师非常有耐心，鼓励我参与进来。" },
+    { en: "By the third meeting, I had already made two new friends.", zh: "到第三次活动时，我已经交到了两个新朋友。" },
+    { en: "Now I look forward to drama club every Tuesday afternoon.", zh: "现在我每周二下午都很期待戏剧社活动。" }
+  ]}
+};
+
+const DAILY = [
+  { en: "On Fridays, lots of Kiwi families have fish and chips for dinner.", zh: "星期五，很多新西兰家庭晚餐会吃炸鱼薯条。", note: "🌏 文化小知识：fish and chips（炸鱼薯条）是新西兰非常普遍又便宜的周五晚餐传统，很多家庭周五懒得做饭就会买一份。" },
+  { en: "Schools in New Zealand often have a 'mufti day' where students can wear normal clothes instead of their uniform.", zh: "新西兰学校经常会有 \"mufti day\"，那天学生可以穿便服而不是校服。", note: "🌏 文化小知识：mufti day通常是为了给慈善活动筹款，学生捐一点小钱就能换来不穿校服的\"特权\"。" },
+  { en: "Kia ora is a Maori greeting that means hello, and it's used everywhere in New Zealand, even in shops and schools.", zh: "Kia ora 是一句毛利语问候语，意思是\"你好\"，在新西兰的商店、学校等到处都能听到。", note: "🌏 文化小知识：除了\"你好\"，Kia ora 有时也可以表示感谢或认同，是新西兰文化里非常核心的一句话。" },
+  { en: "Rugby is hugely popular in New Zealand, and many schools have their own teams.", zh: "橄榄球在新西兰非常受欢迎，很多学校都有自己的球队。", note: "🌏 文化小知识：新西兰国家橄榄球队 All Blacks 是全民偶像级别的存在，几乎人人都认识。" },
+  { en: "If a Kiwi says 'sweet as', it just means 'that's great' or 'no problem'.", zh: "如果一个新西兰人说 \"sweet as\"，意思就是\"很好/没问题\"。", note: "🌏 文化小知识：sweet as 是新西兰本地很有代表性的口头禅，平时练习仍以标准英式表达为主，这个算是一个有趣的本地小知识。" }
+];
+
+/* ---------- 通用 ---------- */
+let sessionCount = 0;
+function bumpSession() {
+  sessionCount++;
+  document.getElementById('session-badge').textContent = `本次 ${sessionCount} 题`;
+}
+
+function speak(text, slow) {
+  if (!window.speechSynthesis) { alert('当前设备不支持语音朗读'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  u.rate = slow ? 0.62 : 0.95;
+  const voices = speechSynthesis.getVoices();
+  const gb = voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en'));
+  if (gb) u.voice = gb;
+  speechSynthesis.speak(u);
+  return u;
+}
+
+function speakSequence(lines, onDone) {
+  speechSynthesis.cancel();
+  const voices = speechSynthesis.getVoices();
+  const gb = voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en'));
+  let i = 0;
+  function next() {
+    if (i >= lines.length) { onDone && onDone(); return; }
+    const u = new SpeechSynthesisUtterance(lines[i].en);
+    u.lang = 'en-GB';
+    u.rate = 0.95;
+    if (gb) u.voice = gb;
+    u.onend = () => { i++; next(); };
+    speechSynthesis.speak(u);
+  }
+  next();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+speechSynthesis.onvoiceschanged = () => {};
+
+/* ---------- 模式 / 等级切换 ---------- */
+let currentMode = 'daily';
+let currentLevel = 'A1';
+
+function switchMode(tab) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentMode = tab.dataset.mode;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + currentMode).classList.add('active');
+  document.getElementById('level-picker').style.display = currentMode === 'daily' ? 'none' : 'flex';
+  speechSynthesis.cancel();
+}
+
+function switchLevel(chip) {
+  document.querySelectorAll('.level-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  currentLevel = chip.dataset.level;
+  if (currentMode === 'dictation') { dictIndex = 0; loadDictation(); }
+  if (currentMode === 'dialogue') { dialogueIndex = 0; loadDialogue(); }
+  if (currentMode === 'intensive') { sentenceIndex = 0; loadIntensivePassage(); }
+}
+
+/* ---------- 今日一听 ---------- */
+let dailyIndex = new Date().getDate() % DAILY.length;
+let dailyRevealed = false;
+
+function loadDaily() {
+  dailyRevealed = false;
+  document.getElementById('daily-en').classList.add('hidden-text');
+  document.getElementById('daily-en').textContent = DAILY[dailyIndex].en;
+  document.getElementById('daily-zh').classList.remove('show');
+  document.getElementById('daily-zh').textContent = DAILY[dailyIndex].zh;
+  document.getElementById('daily-note').classList.remove('show');
+  document.getElementById('daily-note').textContent = DAILY[dailyIndex].note;
+}
+
+function playDaily() {
+  speak(DAILY[dailyIndex].en, false);
+  bumpSession();
+}
+
+function revealDaily() {
+  dailyRevealed = true;
+  document.getElementById('daily-en').classList.remove('hidden-text');
+  document.getElementById('daily-zh').classList.add('show');
+  document.getElementById('daily-note').classList.add('show');
+}
+
+function nextDaily() {
+  dailyIndex = (dailyIndex + 1) % DAILY.length;
+  loadDaily();
+}
+
+/* ---------- 课堂听写 ---------- */
+let dictIndex = 0;
+let dictCorrect = 0;
+let dictTotal = 0;
+
+function normalize(s) {
+  return s.toLowerCase().replace(/[.,!?'"]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function loadDictation() {
+  document.getElementById('dictation-input').value = '';
+  document.getElementById('dictation-result').classList.remove('show');
+  document.getElementById('dictation-next-btn').style.display = 'none';
+  document.getElementById('dictation-check-btn').style.display = '';
+  document.getElementById('dictation-input').disabled = false;
+  document.getElementById('dict-index').textContent = (dictIndex + 1);
+}
+
+function playDictation(slow) {
+  speak(DICTATION[currentLevel][dictIndex].en, slow);
+}
+
+function checkDictation() {
+  const item = DICTATION[currentLevel][dictIndex];
+  const input = document.getElementById('dictation-input').value;
+  const isCorrect = normalize(input) === normalize(item.en);
+  dictTotal++;
+  if (isCorrect) dictCorrect++;
+  document.getElementById('dict-correct').textContent = dictCorrect;
+  document.getElementById('dict-total').textContent = dictTotal;
+
+  const result = document.getElementById('dictation-result');
+  result.classList.add('show');
+  result.className = 'dictation-result show ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('dictation-verdict').className = 'result-verdict ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('dictation-verdict').textContent = isCorrect ? '✓ 完全正确！' : '继续加油，对比一下正确答案：';
+  document.getElementById('dictation-answer').textContent = item.en;
+  document.getElementById('dictation-zh').textContent = item.zh;
+  document.getElementById('dictation-note').textContent = '💡 ' + item.note;
+
+  document.getElementById('dictation-check-btn').style.display = 'none';
+  document.getElementById('dictation-input').disabled = true;
+  document.getElementById('dictation-next-btn').style.display = '';
+  bumpSession();
+}
+
+function nextDictation() {
+  dictIndex = (dictIndex + 1) % DICTATION[currentLevel].length;
+  loadDictation();
+}
+
+/* ---------- 场景理解 ---------- */
+let dialogueIndex = 0;
+let dialogueAnswered = false;
+
+function loadDialogue() {
+  dialogueAnswered = false;
+  const d = DIALOGUES[currentLevel][dialogueIndex];
+  document.getElementById('dialogue-title').textContent = d.title;
+  document.getElementById('dialogue-status').textContent = '点击播放，听完整段对话，然后回答下面的问题。';
+  document.getElementById('dialogue-status').classList.remove('playing');
+  document.getElementById('dialogue-transcript').classList.remove('show');
+  document.getElementById('dialogue-transcript').innerHTML = d.lines.map(l =>
+    `<div class="transcript-line"><b>${escHtml(l.spk)}:</b> ${escHtml(l.en)}</div>`
+  ).join('');
+  document.getElementById('dialogue-question').textContent = d.q;
+  document.getElementById('dialogue-options').innerHTML = d.opts.map((o, i) =>
+    `<button class="option-btn" onclick="answerDialogue(this, ${i})">${escHtml(o)}</button>`
+  ).join('');
+  document.getElementById('dialogue-next-btn').style.display = 'none';
+}
+
+function playDialogue() {
+  const d = DIALOGUES[currentLevel][dialogueIndex];
+  document.getElementById('dialogue-status').textContent = '🔊 正在播放对话...';
+  document.getElementById('dialogue-status').classList.add('playing');
+  speakSequence(d.lines, () => {
+    document.getElementById('dialogue-status').textContent = '播放完毕。再听一遍，或直接回答下面的问题。';
+    document.getElementById('dialogue-status').classList.remove('playing');
+  });
+}
+
+function toggleTranscript() {
+  document.getElementById('dialogue-transcript').classList.toggle('show');
+}
+
+function answerDialogue(btn, index) {
+  if (dialogueAnswered) return;
+  dialogueAnswered = true;
+  const d = DIALOGUES[currentLevel][dialogueIndex];
+  const buttons = document.querySelectorAll('#dialogue-options .option-btn');
+  buttons.forEach((b, i) => {
+    b.classList.add('disabled');
+    if (i === d.correct) b.classList.add('reveal-correct');
+  });
+  if (index === d.correct) {
+    btn.classList.add('selected-correct');
+    btn.classList.remove('reveal-correct');
+  } else {
+    btn.classList.add('selected-wrong');
+  }
+  document.getElementById('dialogue-transcript').classList.add('show');
+  document.getElementById('dialogue-next-btn').style.display = '';
+  bumpSession();
+}
+
+function nextDialogue() {
+  dialogueIndex = (dialogueIndex + 1) % DIALOGUES[currentLevel].length;
+  loadDialogue();
+}
+
+/* ---------- 精听训练 ---------- */
+let sentenceIndex = 0;
+let subtitleShown = false;
+let zhShown = false;
+let visitedSentences = new Set();
+
+function loadIntensivePassage() {
+  subtitleShown = false;
+  zhShown = false;
+  visitedSentences = new Set();
+  document.getElementById('intensive-title').textContent = INTENSIVE[currentLevel].title;
+  renderProgressDots();
+  loadSentence();
+}
+
+function renderProgressDots() {
+  const total = INTENSIVE[currentLevel].sentences.length;
+  const dots = document.getElementById('intensive-progress');
+  dots.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (visitedSentences.has(i) ? ' done' : '') + (i === sentenceIndex ? ' current' : '');
+    dots.appendChild(dot);
+  }
+}
+
+function loadSentence() {
+  const passage = INTENSIVE[currentLevel];
+  const total = passage.sentences.length;
+  const s = passage.sentences[sentenceIndex];
+  subtitleShown = false;
+  zhShown = false;
+  document.getElementById('sentence-counter').textContent = `第 ${sentenceIndex + 1} / ${total} 句`;
+  document.getElementById('sentence-en').textContent = s.en;
+  document.getElementById('sentence-en').classList.add('hidden-text');
+  document.getElementById('sentence-zh').textContent = s.zh;
+  document.getElementById('sentence-zh').classList.remove('show');
+  document.getElementById('toggle-subtitle-btn').classList.remove('toggled');
+  document.getElementById('toggle-subtitle-btn').textContent = '👁 显示字幕';
+  document.getElementById('toggle-zh-btn').classList.remove('toggled');
+  document.getElementById('toggle-zh-btn').textContent = '中 显示中文';
+  document.getElementById('sentence-prev-btn').disabled = sentenceIndex === 0;
+  document.getElementById('sentence-next-btn').disabled = sentenceIndex === total - 1;
+  visitedSentences.add(sentenceIndex);
+  renderProgressDots();
+}
+
+function playSentence(slow) {
+  speak(INTENSIVE[currentLevel].sentences[sentenceIndex].en, slow);
+  bumpSession();
+}
+
+function toggleSubtitle() {
+  subtitleShown = !subtitleShown;
+  document.getElementById('sentence-en').classList.toggle('hidden-text', !subtitleShown);
+  document.getElementById('toggle-subtitle-btn').classList.toggle('toggled', subtitleShown);
+  document.getElementById('toggle-subtitle-btn').textContent = subtitleShown ? '🙈 隐藏字幕' : '👁 显示字幕';
+}
+
+function toggleZh() {
+  zhShown = !zhShown;
+  document.getElementById('sentence-zh').classList.toggle('show', zhShown);
+  document.getElementById('toggle-zh-btn').classList.toggle('toggled', zhShown);
+  document.getElementById('toggle-zh-btn').textContent = zhShown ? '中 隐藏中文' : '中 显示中文';
+}
+
+function prevSentence() {
+  if (sentenceIndex > 0) { sentenceIndex--; loadSentence(); }
+}
+
+function nextSentence() {
+  const total = INTENSIVE[currentLevel].sentences.length;
+  if (sentenceIndex < total - 1) { sentenceIndex++; loadSentence(); }
+}
+
+/* ---------- 初始化 ---------- */
+loadDaily();
+loadDictation();
+loadDialogue();
+loadIntensivePassage();
+</script>
+</body>
+</html>
