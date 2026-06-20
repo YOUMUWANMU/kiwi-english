@@ -46,6 +46,9 @@ export default {
       if (path === '/api/stats' && request.method === 'GET') return withAuth(request, env, handleStats);
       if (path === '/api/settings' && request.method === 'GET') return withAuth(request, env, handleGetSettings);
       if (path === '/api/settings' && request.method === 'POST') return withAuth(request, env, handleSetSettings, ['parent']);
+      if (path === '/api/settings/advance-stage' && request.method === 'POST') return withAuth(request, env, handleAdvanceStage, ['parent']);
+      if (path === '/api/stage-gate' && request.method === 'GET') return withAuth(request, env, handleStageGate);
+      if (path === '/api/stage-test' && request.method === 'POST') return withAuth(request, env, handleStageTest, ['child']);
 
       // 根路径
       if (path === '/') return new Response('Kiwi English API v2', { headers: { ...CORS, 'Content-Type': 'text/plain' } });
@@ -401,10 +404,12 @@ async function handleStats(request, env, session) {
 /* ========== 训练设置（家长配置，孩子读取） ========== */
 
 const DEFAULT_SETTINGS = {
-  // AI 文本显示：'show' = 显示英文+中文，'audio_only_expandable' = 默认只语音可展开，'audio_only' = 纯语音不可看
+  // AI 文本显示：'show' = 显示英文+中文，'audio_only' = 仅语音
   aiTextMode: 'show',
   // 孩子回复方式：'text' = 仅打字，'voice' = 仅语音
   replyMode: 'voice',
+  // 当前阶段 1-8（家长根据测试结果设定，默认 1）
+  currentStage: 1,
 };
 
 async function handleGetSettings(request, env, session) {
@@ -437,18 +442,183 @@ async function handleSetSettings(request, env, session) {
 
   // 校验字段
   const clean = {};
-  if (['show', 'audio_only_expandable', 'audio_only'].includes(settings.aiTextMode)) {
+  if (['show', 'audio_only'].includes(settings.aiTextMode)) {
     clean.aiTextMode = settings.aiTextMode;
   }
   if (['text', 'voice'].includes(settings.replyMode)) {
     clean.replyMode = settings.replyMode;
   }
+  // currentStage 规则：
+  //   - 首次设定（stageInitialized=false）可任选 1-8 作为起点（根据线下测试结果定起跑线）
+  //   - 设过一次后只能通过 /api/settings/advance-stage 推进 +1，不能跳
+  const existingRaw = await env.KV.get(`settings:${childId}`);
+  const existing = existingRaw ? JSON.parse(existingRaw) : {};
+  if (!existing.stageInitialized && Number.isInteger(settings.currentStage) && settings.currentStage >= 1 && settings.currentStage <= 8) {
+    clean.currentStage = settings.currentStage;
+    clean.stageInitialized = true;
+    clean.stageEnteredAt = Date.now();
+  }
 
-  const existing = await env.KV.get(`settings:${childId}`);
-  const merged = { ...DEFAULT_SETTINGS, ...(existing ? JSON.parse(existing) : {}), ...clean };
+  const merged = { ...DEFAULT_SETTINGS, ...existing, ...clean };
   await env.KV.put(`settings:${childId}`, JSON.stringify(merged));
   return jsonResponse({ ok: true, settings: merged });
 }
+
+/* ========== 通关 / 阶段推进 ========== */
+
+const STAGE_GATES = [
+  { id: 1, gate: { listening: 24, speaking: 12, writing: 4,  reading: 6,  minListeningAcc: 80, minWritingScore: 7 } },
+  { id: 2, gate: { listening: 32, speaking: 24, writing: 6,  reading: 10, minListeningAcc: 80, minWritingScore: 7 } },
+  { id: 3, gate: { listening: 48, speaking: 32, writing: 10, reading: 16, minListeningAcc: 82, minWritingScore: 7 } },
+  { id: 4, gate: { listening: 40, speaking: 40, writing: 10, reading: 16, minListeningAcc: 82, minWritingScore: 7 } },
+  { id: 5, gate: { listening: 32, speaking: 32, writing: 14, reading: 16, minListeningAcc: 85, minWritingScore: 7.5 } },
+  { id: 6, gate: { listening: 32, speaking: 32, writing: 10, reading: 24, minListeningAcc: 85, minWritingScore: 7.5 } },
+  { id: 7, gate: { listening: 48, speaking: 48, writing: 14, reading: 30, minListeningAcc: 85, minWritingScore: 8 } },
+  { id: 8, gate: { listening: 32, speaking: 32, writing: 8,  reading: 18, minListeningAcc: 88, minWritingScore: 8 } },
+];
+
+async function getChildSettingsAndProgress(env, childId) {
+  const settingsRaw = await env.KV.get(`settings:${childId}`);
+  const settings = settingsRaw ? { ...DEFAULT_SETTINGS, ...JSON.parse(settingsRaw) } : { ...DEFAULT_SETTINGS };
+  const progressRaw = await env.KV.get(`progress:${childId}`);
+  const progress = progressRaw ? JSON.parse(progressRaw) : emptyProgress();
+  return { settings, progress };
+}
+
+function computeStageStatus(settings, progress) {
+  const stageId = settings.currentStage || 1;
+  const baseline = settings.stageBaseline || {};
+  const stageGate = STAGE_GATES.find(s => s.id === stageId)?.gate || STAGE_GATES[0].gate;
+
+  const inStage = {
+    listening: progress.listening.sessions - (baseline.listening || 0),
+    speaking:  progress.speaking.sessions  - (baseline.speaking  || 0),
+    writing:   progress.writing.sessions   - (baseline.writing   || 0),
+    reading:   (progress.reading?.sessions || 0) - (baseline.reading || 0),
+  };
+  const listeningAcc = progress.listening.total > 0
+    ? (progress.listening.correct / progress.listening.total * 100)
+    : null;
+  const writingAvg = progress.writing.count > 0
+    ? (progress.writing.scoreSum / progress.writing.count)
+    : null;
+
+  const checks = {
+    listening:    { current: Math.max(0, inStage.listening), required: stageGate.listening, ok: inStage.listening >= stageGate.listening },
+    speaking:     { current: Math.max(0, inStage.speaking),  required: stageGate.speaking,  ok: inStage.speaking  >= stageGate.speaking },
+    writing:      { current: Math.max(0, inStage.writing),   required: stageGate.writing,   ok: inStage.writing   >= stageGate.writing },
+    reading:      { current: Math.max(0, inStage.reading),   required: stageGate.reading,   ok: inStage.reading   >= stageGate.reading },
+    listeningAcc: { current: listeningAcc, required: stageGate.minListeningAcc, ok: listeningAcc !== null && listeningAcc >= stageGate.minListeningAcc },
+    writingScore: { current: writingAvg,   required: stageGate.minWritingScore, ok: writingAvg !== null && writingAvg >= stageGate.minWritingScore },
+  };
+  const volumeOk  = checks.listening.ok && checks.speaking.ok && checks.writing.ok && checks.reading.ok;
+  const qualityOk = checks.listeningAcc.ok && checks.writingScore.ok;
+  const canTakeTest = volumeOk && qualityOk;
+  return { stageId, checks, volumeOk, qualityOk, canTakeTest };
+}
+
+async function handleStageGate(request, env, session) {
+  const url = new URL(request.url);
+  let childId = url.searchParams.get('child');
+  if (session.type === 'child') childId = session.id;
+  if (session.type === 'parent') {
+    if (!childId) return jsonResponse({ error: '需要child参数' }, 400);
+    const acc = JSON.parse(await env.KV.get(`account:${session.id}`));
+    if (!acc.children.includes(childId)) return jsonResponse({ error: '无权访问' }, 403);
+  }
+
+  const { settings, progress } = await getChildSettingsAndProgress(env, childId);
+  const status = computeStageStatus(settings, progress);
+
+  // 最近一次通关测试结果
+  const lastTestRaw = await env.KV.get(`stage-test:${childId}:${status.stageId}`);
+  const lastTest = lastTestRaw ? JSON.parse(lastTestRaw) : null;
+
+  return jsonResponse({
+    childId,
+    ...status,
+    lastTest,
+    canAdvance: !!(lastTest && lastTest.passed && !lastTest.advanced),
+    isLastStage: status.stageId >= 8,
+  });
+}
+
+async function handleStageTest(request, env, session) {
+  const { answers, totalQuestions } = await readJson(request);
+  if (!Array.isArray(answers) || answers.length === 0) return jsonResponse({ error: '答案缺失' }, 400);
+
+  const childId = session.id;
+  const { settings } = await getChildSettingsAndProgress(env, childId);
+  const stageId = settings.currentStage || 1;
+  if (stageId >= 8) return jsonResponse({ error: '已是最高阶段' }, 400);
+
+  let passedCount = 0;
+  for (const a of answers) {
+    if (a.type === 'listening' || a.type === 'reading') {
+      if (a.correct) passedCount += 1;
+    } else if (a.type === 'speaking' || a.type === 'writing') {
+      if (typeof a.score === 'number' && a.score >= 6) passedCount += 1;
+    }
+  }
+  const total = totalQuestions || answers.length;
+  const required = Math.ceil(total * 5 / 7);  // 5/7 ≈ 70%
+  const passed = passedCount >= required;
+
+  const result = {
+    stageId, passedCount, total, required, passed,
+    submittedAt: Date.now(),
+    advanced: false,
+  };
+  await env.KV.put(`stage-test:${childId}:${stageId}`, JSON.stringify(result));
+
+  return jsonResponse({ ok: true, result });
+}
+
+async function handleAdvanceStage(request, env, session) {
+  const { childId, confirm } = await readJson(request);
+  if (!childId) return jsonResponse({ error: '需要childId' }, 400);
+  const acc = JSON.parse(await env.KV.get(`account:${session.id}`));
+  if (!acc.children.includes(childId)) return jsonResponse({ error: '无权访问' }, 403);
+
+  const { settings, progress } = await getChildSettingsAndProgress(env, childId);
+  const stageId = settings.currentStage || 1;
+  if (stageId >= 8) return jsonResponse({ error: '已是最高阶段' }, 400);
+
+  const testRaw = await env.KV.get(`stage-test:${childId}:${stageId}`);
+  const test = testRaw ? JSON.parse(testRaw) : null;
+  if (!test && !confirm) {
+    return jsonResponse({ error: '孩子尚未参加通关测试' }, 400);
+  }
+  if (test && !test.passed && !confirm) {
+    return jsonResponse({ error: '通关测试未通过' }, 400);
+  }
+
+  // 记录新阶段 baseline，使训练量从 0 重新开始算
+  const newBaseline = {
+    listening: progress.listening.sessions,
+    speaking:  progress.speaking.sessions,
+    writing:   progress.writing.sessions,
+    reading:   (progress.reading?.sessions || 0),
+  };
+  const newSettings = {
+    ...settings,
+    currentStage: stageId + 1,
+    stageBaseline: newBaseline,
+    stageEnteredAt: Date.now(),
+  };
+  await env.KV.put(`settings:${childId}`, JSON.stringify(newSettings));
+
+  if (test) {
+    test.advanced = true;
+    await env.KV.put(`stage-test:${childId}:${stageId}`, JSON.stringify(test));
+  }
+
+  return jsonResponse({ ok: true, newStage: stageId + 1 });
+}
+
+/* ========== /通关 ========== */
+
+/* ========== 口语对话（接Claude） ========== */
 
 async function handleChat(request, env, session) {
   const { system, messages, max_tokens = 200 } = await readJson(request);

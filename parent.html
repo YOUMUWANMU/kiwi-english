@@ -105,6 +105,35 @@
   .setting-save-btn { padding:9px 18px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; }
   .setting-save-btn:hover { background:var(--kiwi-dark); }
 
+  /* 阶段下拉 */
+  .stage-select-wrap { display:flex; flex-direction:column; gap:8px; }
+  .stage-select { width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); font-family:inherit; cursor:pointer; -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237a8475%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:10px; padding-right:36px; }
+  .stage-select:focus { outline:none; border-color:var(--kiwi); background-color:#fff; }
+  .curriculum-link { display:inline-block; font-size:12px; color:var(--kiwi); text-decoration:none; font-weight:500; align-self:flex-start; }
+  .curriculum-link:hover { text-decoration:underline; }
+
+  /* 通关进度条 */
+  .warn-tip { font-size:11px; color:#7a5a0a; background:var(--gold-light); border:1px solid #f5d89a; padding:8px 10px; border-radius:6px; margin-top:6px; }
+
+  .gate-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  @media (max-width: 600px) { .gate-grid { grid-template-columns:1fr; } }
+  .gate-item { padding:9px 12px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .gate-item.gate-ok { background:var(--kiwi-light); border-color:#b8d9b6; }
+  .gate-item-label { font-size:12px; color:var(--text-2); font-weight:500; }
+  .gate-item.gate-ok .gate-item-label { color:var(--kiwi-dark); }
+  .gate-item-val { font-size:12px; font-weight:600; color:var(--text-3); }
+  .gate-item.gate-ok .gate-item-val { color:var(--kiwi-dark); }
+
+  .gate-summary { font-size:12px; padding:10px 12px; border-radius:var(--radius-sm); margin-top:10px; }
+  .gate-summary-ok { background:var(--kiwi-light); border:1px solid #b8d9b6; color:var(--kiwi-dark); font-weight:500; }
+  .gate-summary-pending { background:var(--bg); border:1px solid var(--border); color:var(--text-3); }
+
+  .advance-card { background:var(--gold-light); border:2px solid var(--gold); border-radius:var(--radius-sm); padding:14px; margin-top:12px; }
+  .advance-card-title { font-size:14px; font-weight:600; color:#7a5a0a; margin-bottom:4px; }
+  .advance-card-sub { font-size:12px; color:#7a5a0a; margin-bottom:10px; line-height:1.5; }
+  .advance-btn { width:100%; padding:11px; background:var(--gold); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; }
+  .advance-btn:hover { background:#a36807; }
+
   /* 模块分布 */
   .distribution { display:flex; height:32px; border-radius:8px; overflow:hidden; background:var(--bg); margin-bottom:10px; }
   .dist-seg { display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:500; transition:opacity .15s; }
@@ -389,19 +418,15 @@ function renderSettings(childId, settings) {
   area.innerHTML = `
     <div class="setting-block">
       <div class="setting-label">🗣️ AI 说话时文本提示</div>
-      <div class="setting-desc">控制 AI 角色回复时是否显示英文文本和中文翻译。模式越高，听力训练强度越大。</div>
+      <div class="setting-desc">控制 AI 角色回复时是否同时显示英文文本。仅语音模式像微信语音一样，强化听力训练。</div>
       <div class="setting-options" data-key="aiTextMode">
         <div class="setting-opt ${settings.aiTextMode === 'show' ? 'active' : ''}" data-val="show">
-          <div class="setting-opt-title">🟢 简单模式</div>
-          <div class="setting-opt-desc">显示英文 + 中文翻译</div>
-        </div>
-        <div class="setting-opt ${settings.aiTextMode === 'audio_only_expandable' ? 'active' : ''}" data-val="audio_only_expandable">
-          <div class="setting-opt-title">🟠 进阶模式</div>
-          <div class="setting-opt-desc">只听语音，点击可展开文本</div>
+          <div class="setting-opt-title">📝 文字 + 语音</div>
+          <div class="setting-opt-desc">同时显示英文文本和语音</div>
         </div>
         <div class="setting-opt ${settings.aiTextMode === 'audio_only' ? 'active' : ''}" data-val="audio_only">
-          <div class="setting-opt-title">🔴 沉浸模式</div>
-          <div class="setting-opt-desc">纯听，完全不显示文本</div>
+          <div class="setting-opt-title">🔊 仅语音</div>
+          <div class="setting-opt-desc">只听不看（像微信语音）</div>
         </div>
       </div>
     </div>
@@ -421,6 +446,12 @@ function renderSettings(childId, settings) {
       </div>
     </div>
 
+    <div class="setting-block">
+      <div class="setting-label">📍 当前训练阶段</div>
+      <div class="setting-desc" id="stage-setting-desc">加载中…</div>
+      <div class="stage-select-wrap" id="stage-gate-area"></div>
+    </div>
+
     <div class="setting-save-row">
       <span class="setting-save-status" id="setting-status"></span>
       <button class="setting-save-btn" onclick="saveSettings('${childId}')">保存设置</button>
@@ -436,15 +467,109 @@ function renderSettings(childId, settings) {
       });
     });
   });
+
+  // 异步加载阶段进度
+  renderStageBlock(childId, settings);
+}
+
+async function renderStageBlock(childId, settings) {
+  const descEl = document.getElementById('stage-setting-desc');
+  const area = document.getElementById('stage-gate-area');
+  if (!descEl || !area) return;
+
+  // 没初始化过：显示下拉选起点
+  if (!settings.stageInitialized) {
+    descEl.textContent = '首次设定可任选起点（根据线下测试结果）。设定后，只能通过通关测试 + 家长批准逐阶段推进。';
+    area.innerHTML = `
+      <select class="stage-select" data-key="currentStage" id="initial-stage-select">
+        ${KIWI.STAGES.map(s => `
+          <option value="${s.id}" ${settings.currentStage === s.id ? 'selected' : ''}>
+            阶段 ${s.id} · ${s.name}（${s.months} · ${s.cefr} · 蓝思 ${s.lexile}）
+          </option>
+        `).join('')}
+      </select>
+      <a class="curriculum-link" href="curriculum.html?stage=${settings.currentStage || 1}" target="_blank">查看 18 个月完整学习计划 →</a>
+      <div class="warn-tip">⚠️ 起始阶段只能设定一次（点保存生效），之后阶段只能按顺序推进。</div>
+    `;
+    return;
+  }
+
+  // 已初始化：显示当前阶段 + 通关门槛进度
+  try {
+    const gate = await KIWI.api('/api/stage-gate?child=' + encodeURIComponent(childId));
+    const stage = KIWI.STAGES[gate.stageId - 1];
+    descEl.innerHTML = `孩子当前在 <strong>阶段 ${gate.stageId} · ${stage.name}</strong>。阶段只能按顺序推进，孩子完成通关测试后家长批准即可进入下一阶段。`;
+    area.innerHTML = `
+      ${renderGateChecklist(gate)}
+      ${gate.canAdvance ? `
+        <div class="advance-card">
+          <div class="advance-card-title">🎉 ${stage.name} 通关测试通过！</div>
+          <div class="advance-card-sub">测试 ${gate.lastTest.passedCount} / ${gate.lastTest.total} 题合格（要求 ${gate.lastTest.required} 题）。可以推进到下一阶段。</div>
+          <button class="advance-btn" onclick="approveAdvance('${childId}')">✅ 批准升入阶段 ${gate.stageId + 1}</button>
+        </div>
+      ` : ''}
+      <a class="curriculum-link" href="curriculum.html?stage=${gate.stageId}" target="_blank">查看 18 个月完整学习计划 →</a>
+    `;
+  } catch (e) {
+    area.innerHTML = `<div style="font-size:12px;color:var(--text-3)">加载阶段数据失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderGateChecklist(gate) {
+  const items = [
+    { label: '🎧 听力训练', c: gate.checks.listening, unit: '次' },
+    { label: '🎤 口语训练', c: gate.checks.speaking, unit: '次' },
+    { label: '✏️ 写作训练', c: gate.checks.writing, unit: '篇' },
+    { label: '📖 阅读训练', c: gate.checks.reading, unit: '篇' },
+    { label: '🎯 听力准确率', c: gate.checks.listeningAcc, unit: '%' },
+    { label: '📝 写作平均分', c: gate.checks.writingScore, unit: '' },
+  ];
+  return `
+    <div class="gate-grid">
+      ${items.map(it => {
+        const cur = it.c.current === null ? '—' : (typeof it.c.current === 'number' ? Math.round(it.c.current * 10) / 10 : it.c.current);
+        return `
+          <div class="gate-item ${it.c.ok ? 'gate-ok' : ''}">
+            <div class="gate-item-label">${it.c.ok ? '✓' : '○'} ${it.label}</div>
+            <div class="gate-item-val">${cur}${it.unit} / ${it.c.required}${it.unit}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="gate-summary ${gate.canTakeTest ? 'gate-summary-ok' : 'gate-summary-pending'}">
+      ${gate.canTakeTest
+        ? `✓ 训练量和质量都达标，孩子可以参加通关测试`
+        : `○ 训练量或质量未达标，孩子继续练习中（系统会持续追踪）`}
+    </div>
+  `;
+}
+
+async function approveAdvance(childId) {
+  if (!confirm('确认升入下一阶段？此操作不可撤销。')) return;
+  try {
+    const r = await KIWI.api('/api/settings/advance-stage', {
+      method: 'POST',
+      body: JSON.stringify({ childId })
+    });
+    alert('✅ 已升入阶段 ' + r.newStage);
+    await loadKidStats(childId);
+  } catch (e) {
+    alert('升阶失败：' + e.message);
+  }
 }
 
 async function saveSettings(childId) {
   const statusEl = document.getElementById('setting-status');
   const settings = {};
+  // 卡片选项
   document.querySelectorAll('#settings-area .setting-options').forEach(group => {
     const key = group.dataset.key;
     const active = group.querySelector('.setting-opt.active');
     if (active) settings[key] = active.dataset.val;
+  });
+  // 下拉框（currentStage 等数值字段）
+  document.querySelectorAll('#settings-area select[data-key]').forEach(sel => {
+    settings[sel.dataset.key] = parseInt(sel.value, 10);
   });
 
   statusEl.textContent = '保存中…';

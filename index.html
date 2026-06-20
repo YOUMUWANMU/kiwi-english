@@ -163,43 +163,75 @@
 
   .timeline-track {
     display: flex;
-    gap: 3px;
-    margin-bottom: 12px;
+    gap: 2px;
+    margin-bottom: 10px;
   }
 
   .timeline-seg {
     height: 6px;
     border-radius: 3px;
     flex: 1;
+    min-width: 6px;
   }
 
   .seg-done { background: var(--kiwi); }
-  .seg-active { background: var(--fern); opacity: 0.5; }
+  .seg-active { background: var(--fern); opacity: 0.6; }
   .seg-todo { background: var(--border); }
 
   .timeline-phases {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
   }
 
   .phase-item {
     text-align: center;
-    flex: 1;
+    overflow: hidden;
   }
 
   .phase-name {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--text-2);
     display: block;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .phase-time {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-3);
   }
 
   .phase-item.active .phase-name { color: var(--kiwi); }
+  .phase-item.active .phase-time { color: var(--kiwi); font-weight: 600; }
+
+  /* 通关测试 banner */
+  .gate-banner { background:linear-gradient(135deg, var(--gold) 0%, #d49216 100%); color:#fff; border-radius:12px; padding:18px 20px; margin-bottom:18px; display:flex; align-items:center; gap:14px; }
+  .gate-banner-icon { font-size:32px; flex-shrink:0; }
+  .gate-banner-body { flex:1; }
+  .gate-banner-title { font-size:15px; font-weight:700; margin-bottom:2px; }
+  .gate-banner-sub { font-size:12px; opacity:.9; }
+  .gate-banner-btn { background:#fff; color:#a36807; border:none; padding:10px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
+  .gate-banner-btn:hover { background:#fef3dc; }
+
+  .gate-pending-banner { background:var(--kiwi-light); border:1px solid #b8d9b6; color:var(--kiwi-dark); border-radius:12px; padding:14px 18px; margin-bottom:18px; font-size:13px; }
+  .gate-pending-banner strong { font-weight:600; }
+
+  .timeline-cefr-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+  }
+  .cefr-cell {
+    text-align: center;
+    font-size: 9px;
+    color: var(--text-3);
+  }
+  .cefr-cell.active { color: var(--kiwi); }
 
   /* 模块网格 */
   .section-title {
@@ -556,29 +588,12 @@
 
   <div class="timeline-card">
     <div class="timeline-header">
-      <span class="timeline-label">18个月训练路线</span>
-      <span class="timeline-count">已完成 3 / 540 天</span>
+      <span class="timeline-label">18个月训练路线 · 8阶段</span>
+      <span class="timeline-count" id="timeline-count">已完成 0 / 540 天</span>
     </div>
-    <div class="timeline-track">
-      <div class="timeline-seg seg-done" style="flex:1"></div>
-      <div class="timeline-seg seg-active" style="flex:5"></div>
-      <div class="timeline-seg seg-todo" style="flex:6"></div>
-      <div class="timeline-seg seg-todo" style="flex:6"></div>
-    </div>
-    <div class="timeline-phases">
-      <div class="phase-item active">
-        <span class="phase-name">生存基础</span>
-        <span class="phase-time">月1–6</span>
-      </div>
-      <div class="phase-item">
-        <span class="phase-name">融入加速</span>
-        <span class="phase-time">月7–12</span>
-      </div>
-      <div class="phase-item">
-        <span class="phase-name">独立自信</span>
-        <span class="phase-time">月13–18</span>
-      </div>
-    </div>
+    <div class="timeline-track" id="timeline-track"></div>
+    <div class="timeline-phases" id="timeline-phases"></div>
+    <div class="timeline-cefr-row" id="timeline-cefr-row"></div>
   </div>
 </div>
 
@@ -595,6 +610,9 @@
       <button class="btn-practice" onclick="window.location.href='speaking.html'">🎤 开口练习 →</button>
     </div>
   </div>
+
+  <!-- 通关测试 banner（动态填充） -->
+  <div id="gate-banner-slot"></div>
 
   <!-- 统计 -->
   <div class="stats-row">
@@ -682,7 +700,7 @@
       <div class="module-info">
         <div class="module-name">分级阅读</div>
         <div class="module-desc">NZ主题文章，从简单开始读</div>
-        <span class="module-tag tag-locked">🔒 第2周解锁</span>
+        <span class="module-tag tag-new">✨ 新解锁</span>
       </div>
     </a>
 
@@ -691,7 +709,7 @@
       <div class="module-info">
         <div class="module-name">Kiwi文化</div>
         <div class="module-desc">毛利文化、NZ俚语、学校规则</div>
-        <span class="module-tag tag-locked">🔒 第3周解锁</span>
+        <span class="module-tag tag-locked">🔒 第3个月解锁</span>
       </div>
     </a>
 
@@ -717,10 +735,10 @@
     <span class="nav-icon">✏️</span>
     写作
   </a>
-  <div class="nav-item" onclick="alert('进度报告功能即将开放')">
+  <a class="nav-item" href="child-report.html">
     <span class="nav-icon">📊</span>
     报告
-  </div>
+  </a>
 </div>
 
 <script>
@@ -728,15 +746,86 @@
   try {
     const me = await KIWI.requireAuth('any');
     if (me.type === 'parent') {
-      // 家长登进index跳到parent
       window.location.href = 'parent.html';
       return;
     }
     if (me.name && me.avatar) {
       document.getElementById('user-greeting').textContent = me.avatar + ' ' + me.name;
     }
+    let currentStage = 1;
+    try {
+      const s = await KIWI.api('/api/settings');
+      currentStage = s.settings?.currentStage || 1;
+    } catch {}
+    renderTimeline(currentStage);
+    // 拉取通关门槛状态
+    try {
+      const gate = await KIWI.api('/api/stage-gate');
+      renderGateBanner(gate);
+    } catch {}
   } catch {}
 })();
+
+function renderGateBanner(gate) {
+  const slot = document.getElementById('gate-banner-slot');
+  if (!slot) return;
+  if (gate.isLastStage) return;
+  const stage = KIWI.STAGES[gate.stageId - 1];
+  const nextStage = KIWI.STAGES[gate.stageId];
+
+  if (gate.canAdvance) {
+    // 测试已通过，等家长批准
+    slot.innerHTML = `
+      <div class="gate-pending-banner">
+        ✅ <strong>${stage.name}</strong> 通关测试已通过！等家长批准就能升入 <strong>${nextStage.name}</strong>。
+      </div>`;
+  } else if (gate.canTakeTest) {
+    // 可以参加测试
+    slot.innerHTML = `
+      <div class="gate-banner">
+        <div class="gate-banner-icon">🎯</div>
+        <div class="gate-banner-body">
+          <div class="gate-banner-title">恭喜！可以参加 ${stage.name} 通关测试</div>
+          <div class="gate-banner-sub">7 题快速测，至少 5 题合格即通关。下一阶段：${nextStage.name}</div>
+        </div>
+        <a class="gate-banner-btn" href="stage-test.html">开始测试 →</a>
+      </div>`;
+  }
+}
+
+function renderTimeline(currentStage) {
+  const stages = KIWI.STAGES;
+  const totalDays = 540;
+  // 累计前 (currentStage-1) 个阶段的天数，作为"已完成"
+  let doneDays = 0;
+  for (let i = 0; i < currentStage - 1; i++) doneDays += stages[i].days;
+
+  document.getElementById('timeline-count').textContent = `阶段 ${currentStage} / 8 · 累计 ${doneDays} / ${totalDays} 天`;
+
+  // 进度条 segments
+  const trackHtml = stages.map((s, i) => {
+    let cls = 'seg-todo';
+    if (i + 1 < currentStage) cls = 'seg-done';
+    else if (i + 1 === currentStage) cls = 'seg-active';
+    return `<div class="timeline-seg ${cls}" style="flex:${s.days}"></div>`;
+  }).join('');
+  document.getElementById('timeline-track').innerHTML = trackHtml;
+
+  // 阶段名 + 月份
+  const phasesHtml = stages.map(s => `
+    <div class="phase-item ${s.id === currentStage ? 'active' : ''}" title="${s.name} (${s.months})">
+      <span class="phase-name">${s.name}</span>
+      <span class="phase-time">${s.months}</span>
+    </div>
+  `).join('');
+  document.getElementById('timeline-phases').innerHTML = phasesHtml;
+
+  // CEFR 行
+  const cefrHtml = stages.map(s => `
+    <div class="cefr-cell ${s.id === currentStage ? 'active' : ''}">${s.cefr}</div>
+  `).join('');
+  document.getElementById('timeline-cefr-row').innerHTML = cefrHtml;
+}
 
 function speakPhrase() {
   KIWI.speak("Could I sit here, please?", { rate: 0.9 });

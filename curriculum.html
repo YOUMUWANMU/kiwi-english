@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>18 个月学习计划 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --sky: #2563a8; --sky-light: #e8f0fb;
+    --fern: #5a9e57;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --rose: #b04a4a; --rose-light: #fbe8e8;
+    --purple: #7d5fa8; --purple-light: #f0e8fb;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .back-btn { background:transparent; border:none; color:var(--text-2); font-size:18px; cursor:pointer; padding:4px 8px; text-decoration:none; }
+  .topbar-title { font-size:15px; font-weight:600; color:var(--kiwi-dark); flex:1; }
+  .role-badge { background:var(--gold-light); color:#7a5a0a; font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; border:1px solid #f5d89a; }
+
+  .content { max-width:1100px; margin:0 auto; padding:20px 16px 0; }
+
+  /* 引言 */
+  .intro-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:18px; }
+  .intro-title { font-size:18px; font-weight:700; color:var(--kiwi-dark); margin-bottom:6px; }
+  .intro-sub { font-size:13px; color:var(--text-2); line-height:1.6; }
+  .intro-meta { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .intro-tag { background:var(--kiwi-light); color:var(--kiwi-dark); padding:5px 12px; border-radius:14px; font-size:12px; font-weight:500; border:1px solid #b8d9b6; }
+
+  /* 阶段时间线（可点击跳到对应卡片） */
+  .stage-nav { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:18px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+  .stage-nav::-webkit-scrollbar { display:none; }
+  .stage-nav-chip { flex-shrink:0; padding:8px 14px; background:var(--bg); border:1px solid var(--border); border-radius:20px; font-size:12px; color:var(--text-2); cursor:pointer; text-decoration:none; transition:all .15s; white-space:nowrap; }
+  .stage-nav-chip:hover { border-color:var(--kiwi); }
+  .stage-nav-chip.current { background:var(--kiwi); color:#fff; border-color:var(--kiwi); }
+
+  /* 阶段卡片 */
+  .stage-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:18px; scroll-margin-top:60px; }
+  .stage-card.current { border-color:var(--kiwi); border-width:2px; }
+  .stage-header { display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .stage-num { width:48px; height:48px; border-radius:50%; background:var(--kiwi); color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; flex-shrink:0; }
+  .stage-card.current .stage-num { background:var(--kiwi-dark); box-shadow:0 0 0 4px var(--kiwi-light); }
+  .stage-title-row { flex:1; }
+  .stage-name { font-size:17px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .stage-desc { font-size:12px; color:var(--text-2); margin-bottom:8px; }
+  .stage-meta { display:flex; gap:10px; flex-wrap:wrap; }
+  .stage-meta-item { font-size:11px; color:var(--text-3); padding:3px 8px; background:var(--bg); border-radius:10px; border:1px solid var(--border); }
+  .stage-meta-item strong { color:var(--text-2); }
+
+  /* 模块矩阵 */
+  .module-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+  @media (max-width: 720px) { .module-grid { grid-template-columns:1fr; } }
+  .mod-box { padding:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); }
+  .mod-box-head { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+  .mod-box-icon { width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .mod-icon-listening { background:var(--sky-light); }
+  .mod-icon-speaking  { background:var(--kiwi-light); }
+  .mod-icon-writing   { background:var(--gold-light); }
+  .mod-icon-reading   { background:var(--rose-light); }
+  .mod-icon-subject   { background:var(--purple-light); }
+  .mod-box-name { font-size:12px; font-weight:600; color:var(--text); }
+  .mod-box-volume { font-size:11px; font-weight:600; color:var(--kiwi-dark); margin-bottom:6px; }
+  .mod-box-content { font-size:11px; color:var(--text-2); line-height:1.6; }
+  .mod-box-source { font-size:10px; color:var(--text-3); margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); }
+
+  /* 说明 */
+  .note-block { background:var(--gold-light); border:1px solid #f5d89a; border-radius:var(--radius-sm); padding:12px 14px; margin-top:18px; font-size:12px; color:#7a5a0a; line-height:1.6; }
+  .note-block strong { color:#553d05; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="parent.html">←</a>
+  <div class="topbar-title">📋 18 个月学习计划</div>
+  <span class="role-badge">总览</span>
+</div>
+
+<div class="content">
+
+  <div class="intro-card">
+    <div class="intro-title">18 个月 / 8 阶段 / 540 天</div>
+    <div class="intro-sub">
+      从 A1+ 起步，目标 18 个月后达到 NZ Year 10 母语同龄人水平（B2 / 蓝思 1100-1250L）。
+      整体路线按"能力主线"分 8 阶段：先打牢听懂、敢说；中段进入课堂、学科；后段提升写作、阅读；最后冲刺综合学术能力。
+    </div>
+    <div class="intro-meta">
+      <span class="intro-tag">📅 540 天</span>
+      <span class="intro-tag">📈 A1+ → B2</span>
+      <span class="intro-tag">📚 蓝思 200L → 1250L</span>
+      <span class="intro-tag">🎯 NZ Year 10 水平</span>
+    </div>
+  </div>
+
+  <div class="stage-nav" id="stage-nav"></div>
+
+  <div id="stages-container"></div>
+
+  <div class="note-block">
+    <strong>📌 说明：</strong>本计划按 CEFR 国际语言等级（A1-B2）与 Lexile 蓝思阅读分级双轨设计。蓝思值 (L) 是国际通用的阅读分级标准，Year 9 平均约 1010-1185L，Year 10 平均约 1100-1250L。各阶段的素材数量为<strong>建议训练量</strong>而非硬指标，家长可根据孩子吸收程度灵活调整。素材来源标注的为<strong>方向性参考</strong>，具体读物会随每周内容更新动态推荐。
+  </div>
+
+</div>
+
+<script>
+// 8 个阶段 × 5 个模块的详细学习计划
+const CURRICULUM = [
+  {
+    id: 1, name: '听懂日常', months: 'M1-2', days: 60,
+    desc: '高频课堂指令 + 招呼语，先把"听得懂"这关过了',
+    cefr: 'A1+', lexile: '200-400L', goal: '能听懂老师 100 个最高频的课堂指令，能用简单英语自我介绍',
+    modules: {
+      listening: { volume: '30 段 / 60 天', content: '课堂指令（"line up", "sit down", "open your book to page 5"）；早晨问候；点名应答', source: 'NZ 学校真实课堂录音改编 + ESL 入门听力（如 Voice of America Learning English Level 1）' },
+      speaking:  { volume: '15 个场景 / 30 句', content: '问好、自我介绍、说听不懂、请求重复、礼貌用语', source: 'AI 陪练（Liam / Ms. Johnson 食堂&课堂场景）' },
+      writing:   { volume: '4 篇 / 60 天', content: '50-80 词：自我介绍 / 名字喜好 / 我的家人', source: 'AI 批改 · 模板填空式入门' },
+      reading:   { volume: '8 篇 / 60 天', content: '50-150 词短文：学校一天 / 我的教室 / 朋友', source: 'Oxford Reading Tree Level 1-3 + 自编 NZ 校园短篇' },
+      subject:   { volume: '体育 + 美术', content: 'PE 入门词汇（30 个动作词）；美术课工具名称', source: '学科英语模块' }
+    }
+  },
+  {
+    id: 2, name: '开口生存', months: 'M3-4', days: 60,
+    desc: '把"想说但不敢说"突破掉，30 个生存场景脱口而出',
+    cefr: 'A2', lexile: '400-550L', goal: '30 个高频生存场景能开口完成对话（食堂、问路、借东西、问问题）',
+    modules: {
+      listening: { volume: '40 段 / 60 天', content: '同学闲聊片段；食堂点餐；走廊偶遇；老师课间答疑', source: 'NZ teen scenario 听力 + BBC Learning English' },
+      speaking:  { volume: '30 个场景 / 100 句', content: '食堂点餐、问位子、借文具、问课表、找洗手间、迟到道歉', source: 'AI 陪练全部 6 个场景循环训练' },
+      writing:   { volume: '8 篇 / 60 天', content: '80-120 词：周末做了什么 / 我的兴趣 / 邀请朋友 / 请假条', source: 'AI 批改 · 引入时态准确性反馈' },
+      reading:   { volume: '12 篇 / 60 天', content: '150-300 词：NZ 校园生活；体育课故事；与朋友的对话', source: 'PM Readers Blue + Cambridge Young Learners A2' },
+      subject:   { volume: '体育 + 美术 + 音乐', content: '运动规则用语；乐器名称；节奏术语', source: '学科英语模块' }
+    }
+  },
+  {
+    id: 3, name: '课堂跟上', months: 'M5-7', days: 90,
+    desc: '体育 / 美术 / 音乐课能跟上节奏，不再"完全听不懂"',
+    cefr: 'A2 → B1', lexile: '500-700L', goal: '艺术、体育类课程能跟上 80% 内容，能跟同学讨论作业',
+    modules: {
+      listening: { volume: '60 段 / 90 天', content: '模拟艺体类课堂 15 节；同学协作对话；课间闲聊', source: '改编 NZ 真实课堂 + NZ ABC Schools 节目' },
+      speaking:  { volume: '40 个场景 / 200 轮', content: '小组讨论开口、问老师 follow-up、提出建议、表达不同意见', source: 'AI 陪练 · 引入多轮对话挑战' },
+      writing:   { volume: '12 篇 / 90 天', content: '120-180 词：体育课感想 / 周记 / 朋友推荐信 / 项目反思', source: 'AI 批改 · 加入"高频错误统计"反馈' },
+      reading:   { volume: '20 篇 / 90 天', content: '300-450 词：NZ 自然 / 毛利文化入门 / 学校规则 / 青少年杂志短篇', source: 'NZ School Journal Level 2-3 + Cambridge B1 Readers' },
+      subject:   { volume: '体育 / 美术 / 音乐 全词汇', content: '完整 3 门艺体课程词汇 (~600 词)', source: '学科英语模块 + Kiwi 文化模块解锁' }
+    }
+  },
+  {
+    id: 4, name: '学科入门', months: 'M8-9', days: 60,
+    desc: '科学 / 数学课堂用语理解，能看懂实验步骤',
+    cefr: 'B1', lexile: '650-800L', goal: '科学课能看懂实验指令、跟着做；数学题面看得懂、能列式',
+    modules: {
+      listening: { volume: '50 段 / 60 天', content: '科学课实验讲解；数学例题讲解；TED-Ed 科普短片（5-8 分钟）', source: 'TED-Ed Kids + Khan Academy + 自编 NZ 学科音频' },
+      speaking:  { volume: '50 个场景 / 250 轮', content: '科学课问问题、数学解题对话、实验合作', source: 'AI 陪练 · 新增"科学课"科目场景' },
+      writing:   { volume: '12 篇 / 60 天', content: '150-250 词：实验报告框架 / 简单数学论证 / 学科笔记', source: 'AI 批改 · 引入学科专用词汇评分' },
+      reading:   { volume: '20 篇 / 60 天', content: '350-550 词：科普短文（动物、地理、化学入门）；NZ 自然主题', source: 'NZ School Journal Level 3 + Reading A-Z Level N-P' },
+      subject:   { volume: '科学 + 数学 入门词', content: '科学实验词汇 (~400 词)；数学高频词 (~300 词)', source: '学科英语模块' }
+    }
+  },
+  {
+    id: 5, name: '写作起步', months: 'M10-11', days: 60,
+    desc: '从"会说"过渡到"会写"，能输出 200 词左右的连贯段落',
+    cefr: 'B1', lexile: '750-900L', goal: '能写日记、邮件、简单的实验报告 + 学科笔记',
+    modules: {
+      listening: { volume: '40 段 / 60 天', content: '广播新闻片段；播客（学生向）；TED-Ed 完整短片', source: 'NPR Student Edition + BBC Newsround + TED-Ed' },
+      speaking:  { volume: '40 个场景 / 200 轮', content: '能阐述观点、做 2-3 分钟自述（My Hobby / My Dream）', source: 'AI 陪练 · 新增"观点表达"挑战' },
+      writing:   { volume: '16 篇 / 60 天', content: '200-300 词：日记 / 给笔友邮件 / 实验报告 / 旅行游记 / 给老师便条', source: 'AI 批改 · 引入"段落结构"评分维度' },
+      reading:   { volume: '20 篇 / 60 天', content: '450-650 词：青少年新闻；NZ 校园杂志；现代短篇小说节选', source: 'NZ School Journal Level 4 + Time For Kids' },
+      subject:   { volume: '社会研究 入门词', content: '历史地理高频词；NZ 地理与历史基础', source: '学科英语模块' }
+    }
+  },
+  {
+    id: 6, name: '阅读进阶', months: 'M12-13', days: 60,
+    desc: 'NZ 青少年小说、教材选段，开始读"原版"',
+    cefr: 'B1+', lexile: '850-1000L', goal: '能完整读完一本 NZ 青少年小说；能读懂 Year 8-9 教材选段',
+    modules: {
+      listening: { volume: '40 段 / 60 天', content: '有声书章节；电影对白；播客深度访谈', source: 'Audible Kids + BBC Sounds + NZ ABC podcasts' },
+      speaking:  { volume: '40 个场景 / 200 轮', content: '能跟 AI 讨论一本书 / 一个事件 / 一个观点（5-8 轮）', source: 'AI 陪练 · 新增"书评讨论"挑战' },
+      writing:   { volume: '12 篇 / 60 天', content: '250-400 词：书评 / 议论文起步 / 故事创作 / 邮件交涉', source: 'AI 批改 · 引入"逻辑连贯性"维度' },
+      reading:   { volume: '2 本小说 + 25 篇短文', content: '小说：Holes、Wonder、Hatchet 等青少年经典（蓝思 850-1000L）；短文：NZ 文化、毛利历史', source: 'NZ Recommended Reading List Year 8 + Scholastic Storyworks' },
+      subject:   { volume: '历史 / 地理 完整', content: 'NZ 历史关键事件；世界地理基础；社会议题入门', source: '学科英语模块' }
+    }
+  },
+  {
+    id: 7, name: '学术综合', months: 'M14-16', days: 90,
+    desc: '议论文 + TED-Ed + Year 9 教材，正式进入学术英语',
+    cefr: 'B1+ → B2', lexile: '1000-1150L', goal: '能写 400 词议论文；TED-Ed 听得懂 90%；Year 9 教材独立阅读',
+    modules: {
+      listening: { volume: '60 段 / 90 天', content: 'TED-Ed 完整片源；BBC 6-Minute English；模拟 Year 9 课堂全片段', source: 'TED-Ed + BBC Learning English + 自编模拟课堂' },
+      speaking:  { volume: '60 个场景 / 300 轮', content: '5 分钟主题演讲；学术辩论；对学科问题深入讨论', source: 'AI 陪练 · 新增"演讲准备"+"辩论"模式' },
+      writing:   { volume: '18 篇 / 90 天', content: '400-500 词：议论文（学校政策、社会现象）；记叙文 / 学术 essay 起步', source: 'AI 批改 · 引入"学术规范度"维度' },
+      reading:   { volume: '3 本小说 + 30 篇短文', content: '小说：The Giver、The Outsiders 等（蓝思 1000-1150L）；短文：Year 9 历史地理教材选段', source: 'NZ Year 9 教材 + Newsela Pro' },
+      subject:   { volume: '所有学科全覆盖', content: '科学、数学、社会、文学全部学科英语', source: '学科英语模块全部解锁' }
+    }
+  },
+  {
+    id: 8, name: 'Year 10 冲刺', months: 'M17-18', days: 60,
+    desc: '达到 NZ Year 10 母语同龄人水平，全场景实战',
+    cefr: 'B2', lexile: '1100-1250L', goal: '全场景对话流畅；能写 500 词议论文；能独立阅读 Year 10 教材；NCEA Level 1 入门预备',
+    modules: {
+      listening: { volume: '40 段 / 60 天', content: 'Year 10 真实课堂录音；NZ 新闻广播；学术讲座节选', source: 'NZ ABC News + Year 10 课堂实录' },
+      speaking:  { volume: '40 个场景 / 200 轮', content: '任何话题闲聊；正式场合学术讨论；模拟 NCEA 口试', source: 'AI 陪练 · 综合模式' },
+      writing:   { volume: '10 篇 / 60 天', content: '500 词：完整议论文 / 记叙文 / 学术 essay；NCEA Level 1 模拟', source: 'AI 批改 · NCEA 评分标准对齐' },
+      reading:   { volume: '2 本 + 25 篇', content: '小说：To Kill a Mockingbird、Animal Farm 等（蓝思 1100-1250L）；Year 10 教材', source: 'NZ Year 10 教材 + classic literature' },
+      subject:   { volume: 'Year 10 全学科预习', content: 'NZ Year 10 各学科核心词汇与概念预习', source: '学科英语模块 · 高级' }
+    }
+  }
+];
+
+const MODULE_META = {
+  listening: { icon: '🎧', name: '听力', cls: 'mod-icon-listening' },
+  speaking:  { icon: '🎤', name: '口语', cls: 'mod-icon-speaking' },
+  writing:   { icon: '✏️', name: '写作', cls: 'mod-icon-writing' },
+  reading:   { icon: '📖', name: '阅读', cls: 'mod-icon-reading' },
+  subject:   { icon: '🔬', name: '学科英语', cls: 'mod-icon-subject' },
+};
+
+// 当前阶段（URL 参数 或 默认 1）
+const urlParams = new URLSearchParams(window.location.search);
+const currentStage = parseInt(urlParams.get('stage'), 10) || 1;
+
+function renderNav() {
+  const nav = document.getElementById('stage-nav');
+  nav.innerHTML = CURRICULUM.map(s => `
+    <a class="stage-nav-chip ${s.id === currentStage ? 'current' : ''}" href="#stage-${s.id}">
+      ${s.id} · ${s.name}
+    </a>
+  `).join('');
+}
+
+function renderStages() {
+  const container = document.getElementById('stages-container');
+  container.innerHTML = CURRICULUM.map(s => `
+    <div class="stage-card ${s.id === currentStage ? 'current' : ''}" id="stage-${s.id}">
+      <div class="stage-header">
+        <div class="stage-num">${s.id}</div>
+        <div class="stage-title-row">
+          <div class="stage-name">${s.name}${s.id === currentStage ? ' · 当前阶段' : ''}</div>
+          <div class="stage-desc">${s.desc}</div>
+          <div class="stage-meta">
+            <span class="stage-meta-item"><strong>时间：</strong>${s.months} · ${s.days} 天</span>
+            <span class="stage-meta-item"><strong>CEFR：</strong>${s.cefr}</span>
+            <span class="stage-meta-item"><strong>蓝思值：</strong>${s.lexile}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-2);margin-top:8px;padding:6px 10px;background:var(--kiwi-light);border-radius:6px;border-left:3px solid var(--kiwi)">🎯 ${s.goal}</div>
+        </div>
+      </div>
+
+      <div class="module-grid">
+        ${Object.entries(s.modules).map(([key, m]) => {
+          const meta = MODULE_META[key];
+          return `
+            <div class="mod-box">
+              <div class="mod-box-head">
+                <div class="mod-box-icon ${meta.cls}">${meta.icon}</div>
+                <div class="mod-box-name">${meta.name}</div>
+              </div>
+              <div class="mod-box-volume">${m.volume}</div>
+              <div class="mod-box-content">${m.content}</div>
+              <div class="mod-box-source">📚 ${m.source}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+(async function init() {
+  try {
+    await KIWI.requireAuth('any');
+  } catch {}
+  renderNav();
+  renderStages();
+  // 滚动到当前阶段
+  setTimeout(() => {
+    const el = document.getElementById('stage-' + currentStage);
+    if (el && currentStage > 1) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+})();
+</script>
+</body>
+</html>

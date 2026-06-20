@@ -875,7 +875,6 @@ function addAIMessage(enText, zhText, _alreadyInHistory) {
   const msgId = 'ai-msg-' + (++_aiMsgCounter);
   const div = document.createElement('div');
   div.className = 'msg ai';
-  // 把英文文本存在 data 上方便重放和展开
   div.dataset.en = enText;
   div.dataset.zh = zhText || '';
 
@@ -883,13 +882,7 @@ function addAIMessage(enText, zhText, _alreadyInHistory) {
   if (mode === 'show') {
     bubbleInner = `<div class="msg-bubble">${escHtml(enText)}</div>
       ${zhText ? `<div class="msg-zh">${escHtml(zhText)}</div>` : ''}`;
-  } else if (mode === 'audio_only_expandable') {
-    bubbleInner = `
-      <div class="msg-bubble" onclick="replayMessage('${msgId}')">
-        <span class="msg-replay-icon">🔊</span>点击重放
-      </div>
-      <button class="msg-expand-btn" onclick="expandMessage('${msgId}')">查看文本</button>`;
-  } else { // audio_only
+  } else { // audio_only：纯语音，像微信语音
     bubbleInner = `
       <div class="msg-bubble" onclick="replayMessage('${msgId}')">
         <span class="msg-replay-icon">🔊</span>点击重放
@@ -902,7 +895,6 @@ function addAIMessage(enText, zhText, _alreadyInHistory) {
     <div class="msg-body">${bubbleInner}</div>`;
   chatArea.appendChild(div);
   chatArea.scrollTop = chatArea.scrollHeight;
-  // 自动朗读
   speakText(enText);
 }
 
@@ -910,16 +902,6 @@ function replayMessage(msgId) {
   const div = document.getElementById(msgId);
   if (!div) return;
   speakText(div.dataset.en);
-}
-
-function expandMessage(msgId) {
-  const div = document.getElementById(msgId);
-  if (!div) return;
-  const en = div.dataset.en, zh = div.dataset.zh;
-  const body = div.querySelector('.msg-body');
-  body.innerHTML = `
-    <div class="msg-bubble">${escHtml(en)}</div>
-    ${zh ? `<div class="msg-zh">${escHtml(zh)}</div>` : ''}`;
 }
 
 function analyzePronunciation(text) {

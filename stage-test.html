@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通关测试 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .back-btn { background:transparent; border:none; color:var(--text-2); font-size:18px; cursor:pointer; padding:4px 8px; text-decoration:none; }
+  .topbar-title { font-size:15px; font-weight:600; color:var(--kiwi-dark); flex:1; }
+  .topbar-badge { background:var(--gold-light); color:#7a5a0a; font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; }
+
+  .content { max-width:720px; margin:0 auto; padding:24px 16px 60px; }
+
+  .stage-banner { background:var(--kiwi-dark); color:#fff; border-radius:var(--radius); padding:20px; margin-bottom:18px; text-align:center; }
+  .stage-banner-title { font-size:18px; font-weight:700; margin-bottom:4px; }
+  .stage-banner-sub { font-size:12px; opacity:.85; }
+
+  .progress-row { display:flex; gap:6px; margin-bottom:18px; padding:0 4px; }
+  .progress-dot { flex:1; height:6px; background:var(--border); border-radius:3px; }
+  .progress-dot.done { background:var(--kiwi); }
+  .progress-dot.current { background:var(--gold); }
+
+  .q-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:14px; }
+  .q-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .q-type-icon { font-size:18px; }
+  .q-type-label { font-size:12px; color:var(--text-3); font-weight:500; }
+  .q-num { margin-left:auto; font-size:11px; color:var(--text-3); }
+  .q-prompt { font-size:14px; color:var(--text); margin-bottom:14px; line-height:1.5; }
+  .q-prompt-zh { font-size:12px; color:var(--text-3); margin-top:4px; }
+
+  .play-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:var(--kiwi); color:#fff; border:none; border-radius:24px; font-size:13px; cursor:pointer; margin-bottom:14px; }
+  .play-btn:hover { background:var(--kiwi-dark); }
+
+  .options { display:flex; flex-direction:column; gap:8px; }
+  .option-btn { padding:11px 14px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:left; font-size:13px; cursor:pointer; transition:all .15s; font-family:inherit; color:var(--text); }
+  .option-btn:hover { border-color:var(--kiwi); background:var(--kiwi-light); }
+  .option-btn.selected { background:var(--kiwi-light); border-color:var(--kiwi); }
+  .option-btn.correct { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); font-weight:600; }
+  .option-btn.wrong { background:var(--danger-light); border-color:var(--danger); color:var(--danger); }
+  .option-btn:disabled { cursor:default; }
+
+  .text-input, .textarea { width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); outline:none; font-family:inherit; color:var(--text); resize:vertical; }
+  .textarea { min-height:100px; }
+  .text-input:focus, .textarea:focus { border-color:var(--kiwi); background:#fff; }
+
+  .submit-btn { width:100%; padding:13px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:500; cursor:pointer; margin-top:8px; }
+  .submit-btn:hover { background:var(--kiwi-dark); }
+  .submit-btn:disabled { background:var(--border); cursor:not-allowed; }
+
+  .feedback { margin-top:12px; padding:10px 12px; border-radius:var(--radius-sm); font-size:12px; }
+  .feedback-ok { background:var(--kiwi-light); border:1px solid #b8d9b6; color:var(--kiwi-dark); }
+  .feedback-bad { background:var(--danger-light); border:1px solid #f5c0b8; color:var(--danger); }
+  .feedback-info { background:var(--gold-light); border:1px solid #f5d89a; color:#7a5a0a; }
+
+  .result-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; text-align:center; }
+  .result-emoji { font-size:60px; margin-bottom:10px; }
+  .result-title { font-size:22px; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .result-sub { font-size:13px; color:var(--text-3); margin-bottom:18px; }
+  .result-score { font-size:36px; font-weight:700; color:var(--kiwi-dark); }
+  .result-bar { display:flex; gap:8px; justify-content:center; margin:14px 0; }
+  .result-bar-dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; }
+  .result-bar-dot.ok { background:var(--kiwi-light); color:var(--kiwi-dark); border:2px solid var(--kiwi); }
+  .result-bar-dot.bad { background:var(--danger-light); color:var(--danger); border:2px solid var(--danger); }
+  .result-actions { display:flex; gap:10px; margin-top:18px; }
+  .result-btn { flex:1; padding:11px; border-radius:var(--radius-sm); font-size:14px; cursor:pointer; text-decoration:none; text-align:center; }
+  .result-btn-primary { background:var(--kiwi); color:#fff; border:none; }
+  .result-btn-secondary { background:var(--bg); border:1px solid var(--border); color:var(--text-2); }
+
+  .loading { text-align:center; padding:80px 20px; color:var(--text-3); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">←</a>
+  <div class="topbar-title">🎯 通关测试</div>
+  <span class="topbar-badge">7 题</span>
+</div>
+
+<div class="content" id="content">
+  <div class="loading">加载中…</div>
+</div>
+
+<script>
+let currentChild = null;
+let currentStage = 1;
+let currentQuestions = [];
+let currentQuestionIdx = 0;
+let answers = [];
+
+(async function init() {
+  try {
+    const me = await KIWI.requireAuth('child');
+    currentChild = me;
+    // 拉取当前阶段
+    const s = await KIWI.api('/api/settings');
+    currentStage = s.settings.currentStage || 1;
+    // 拉门槛状态，确认可以参加
+    const gate = await KIWI.api('/api/stage-gate');
+    if (!gate.canTakeTest) {
+      document.getElementById('content').innerHTML = `
+        <div class="result-card">
+          <div class="result-emoji">⏳</div>
+          <div class="result-title">还不到测试时间</div>
+          <div class="result-sub">训练量或质量还没达标，继续练习吧！</div>
+          <div class="result-actions">
+            <a class="result-btn result-btn-primary" href="index.html">回首页继续练 →</a>
+          </div>
+        </div>`;
+      return;
+    }
+    currentQuestions = generateQuestions(currentStage);
+    renderQuestion();
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="loading">加载失败：${escHtml(e.message)}</div>`;
+  }
+})();
+
+// 题库：每阶段难度递增（简化版，使用模板生成）
+// 实际可以从远程加载题库。这里先用阶段相关的硬编码题目
+const QUESTION_BANK = {
+  1: [
+    { type:'listening', audio:"Open your book to page twelve.", options:["翻到第12页","坐到第12排","Chapter 12"], correct:0, prompt:"听老师说，他让你做什么？" },
+    { type:'listening', audio:"Could you please line up by the door?", options:["关上门","在门边排好队","开门让大家进来"], correct:1, prompt:"听到了什么？" },
+    { type:'listening', audio:"Hi! My name is Aroha. What's your name?", options:["问你今天的心情","问你叫什么名字","问你来自哪里"], correct:1, prompt:"这位同学在问你什么？" },
+    { type:'reading', text:"My name is Sam. I am twelve years old. I am from China. I like football.", q:"How old is Sam?", options:["10","11","12","13"], correct:2 },
+    { type:'reading', text:"Today is Monday. We have PE class. The teacher's name is Mr. Tane.", q:"What class is today?", options:["Maths","PE","Science","Art"], correct:1 },
+    { type:'speaking', prompt:"用英文回答：What's your name and where are you from?（请按住录音回答）" },
+    { type:'writing',  prompt:"用英文写 1-2 句自我介绍（名字 + 国家）" },
+  ],
+  2: [
+    { type:'listening', audio:"Could I sit here, please?", options:["请问几点了","请问可以坐这里吗","请问厕所在哪"], correct:1, prompt:"对方说什么？" },
+    { type:'listening', audio:"I forgot my pencil. Can I borrow yours?", options:["问你借铅笔","问你借作业","问你借钱"], correct:0, prompt:"同学想做什么？" },
+    { type:'listening', audio:"What time does the next class start?", options:["问哪节课","问什么时候放学","问下节课几点开始"], correct:2, prompt:"问的是什么？" },
+    { type:'reading', text:"Liam went to the canteen at lunchtime. He bought a pie and a juice. The pie cost $3 and the juice cost $2.", q:"How much did Liam spend in total?", options:["$3","$5","$2","$6"], correct:1 },
+    { type:'reading', text:"After school, Aroha goes to the library to study. She likes reading books about animals, especially kiwi birds.", q:"What does Aroha like reading about?", options:["food","animals","sports","music"], correct:1 },
+    { type:'speaking', prompt:"用英文回答：What do you usually do after school?（请按住录音回答）" },
+    { type:'writing',  prompt:"用英文写一条短信请假（你今天生病，不能上学）" },
+  ],
+  // 阶段 3-8 用模板（实际部署后可扩充题库）
+};
+
+function getStageQs(stage) {
+  if (QUESTION_BANK[stage]) return QUESTION_BANK[stage];
+  // fallback: 用阶段 2 的题（用户可以日后扩充）
+  return QUESTION_BANK[2];
+}
+
+function generateQuestions(stage) {
+  const all = getStageQs(stage);
+  // 阶段 1-2 我已经写满 7 题；其他用前 7 题（如果不足则循环）
+  const arr = [];
+  for (let i = 0; i < 7; i++) {
+    arr.push(all[i % all.length]);
+  }
+  return arr;
+}
+
+function renderQuestion() {
+  const idx = currentQuestionIdx;
+  if (idx >= currentQuestions.length) {
+    submitAll();
+    return;
+  }
+  const q = currentQuestions[idx];
+  const content = document.getElementById('content');
+
+  // 进度点
+  const dotsHtml = currentQuestions.map((_, i) => {
+    let cls = '';
+    if (i < idx) cls = 'done';
+    else if (i === idx) cls = 'current';
+    return `<div class="progress-dot ${cls}"></div>`;
+  }).join('');
+
+  let body = '';
+  if (q.type === 'listening') {
+    body = `
+      <div class="q-prompt">${escHtml(q.prompt)}</div>
+      <button class="play-btn" onclick="playAudio('${escAttr(q.audio)}')">🔊 播放</button>
+      <div class="options">
+        ${q.options.map((opt, i) => `<button class="option-btn" onclick="selectOption(${i}, ${q.correct})" data-i="${i}">${escHtml(opt)}</button>`).join('')}
+      </div>`;
+  } else if (q.type === 'reading') {
+    body = `
+      <div class="q-prompt" style="background:var(--bg);padding:12px 14px;border-radius:6px;border-left:3px solid var(--kiwi)">${escHtml(q.text)}</div>
+      <div class="q-prompt" style="margin-top:12px"><strong>${escHtml(q.q)}</strong></div>
+      <div class="options">
+        ${q.options.map((opt, i) => `<button class="option-btn" onclick="selectOption(${i}, ${q.correct})" data-i="${i}">${escHtml(opt)}</button>`).join('')}
+      </div>`;
+  } else if (q.type === 'speaking') {
+    body = `
+      <div class="q-prompt">${escHtml(q.prompt)}</div>
+      <button class="play-btn" id="record-btn" onmousedown="startRec()" onmouseup="stopRec()" ontouchstart="startRec()" ontouchend="stopRec()">🎤 按住录音</button>
+      <div id="rec-result" style="font-size:12px;color:var(--text-3);margin-top:8px"></div>
+      <button class="submit-btn" id="speak-submit" onclick="submitSpeaking()" disabled>确认提交</button>`;
+  } else if (q.type === 'writing') {
+    body = `
+      <div class="q-prompt">${escHtml(q.prompt)}</div>
+      <textarea class="textarea" id="writing-area" placeholder="用英文写在这里..."></textarea>
+      <button class="submit-btn" onclick="submitWriting()">确认提交</button>`;
+  }
+
+  content.innerHTML = `
+    <div class="stage-banner">
+      <div class="stage-banner-title">阶段 ${currentStage} · ${KIWI.STAGES[currentStage-1].name}</div>
+      <div class="stage-banner-sub">通关测试 · 共 7 题，至少 5 题合格即通过</div>
+    </div>
+    <div class="progress-row">${dotsHtml}</div>
+    <div class="q-card">
+      <div class="q-header">
+        <span class="q-type-icon">${q.type === 'listening' ? '🎧' : q.type === 'reading' ? '📖' : q.type === 'speaking' ? '🎤' : '✏️'}</span>
+        <span class="q-type-label">${q.type === 'listening' ? '听力' : q.type === 'reading' ? '阅读' : q.type === 'speaking' ? '口语' : '写作'}</span>
+        <span class="q-num">${idx + 1} / 7</span>
+      </div>
+      ${body}
+      <div id="feedback-area"></div>
+    </div>
+  `;
+}
+
+function playAudio(text) {
+  KIWI.speak(text, { rate: 0.9 });
+}
+
+function selectOption(picked, correct) {
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === correct) b.classList.add('correct');
+    else if (i === picked && picked !== correct) b.classList.add('wrong');
+  });
+  const isCorrect = picked === correct;
+  const q = currentQuestions[currentQuestionIdx];
+  answers.push({ type: q.type, correct: isCorrect });
+  document.getElementById('feedback-area').innerHTML = `
+    <div class="feedback ${isCorrect ? 'feedback-ok' : 'feedback-bad'}">
+      ${isCorrect ? '✓ 答对了！' : '✗ 答错了。正确答案已标出，下次加油。'}
+    </div>
+    <button class="submit-btn" onclick="nextQuestion()">下一题 →</button>
+  `;
+}
+
+function nextQuestion() {
+  currentQuestionIdx += 1;
+  renderQuestion();
+}
+
+/* 口语题：按住录音 */
+let _rec = null;
+let _recText = '';
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function startRec() {
+  if (!SR) { alert('当前浏览器不支持语音识别'); return; }
+  _recText = '';
+  _rec = new SR();
+  _rec.lang = 'en-US';
+  _rec.continuous = true;
+  _rec.interimResults = true;
+  _rec.onresult = (e) => {
+    let t = '';
+    for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+    _recText = t;
+    document.getElementById('rec-result').textContent = '识别中：' + t;
+  };
+  try { _rec.start(); } catch {}
+  document.getElementById('record-btn').textContent = '🔴 正在录音…松开停止';
+}
+
+function stopRec() {
+  if (_rec) { try { _rec.stop(); } catch {} _rec = null; }
+  setTimeout(() => {
+    if (_recText.trim()) {
+      document.getElementById('rec-result').innerHTML = '识别结果：<strong>' + escHtml(_recText) + '</strong>';
+      document.getElementById('speak-submit').disabled = false;
+    } else {
+      document.getElementById('rec-result').textContent = '没听清，再试一次';
+    }
+    document.getElementById('record-btn').textContent = '🎤 按住录音';
+  }, 200);
+}
+
+function submitSpeaking() {
+  // 简单评分：识别到 5 个以上单词 = 合格（6 分）
+  const wordCount = _recText.trim().split(/\s+/).filter(Boolean).length;
+  const score = wordCount >= 5 ? 7 : wordCount >= 3 ? 5 : 3;
+  answers.push({ type: 'speaking', score });
+  document.getElementById('feedback-area').innerHTML = `
+    <div class="feedback ${score >= 6 ? 'feedback-ok' : 'feedback-info'}">
+      ${score >= 6 ? '✓ 表达充分！' : '○ 这次说得有点少，下次试试讲完整一些'}（${wordCount} 个单词，${score}/10）
+    </div>
+    <button class="submit-btn" onclick="nextQuestion()">下一题 →</button>
+  `;
+  document.getElementById('speak-submit').disabled = true;
+}
+
+function submitWriting() {
+  const text = document.getElementById('writing-area').value.trim();
+  if (!text) { alert('请先写点东西'); return; }
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  const score = wordCount >= 15 ? 7 : wordCount >= 8 ? 6 : wordCount >= 3 ? 4 : 2;
+  answers.push({ type: 'writing', score });
+  document.getElementById('feedback-area').innerHTML = `
+    <div class="feedback ${score >= 6 ? 'feedback-ok' : 'feedback-info'}">
+      ${score >= 6 ? '✓ 写得很完整！' : '○ 写得有点短，下次多写几句'}（${wordCount} 个单词，${score}/10）
+    </div>
+    <button class="submit-btn" onclick="nextQuestion()">下一题 →</button>
+  `;
+}
+
+async function submitAll() {
+  const passedCount = answers.filter(a =>
+    (a.type === 'listening' || a.type === 'reading') ? a.correct :
+    (typeof a.score === 'number' && a.score >= 6)
+  ).length;
+  const total = answers.length;
+  const required = Math.ceil(total * 5 / 7);
+  const passed = passedCount >= required;
+
+  document.getElementById('content').innerHTML = `<div class="loading">正在提交结果...</div>`;
+  try {
+    const r = await KIWI.api('/api/stage-test', {
+      method: 'POST',
+      body: JSON.stringify({ answers, totalQuestions: total })
+    });
+    renderResult(r.result);
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="loading">提交失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderResult(result) {
+  const dots = currentQuestions.map((q, i) => {
+    const a = answers[i];
+    const ok = a && ((a.type === 'listening' || a.type === 'reading') ? a.correct : (typeof a.score === 'number' && a.score >= 6));
+    return `<div class="result-bar-dot ${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✗'}</div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="result-card">
+      <div class="result-emoji">${result.passed ? '🎉' : '💪'}</div>
+      <div class="result-title">${result.passed ? '通过了！' : '差一点，再加油'}</div>
+      <div class="result-sub">${result.passedCount} / ${result.total} 题合格（要求 ${result.required} 题）</div>
+      <div class="result-bar">${dots}</div>
+      ${result.passed
+        ? `<div class="feedback feedback-ok">已通知家长，等待家长批准升入下一阶段</div>`
+        : `<div class="feedback feedback-info">继续训练，下次再来！</div>`
+      }
+      <div class="result-actions">
+        <a class="result-btn result-btn-secondary" href="child-report.html">看我的报告</a>
+        <a class="result-btn result-btn-primary" href="index.html">回首页 →</a>
+      </div>
+    </div>
+  `;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
