@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Kiwi文化 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:60px; }
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .back-btn { background:transparent; border:none; color:var(--text-2); font-size:18px; cursor:pointer; padding:4px 8px; text-decoration:none; }
+  .topbar-title { font-size:15px; font-weight:600; color:var(--kiwi-dark); flex:1; }
+  .content { max-width:560px; margin:0 auto; padding:60px 20px; text-align:center; }
+  .lock-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:40px 24px; }
+  .lock-emoji { font-size:64px; margin-bottom:14px; }
+  .lock-title { font-size:18px; font-weight:600; color:var(--text); margin-bottom:8px; }
+  .lock-sub { font-size:13px; color:var(--text-3); margin-bottom:24px; line-height:1.6; }
+  .preview-list { text-align:left; max-width:340px; margin:0 auto 24px; }
+  .preview-item { display:flex; gap:10px; margin-bottom:10px; padding:10px 12px; background:var(--bg); border-radius:var(--radius-sm); border:1px solid var(--border); }
+  .preview-icon { font-size:18px; flex-shrink:0; }
+  .preview-text { font-size:13px; color:var(--text-2); }
+  .back-link { display:inline-block; padding:11px 22px; background:var(--kiwi); color:#fff; text-decoration:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">←</a>
+  <div class="topbar-title">🌿 Kiwi 文化</div>
+</div>
+
+<div class="content">
+  <div class="lock-card">
+    <div class="lock-emoji">🔒</div>
+    <div class="lock-title">这个模块还没解锁</div>
+    <div class="lock-sub">Kiwi 文化将在使用满 3 个月后解锁。<br>到时候你已经有了基础的英语听说能力，更容易理解 NZ 本地文化。</div>
+
+    <div class="preview-list">
+      <div class="preview-item"><span class="preview-icon">🇳🇿</span><span class="preview-text">毛利文化与历史（haka、hongi、神话）</span></div>
+      <div class="preview-item"><span class="preview-icon">🗣️</span><span class="preview-text">NZ 本地俚语（sweet as、chur、wicked）</span></div>
+      <div class="preview-item"><span class="preview-icon">🏫</span><span class="preview-text">NZ 学校规则与文化（校服、house system、prefects）</span></div>
+      <div class="preview-item"><span class="preview-icon">🏉</span><span class="preview-text">橄榄球、All Blacks 与体育文化</span></div>
+      <div class="preview-item"><span class="preview-icon">🥧</span><span class="preview-text">饮食与节日（meat pie、Waitangi Day、ANZAC Day）</span></div>
+    </div>
+
+    <a class="back-link" href="index.html">← 回到首页</a>
+  </div>
+</div>
+
+<script>
+(async function init() {
+  try { await KIWI.requireAuth('any'); } catch {}
+})();
+</script>
+</body>
+</html>

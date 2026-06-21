@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>口语陪练 · Kiwi English</title>
 <script src="auth.js"></script>
 <style>
@@ -533,13 +536,7 @@
 
 <!-- 对话区 -->
 <div class="chat-area" id="chat-area">
-  <div class="msg ai" id="first-msg">
-    <div class="msg-avatar">😊</div>
-    <div class="msg-body">
-      <div class="msg-bubble">Hey! You look a bit lost. You new here?</div>
-      <div class="msg-zh">嘿！你看起来有点迷茫。你是新来的吗？</div>
-    </div>
-  </div>
+  <!-- 首条消息由 JS 在 init 完成后渲染，保证按 settings 显示 -->
 </div>
 
 <!-- 发音反馈 -->
@@ -652,7 +649,7 @@ let currentUserType = 'child';
 let sessionStartTs = Date.now();
 let sessionTurns = 0;
 
-// 初始化：检查登录 + 拉取设置 + 应用UI
+// 初始化：检查登录 + 拉取设置 + 应用UI + 渲染首条消息
 (async function init() {
   try {
     const me = await KIWI.requireAuth('any');
@@ -665,6 +662,8 @@ let sessionTurns = 0;
       } catch {}
     }
     applySettingsToUI();
+    // 渲染首条消息（按 settings 决定是文本还是仅语音）
+    renderFirstMessage();
   } catch (e) {
     // requireAuth已经跳转，这里不用处理
   }
@@ -682,20 +681,21 @@ function applySettingsToUI() {
     textRow.style.display = 'none';
     voiceRow.style.display = 'flex';
   }
-  // 初始消息也按设置渲染
-  rerenderFirstMessage();
 }
 
-function rerenderFirstMessage() {
-  const s = SCENARIOS[currentScenario];
+function renderFirstMessage() {
+  // 清空 chat 区，按当前 settings 重新渲染首条
   const chatArea = document.getElementById('chat-area');
-  // 找到首条 ai 消息并按设置重渲染
-  const firstAi = chatArea.querySelector('.msg.ai');
-  if (firstAi && conversationHistory.length === 0) {
-    chatArea.innerHTML = '';
-    addAIMessage(s.firstMsg, s.firstMsgZh, /*alreadyInHistory*/false);
-    conversationHistory.push({ role: 'assistant', content: s.firstMsg });
-  }
+  chatArea.innerHTML = '';
+  conversationHistory = [];
+  const s = SCENARIOS[currentScenario];
+  addAIMessage(s.firstMsg, s.firstMsgZh, false);
+  conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+}
+
+// 保留兼容旧名（switchScenario里会调用）
+function rerenderFirstMessage() {
+  renderFirstMessage();
 }
 
 function switchScenario(chip) {

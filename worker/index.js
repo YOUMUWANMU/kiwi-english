@@ -272,9 +272,10 @@ function emptyProgress() {
     listening: { sessions: 0, correct: 0, total: 0, scoreSum: 0 },
     speaking:  { sessions: 0, turns: 0, durationSec: 0 },
     writing:   { sessions: 0, scoreSum: 0, count: 0 },
+    reading:   { sessions: 0, correct: 0, total: 0, scoreSum: 0 },
     streak: { current: 0, lastActiveDate: null, bestStreak: 0 },
     totalMinutes: 0,
-    errorTypes: {},  // { 'I is / I am': 8, ... }
+    errorTypes: {},
     createdAt: Date.now(),
   };
 }
@@ -319,6 +320,12 @@ async function handleEvent(request, env, session) {
         progress.errorTypes[key] = (progress.errorTypes[key] || 0) + 1;
       }
     }
+  } else if (event.module === 'reading') {
+    if (!progress.reading) progress.reading = { sessions: 0, correct: 0, total: 0, scoreSum: 0 };
+    progress.reading.sessions += 1;
+    if (typeof event.correct === 'number') progress.reading.correct += event.correct;
+    if (typeof event.total === 'number') progress.reading.total += event.total;
+    if (typeof event.score === 'number') progress.reading.scoreSum += event.score;
   }
   if (typeof event.durationSec === 'number') {
     progress.totalMinutes += event.durationSec / 60;
@@ -468,13 +475,13 @@ async function handleSetSettings(request, env, session) {
 
 const STAGE_GATES = [
   { id: 1, gate: { listening: 24, speaking: 12, writing: 4,  reading: 6,  minListeningAcc: 80, minWritingScore: 7 } },
-  { id: 2, gate: { listening: 32, speaking: 24, writing: 6,  reading: 10, minListeningAcc: 80, minWritingScore: 7 } },
-  { id: 3, gate: { listening: 48, speaking: 32, writing: 10, reading: 16, minListeningAcc: 82, minWritingScore: 7 } },
-  { id: 4, gate: { listening: 40, speaking: 40, writing: 10, reading: 16, minListeningAcc: 82, minWritingScore: 7 } },
-  { id: 5, gate: { listening: 32, speaking: 32, writing: 14, reading: 16, minListeningAcc: 85, minWritingScore: 7.5 } },
-  { id: 6, gate: { listening: 32, speaking: 32, writing: 10, reading: 24, minListeningAcc: 85, minWritingScore: 7.5 } },
-  { id: 7, gate: { listening: 48, speaking: 48, writing: 14, reading: 30, minListeningAcc: 85, minWritingScore: 8 } },
-  { id: 8, gate: { listening: 32, speaking: 32, writing: 8,  reading: 18, minListeningAcc: 88, minWritingScore: 8 } },
+  { id: 2, gate: { listening: 32, speaking: 24, writing: 6,  reading: 8,  minListeningAcc: 80, minWritingScore: 7 } },
+  { id: 3, gate: { listening: 48, speaking: 32, writing: 10, reading: 6,  minListeningAcc: 82, minWritingScore: 7 } },
+  { id: 4, gate: { listening: 40, speaking: 40, writing: 10, reading: 1,  minListeningAcc: 82, minWritingScore: 7 } },
+  { id: 5, gate: { listening: 32, speaking: 32, writing: 14, reading: 1,  minListeningAcc: 85, minWritingScore: 7.5 } },
+  { id: 6, gate: { listening: 32, speaking: 32, writing: 10, reading: 1,  minListeningAcc: 85, minWritingScore: 7.5 } },
+  { id: 7, gate: { listening: 48, speaking: 48, writing: 14, reading: 1,  minListeningAcc: 85, minWritingScore: 8 } },
+  { id: 8, gate: { listening: 32, speaking: 32, writing: 8,  reading: 1,  minListeningAcc: 88, minWritingScore: 8 } },
 ];
 
 async function getChildSettingsAndProgress(env, childId) {

@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>18 个月学习计划 · Kiwi English</title>
 <script src="auth.js"></script>
 <style>
@@ -120,7 +123,7 @@ const CURRICULUM = [
       listening: { volume: '30 段 / 60 天', content: '课堂指令（"line up", "sit down", "open your book to page 5"）；早晨问候；点名应答', source: 'NZ 学校真实课堂录音改编 + ESL 入门听力（如 Voice of America Learning English Level 1）' },
       speaking:  { volume: '15 个场景 / 30 句', content: '问好、自我介绍、说听不懂、请求重复、礼貌用语', source: 'AI 陪练（Liam / Ms. Johnson 食堂&课堂场景）' },
       writing:   { volume: '4 篇 / 60 天', content: '50-80 词：自我介绍 / 名字喜好 / 我的家人', source: 'AI 批改 · 模板填空式入门' },
-      reading:   { volume: '8 篇 / 60 天', content: '50-150 词短文：学校一天 / 我的教室 / 朋友', source: 'Oxford Reading Tree Level 1-3 + 自编 NZ 校园短篇' },
+      reading:   { volume: '8 篇 / 60 天', content: '50-150 词短文：学校一天 / 我的教室 / 朋友 / 家人 / 食物 / 宠物', source: '系统内置（Sam 同学的 NZ 校园日记 · 初阶）' },
       subject:   { volume: '体育 + 美术', content: 'PE 入门词汇（30 个动作词）；美术课工具名称', source: '学科英语模块' }
     }
   },
@@ -132,7 +135,7 @@ const CURRICULUM = [
       listening: { volume: '40 段 / 60 天', content: '同学闲聊片段；食堂点餐；走廊偶遇；老师课间答疑', source: 'NZ teen scenario 听力 + BBC Learning English' },
       speaking:  { volume: '30 个场景 / 100 句', content: '食堂点餐、问位子、借文具、问课表、找洗手间、迟到道歉', source: 'AI 陪练全部 6 个场景循环训练' },
       writing:   { volume: '8 篇 / 60 天', content: '80-120 词：周末做了什么 / 我的兴趣 / 邀请朋友 / 请假条', source: 'AI 批改 · 引入时态准确性反馈' },
-      reading:   { volume: '12 篇 / 60 天', content: '150-300 词：NZ 校园生活；体育课故事；与朋友的对话', source: 'PM Readers Blue + Cambridge Young Learners A2' },
+      reading:   { volume: '10 篇 / 60 天', content: '100-200 词：海滩游记 / 节日 / 学校戏剧 / 朋友互助 / NZ 文化', source: '系统内置（Sam 同学的 NZ 校园日记 · 中阶）' },
       subject:   { volume: '体育 + 美术 + 音乐', content: '运动规则用语；乐器名称；节奏术语', source: '学科英语模块' }
     }
   },
@@ -144,7 +147,7 @@ const CURRICULUM = [
       listening: { volume: '60 段 / 90 天', content: '模拟艺体类课堂 15 节；同学协作对话；课间闲聊', source: '改编 NZ 真实课堂 + NZ ABC Schools 节目' },
       speaking:  { volume: '40 个场景 / 200 轮', content: '小组讨论开口、问老师 follow-up、提出建议、表达不同意见', source: 'AI 陪练 · 引入多轮对话挑战' },
       writing:   { volume: '12 篇 / 90 天', content: '120-180 词：体育课感想 / 周记 / 朋友推荐信 / 项目反思', source: 'AI 批改 · 加入"高频错误统计"反馈' },
-      reading:   { volume: '20 篇 / 90 天', content: '300-450 词：NZ 自然 / 毛利文化入门 / 学校规则 / 青少年杂志短篇', source: 'NZ School Journal Level 2-3 + Cambridge B1 Readers' },
+      reading:   { volume: '8 篇 / 90 天', content: '150-250 词：奥克兰 / 惠灵顿 / 毛利文化 / NZ 自然 / 历史 / 学校制度', source: '系统内置（Sam 同学的 NZ 校园日记 · 进阶）' },
       subject:   { volume: '体育 / 美术 / 音乐 全词汇', content: '完整 3 门艺体课程词汇 (~600 词)', source: '学科英语模块 + Kiwi 文化模块解锁' }
     }
   },
@@ -156,7 +159,7 @@ const CURRICULUM = [
       listening: { volume: '50 段 / 60 天', content: '科学课实验讲解；数学例题讲解；TED-Ed 科普短片（5-8 分钟）', source: 'TED-Ed Kids + Khan Academy + 自编 NZ 学科音频' },
       speaking:  { volume: '50 个场景 / 250 轮', content: '科学课问问题、数学解题对话、实验合作', source: 'AI 陪练 · 新增"科学课"科目场景' },
       writing:   { volume: '12 篇 / 60 天', content: '150-250 词：实验报告框架 / 简单数学论证 / 学科笔记', source: 'AI 批改 · 引入学科专用词汇评分' },
-      reading:   { volume: '20 篇 / 60 天', content: '350-550 词：科普短文（动物、地理、化学入门）；NZ 自然主题', source: 'NZ School Journal Level 3 + Reading A-Z Level N-P' },
+      reading:   { volume: '1 篇示范 + 原版小说', content: '350-550 词：科普短文（动物、地理、化学入门）；NZ 自然主题。系统内 1 篇示范，主要依靠真实素材', source: 'NZ School Journal Level 3 + Reading A-Z Level N-P（家长自购）' },
       subject:   { volume: '科学 + 数学 入门词', content: '科学实验词汇 (~400 词)；数学高频词 (~300 词)', source: '学科英语模块' }
     }
   },
@@ -168,7 +171,7 @@ const CURRICULUM = [
       listening: { volume: '40 段 / 60 天', content: '广播新闻片段；播客（学生向）；TED-Ed 完整短片', source: 'NPR Student Edition + BBC Newsround + TED-Ed' },
       speaking:  { volume: '40 个场景 / 200 轮', content: '能阐述观点、做 2-3 分钟自述（My Hobby / My Dream）', source: 'AI 陪练 · 新增"观点表达"挑战' },
       writing:   { volume: '16 篇 / 60 天', content: '200-300 词：日记 / 给笔友邮件 / 实验报告 / 旅行游记 / 给老师便条', source: 'AI 批改 · 引入"段落结构"评分维度' },
-      reading:   { volume: '20 篇 / 60 天', content: '450-650 词：青少年新闻；NZ 校园杂志；现代短篇小说节选', source: 'NZ School Journal Level 4 + Time For Kids' },
+      reading:   { volume: '1 篇示范 + 原版小说', content: '450-650 词：青少年新闻；NZ 校园杂志；现代短篇小说节选。系统内 1 篇示范，主要靠真实素材', source: 'NZ School Journal Level 4 + Time For Kids（家长自购）' },
       subject:   { volume: '社会研究 入门词', content: '历史地理高频词；NZ 地理与历史基础', source: '学科英语模块' }
     }
   },
@@ -180,7 +183,7 @@ const CURRICULUM = [
       listening: { volume: '40 段 / 60 天', content: '有声书章节；电影对白；播客深度访谈', source: 'Audible Kids + BBC Sounds + NZ ABC podcasts' },
       speaking:  { volume: '40 个场景 / 200 轮', content: '能跟 AI 讨论一本书 / 一个事件 / 一个观点（5-8 轮）', source: 'AI 陪练 · 新增"书评讨论"挑战' },
       writing:   { volume: '12 篇 / 60 天', content: '250-400 词：书评 / 议论文起步 / 故事创作 / 邮件交涉', source: 'AI 批改 · 引入"逻辑连贯性"维度' },
-      reading:   { volume: '2 本小说 + 25 篇短文', content: '小说：Holes、Wonder、Hatchet 等青少年经典（蓝思 850-1000L）；短文：NZ 文化、毛利历史', source: 'NZ Recommended Reading List Year 8 + Scholastic Storyworks' },
+      reading:   { volume: '原版小说为主', content: '推荐 2 本青少年小说（Holes、Wonder、Hatchet 等，蓝思 850-1000L）+ NZ 文化短文', source: 'NZ Recommended Reading List Year 8 + Scholastic Storyworks（家长自购）' },
       subject:   { volume: '历史 / 地理 完整', content: 'NZ 历史关键事件；世界地理基础；社会议题入门', source: '学科英语模块' }
     }
   },
@@ -192,7 +195,7 @@ const CURRICULUM = [
       listening: { volume: '60 段 / 90 天', content: 'TED-Ed 完整片源；BBC 6-Minute English；模拟 Year 9 课堂全片段', source: 'TED-Ed + BBC Learning English + 自编模拟课堂' },
       speaking:  { volume: '60 个场景 / 300 轮', content: '5 分钟主题演讲；学术辩论；对学科问题深入讨论', source: 'AI 陪练 · 新增"演讲准备"+"辩论"模式' },
       writing:   { volume: '18 篇 / 90 天', content: '400-500 词：议论文（学校政策、社会现象）；记叙文 / 学术 essay 起步', source: 'AI 批改 · 引入"学术规范度"维度' },
-      reading:   { volume: '3 本小说 + 30 篇短文', content: '小说：The Giver、The Outsiders 等（蓝思 1000-1150L）；短文：Year 9 历史地理教材选段', source: 'NZ Year 9 教材 + Newsela Pro' },
+      reading:   { volume: '原版小说 + 教材', content: '推荐 3 本小说（The Giver、The Outsiders 等，蓝思 1000-1150L）+ Year 9 历史地理教材选段', source: 'NZ Year 9 教材 + Newsela Pro（家长自购）' },
       subject:   { volume: '所有学科全覆盖', content: '科学、数学、社会、文学全部学科英语', source: '学科英语模块全部解锁' }
     }
   },
@@ -204,7 +207,7 @@ const CURRICULUM = [
       listening: { volume: '40 段 / 60 天', content: 'Year 10 真实课堂录音；NZ 新闻广播；学术讲座节选', source: 'NZ ABC News + Year 10 课堂实录' },
       speaking:  { volume: '40 个场景 / 200 轮', content: '任何话题闲聊；正式场合学术讨论；模拟 NCEA 口试', source: 'AI 陪练 · 综合模式' },
       writing:   { volume: '10 篇 / 60 天', content: '500 词：完整议论文 / 记叙文 / 学术 essay；NCEA Level 1 模拟', source: 'AI 批改 · NCEA 评分标准对齐' },
-      reading:   { volume: '2 本 + 25 篇', content: '小说：To Kill a Mockingbird、Animal Farm 等（蓝思 1100-1250L）；Year 10 教材', source: 'NZ Year 10 教材 + classic literature' },
+      reading:   { volume: '原版小说 + 教材', content: '推荐 2 本（To Kill a Mockingbird、Animal Farm 等，蓝思 1100-1250L）+ Year 10 教材', source: 'NZ Year 10 教材 + classic literature（家长自购）' },
       subject:   { volume: 'Year 10 全学科预习', content: 'NZ Year 10 各学科核心词汇与概念预习', source: '学科英语模块 · 高级' }
     }
   }

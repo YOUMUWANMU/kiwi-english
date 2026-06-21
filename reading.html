@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>分级阅读 · Kiwi English</title>
+<script src="auth.js"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --rose: #b04a4a; --rose-light: #fbe8e8;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:60px; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .back-btn { background:transparent; border:none; color:var(--text-2); font-size:18px; cursor:pointer; padding:4px 8px; text-decoration:none; }
+  .topbar-title { font-size:15px; font-weight:600; color:var(--kiwi-dark); flex:1; }
+  .stage-tag { background:var(--rose-light); color:var(--rose); font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; }
+
+  .content { max-width:760px; margin:0 auto; padding:18px 16px 0; }
+
+  /* 列表页 */
+  .intro { font-size:13px; color:var(--text-2); margin-bottom:14px; line-height:1.5; padding:12px 14px; background:var(--rose-light); border:1px solid #f5c0c0; border-radius:var(--radius-sm); }
+  .intro-stage { font-size:12px; color:var(--rose); font-weight:600; margin-bottom:4px; }
+
+  .article-list { display:flex; flex-direction:column; gap:10px; }
+  .article-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:all .15s; }
+  .article-card:hover { border-color:var(--rose); }
+  .article-card.done { background:var(--kiwi-light); border-color:#b8d9b6; }
+  .article-row { display:flex; align-items:center; gap:12px; }
+  .article-icon { font-size:24px; }
+  .article-info { flex:1; min-width:0; }
+  .article-title { font-size:14px; font-weight:600; color:var(--text); margin-bottom:3px; }
+  .article-meta { font-size:11px; color:var(--text-3); display:flex; gap:8px; flex-wrap:wrap; }
+  .article-status { font-size:18px; color:var(--kiwi); }
+
+  .empty-stage { text-align:center; padding:50px 20px; color:var(--text-3); }
+
+  /* 阅读详情页 */
+  .reader { background:var(--surface); border-radius:var(--radius); padding:24px 20px; margin-bottom:14px; }
+  .reader-title { font-size:22px; font-weight:700; color:var(--text); margin-bottom:8px; line-height:1.3; }
+  .reader-meta { font-size:12px; color:var(--text-3); margin-bottom:18px; display:flex; gap:10px; }
+  .reader-meta-item { padding:3px 8px; background:var(--bg); border-radius:8px; border:1px solid var(--border); }
+
+  .toolbar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .tool-btn { background:var(--bg); border:1px solid var(--border); color:var(--text-2); padding:7px 12px; border-radius:18px; font-size:12px; cursor:pointer; }
+  .tool-btn.active { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); }
+  .tool-btn:hover { border-color:var(--kiwi); }
+
+  .article-body { font-size:15px; line-height:1.8; color:var(--text); }
+  .article-body p { margin-bottom:14px; }
+  .article-body .zh { color:var(--text-3); font-size:13px; margin-top:4px; display:block; }
+  .article-body .zh.hidden { display:none; }
+  .keyword { background:#fff7d6; border-bottom:2px solid var(--gold); padding:0 2px; cursor:help; position:relative; }
+
+  .actions { margin-top:24px; display:flex; gap:10px; }
+  .btn-primary { flex:1; padding:13px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; }
+  .btn-secondary { flex:1; padding:13px; background:var(--bg); color:var(--text-2); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:14px; cursor:pointer; text-decoration:none; text-align:center; }
+
+  /* 题目 */
+  .quiz-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-top:14px; }
+  .quiz-title { font-size:14px; font-weight:600; margin-bottom:12px; color:var(--text); }
+  .quiz-question { font-size:14px; margin-bottom:10px; }
+  .quiz-options { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .quiz-opt { padding:11px 14px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:left; font-size:13px; cursor:pointer; font-family:inherit; color:var(--text); }
+  .quiz-opt:hover { border-color:var(--kiwi); background:var(--kiwi-light); }
+  .quiz-opt.selected { background:var(--kiwi-light); border-color:var(--kiwi); }
+  .quiz-opt.correct { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); font-weight:600; }
+  .quiz-opt.wrong { background:var(--danger-light); border-color:var(--danger); color:var(--danger); }
+  .quiz-opt:disabled { cursor:default; }
+
+  /* 完成总结 */
+  .summary-card { background:var(--kiwi-light); border:1px solid #b8d9b6; border-radius:var(--radius); padding:24px; text-align:center; }
+  .summary-emoji { font-size:48px; margin-bottom:10px; }
+  .summary-title { font-size:18px; font-weight:700; color:var(--kiwi-dark); margin-bottom:6px; }
+  .summary-sub { font-size:13px; color:var(--text-2); margin-bottom:16px; }
+  .summary-score { font-size:14px; color:var(--kiwi-dark); margin-bottom:14px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html" id="back-btn">←</a>
+  <div class="topbar-title" id="topbar-title">📖 分级阅读</div>
+  <span class="stage-tag" id="stage-tag">加载中</span>
+</div>
+
+<div class="content" id="content">
+  <div style="text-align:center;padding:60px 20px;color:var(--text-3)">加载中…</div>
+</div>
+
+<script>
+let currentStageId = 1;
+let currentChild = null;
+let articlesOfStage = [];
+let doneArticles = new Set();
+let currentArticle = null;
+let readStartTs = 0;
+
+/* ===== 24 篇分级阅读文章（8 阶段 × 3 篇）===== */
+const ARTICLES = [
+  /* 阶段 1: 200-400L, 50-150 词 */
+  { id: 's1-a1', stage: 1, title: 'My First Day at School',
+    lexile: 280, words: 62,
+    en: `<p>My name is Sam. I am twelve years old. I am from China. Today is my first day at school in New Zealand.</p>
+<p>I see many new friends. They say "Hi" to me. A boy gives me a big smile. His name is Liam. He is kind. I am happy.</p>`,
+    zh: [`我叫 Sam。我十二岁。我来自中国。今天是我在新西兰上学的第一天。`,
+         `我看到许多新朋友。他们对我说"Hi"。一个男孩给我一个大大的微笑。他叫 Liam。他很友好。我很开心。`],
+    keywords: { 'kind': '友好的', 'smile': '微笑' },
+    quiz: [
+      { q: 'How old is Sam?', options: ['10', '11', '12', '13'], correct: 2 },
+      { q: "What does Liam do?", options: ['He gives Sam a book', 'He smiles at Sam', 'He says nothing', 'He runs away'], correct: 1 }
+    ]
+  },
+  { id: 's1-a2', stage: 1, title: 'The Canteen',
+    lexile: 320, words: 75,
+    en: `<p>At lunchtime, I go to the canteen. The canteen is big. Many students sit and eat. I see pies, sandwiches and juice.</p>
+<p>I want a pie. I say to the lady, "Can I have a pie, please?" She smiles and says, "Sure. That's three dollars." I pay her and take my pie. It is hot and yummy.</p>`,
+    zh: [`午餐时间，我去食堂。食堂很大。许多学生坐着吃饭。我看到肉饼、三明治和果汁。`,
+         `我想要一个肉饼。我对那位女士说："请问可以给我一个肉饼吗？" 她笑着说："当然，三美元。" 我付钱给她，拿走我的肉饼。它热腾腾的，很好吃。`],
+    keywords: { 'canteen': '食堂', 'pie': '肉馅饼' },
+    quiz: [
+      { q: 'How much does a pie cost?', options: ['$1', '$2', '$3', '$5'], correct: 2 },
+      { q: 'How does Sam feel about the pie?', options: ['It is bad', 'It is yummy', 'It is cold', 'It is too small'], correct: 1 }
+    ]
+  },
+  { id: 's1-a3', stage: 1, title: 'My New Friend',
+    lexile: 350, words: 95,
+    en: `<p>I meet a girl in my class. Her name is Aroha. She has long black hair and a big smile. She comes to me and says, "Hello! Where are you from?"</p>
+<p>I say, "I am from China. My name is Sam." She says, "Cool! I like Chinese food. Do you like rugby?" I say, "I don't know rugby. Can you show me?"</p>
+<p>After school, Aroha shows me the rugby ball. It is fun. Now I have a new friend.</p>`,
+    zh: [`我在班上认识了一个女孩。她叫 Aroha。她有长长的黑头发和大大的笑容。她走过来对我说："你好！你从哪里来？"`,
+         `我说："我来自中国。我叫 Sam。" 她说："酷！我喜欢中国菜。你喜欢橄榄球吗？" 我说："我不懂橄榄球。你能教我吗？"`,
+         `放学后，Aroha 给我看橄榄球。很好玩。现在我有了一个新朋友。`],
+    keywords: { 'rugby': '橄榄球', 'meet': '遇见、认识' },
+    quiz: [
+      { q: 'What does Aroha look like?', options: ['Short hair, no smile', 'Long black hair, big smile', 'Glasses, blue eyes', 'Curly hair'], correct: 1 },
+      { q: "What does Aroha show Sam after school?", options: ['Chinese food', 'A rugby ball', 'Her homework', 'A book'], correct: 1 }
+    ]
+  },
+  { id: 's1-a4', stage: 1, title: 'My Family',
+    lexile: 320, words: 78,
+    en: `<p>My family is small. There are four people in my family. My dad is forty years old. He works in a bank. My mum is thirty-eight. She is a teacher.</p>
+<p>I have a little brother. His name is Tom. He is nine years old. He likes cars and trucks. We play together at home. I love my family.</p>`,
+    zh: [`我的家人不多。我家有四口人。我爸爸四十岁。他在银行工作。我妈妈三十八岁。她是老师。`,
+         `我有一个弟弟。他叫 Tom。他九岁。他喜欢汽车和卡车。我们在家一起玩。我爱我的家人。`],
+    keywords: { 'work': '工作', 'together': '一起' },
+    quiz: [
+      { q: 'How many people are in Sam\'s family?', options: ['2', '3', '4', '5'], correct: 2 },
+      { q: 'What does Sam\'s dad do?', options: ['Teacher', 'Works in a bank', 'Doctor', 'Driver'], correct: 1 }
+    ]
+  },
+  { id: 's1-a5', stage: 1, title: 'My Favorite Food',
+    lexile: 360, words: 92,
+    en: `<p>I like many foods. My favorite food is dumplings. My mum makes them at home. They are full of meat and vegetables. They taste so good!</p>
+<p>In New Zealand, I also like fish and chips. The fish is hot and crispy. The chips are soft inside. Liam shares his with me at lunch sometimes. We eat them with tomato sauce. It is yummy.</p>`,
+    zh: [`我喜欢很多食物。我最喜欢的食物是饺子。妈妈在家做。它们里面有肉和蔬菜。非常好吃！`,
+         `在新西兰，我也喜欢炸鱼和薯条。鱼又热又脆。薯条里面软软的。Liam 有时候在午餐时和我分享。我们蘸番茄酱吃。很好吃。`],
+    keywords: { 'favorite': '最喜欢的', 'crispy': '脆的', 'share': '分享' },
+    quiz: [
+      { q: 'What does Sam\'s mum make?', options: ['Pizza', 'Dumplings', 'Cake', 'Rice'], correct: 1 },
+      { q: 'How do they eat fish and chips?', options: ['With sugar', 'With tomato sauce', 'With chopsticks', 'Cold'], correct: 1 }
+    ]
+  },
+  { id: 's1-a6', stage: 1, title: 'My Classroom',
+    lexile: 340, words: 84,
+    en: `<p>My classroom is bright and big. There are many windows. We can see the trees outside. The walls have student artwork on them.</p>
+<p>We have twenty-five students in my class. We sit in groups of four. My group has me, Liam, Aroha, and a girl called Mia. The teacher's desk is at the front. There is a smart board behind her desk. We use it every day.</p>`,
+    zh: [`我的教室明亮宽敞。有很多窗户。我们能看到外面的树。墙上挂着学生的美术作品。`,
+         `我们班有二十五个学生。我们四人一组坐。我这组有我、Liam、Aroha 和一个叫 Mia 的女孩。老师的桌子在前面。她桌子后面有一块智能板。我们每天都用。`],
+    keywords: { 'bright': '明亮的', 'artwork': '艺术作品', 'smart board': '智能板' },
+    quiz: [
+      { q: 'How many students are in the class?', options: ['15', '20', '25', '30'], correct: 2 },
+      { q: 'Where is the teacher\'s desk?', options: ['At the back', 'At the front', 'In the middle', 'By the window'], correct: 1 }
+    ]
+  },
+  { id: 's1-a7', stage: 1, title: 'A Day at PE Class',
+    lexile: 380, words: 95,
+    en: `<p>Tuesday is my PE day. PE means physical education. We do many sports. Today we played basketball.</p>
+<p>Mr Tane is our PE teacher. He is tall and kind. He showed us how to throw the ball. Then we tried it. I was not good at first. But Liam helped me. After ten minutes, I made my first basket. Mr Tane said, "Good job!" I felt very happy.</p>`,
+    zh: [`星期二是我的体育日。PE 意思是体育课。我们做很多运动。今天我们打了篮球。`,
+         `Mr Tane 是我们的体育老师。他又高又友好。他给我们示范怎么投球。然后我们试了一下。我一开始不太会。但 Liam 帮了我。十分钟后，我投进了第一个球。Mr Tane 说："干得好！"我感到非常开心。`],
+    keywords: { 'physical education': '体育', 'throw': '投掷', 'basket': '篮筐' },
+    quiz: [
+      { q: 'What does PE mean?', options: ['Physical education', 'Personal exercise', 'Play every day', 'Picnic event'], correct: 0 },
+      { q: 'Who helped Sam?', options: ['Mr Tane', 'Liam', 'Aroha', 'No one'], correct: 1 }
+    ]
+  },
+  { id: 's1-a8', stage: 1, title: 'My Pet Cat',
+    lexile: 290, words: 80,
+    en: `<p>My family has a cat. Her name is Mochi. She is white with grey ears. She is two years old.</p>
+<p>Mochi sleeps a lot. She also likes to sit on my school bag. When I come home, she runs to the door. She makes a "meow" sound. I give her food and water. Then I pet her. Mochi is my best friend at home.</p>`,
+    zh: [`我家有一只猫。她叫 Mochi。她是白色的，灰耳朵。她两岁。`,
+         `Mochi 睡得很多。她也喜欢坐在我的书包上。我回家时，她跑到门口。她"喵"地一声叫。我给她吃饭喝水。然后我抚摸她。Mochi 是我在家最好的朋友。`],
+    keywords: { 'pet': '宠物', 'grey': '灰色的' },
+    quiz: [
+      { q: 'How old is Mochi?', options: ['One', 'Two', 'Three', 'Four'], correct: 1 },
+      { q: 'Where does Mochi like to sit?', options: ['On the sofa', 'On Sam\'s school bag', 'On the floor', 'On the bed'], correct: 1 }
+    ]
+  },
+
+  /* 阶段 2: 400-550L, 100-200 词 */
+  { id: 's2-a1', stage: 2, title: 'After School Activities',
+    lexile: 470, words: 140,
+    en: `<p>School ends at three thirty in the afternoon. After school, students do many different things. Some students play sports like rugby, netball, or football. Others go to the library to read books and do homework.</p>
+<p>My friend Aroha is in the school choir. She practises singing every Tuesday and Thursday. She has a very nice voice. Liam is in the basketball team. He trains hard three times a week.</p>
+<p>I want to try something new. My teacher tells me about the chess club. They meet on Wednesdays at lunch. I will go and try it next week. I hope I can make more friends there.</p>`,
+    zh: [`学校下午三点半放学。放学后，学生们做许多不同的事情。有些学生打橄榄球、无挡板篮球或足球。其他学生去图书馆看书、做作业。`,
+         `我的朋友 Aroha 在学校合唱团。她每周二和周四练唱歌。她的嗓音很好听。Liam 在篮球队。他每周训练三次，很刻苦。`,
+         `我想尝试新东西。老师告诉我国际象棋俱乐部的事。他们每周三午餐时间聚会。我下周会去试试。希望我能在那里交到更多朋友。`],
+    keywords: { 'choir': '合唱团', 'practise': '练习', 'chess': '国际象棋' },
+    quiz: [
+      { q: 'When does the chess club meet?', options: ['Mondays at lunch', 'Wednesdays at lunch', 'Fridays after school', 'Tuesdays morning'], correct: 1 },
+      { q: 'How often does Liam train?', options: ['Once a week', 'Twice a week', 'Three times a week', 'Every day'], correct: 2 }
+    ]
+  },
+  { id: 's2-a2', stage: 2, title: 'A Rugby Game',
+    lexile: 510, words: 175,
+    en: `<p>Last Saturday, I watched my first rugby game with Liam and his family. We went to Eden Park in Auckland. It is a big stadium with many people. The All Blacks were playing against Australia.</p>
+<p>Before the game, the All Blacks did the haka. The haka is a Maori war dance. The players stamp their feet and shout. It is very powerful. Liam told me it makes the team strong.</p>
+<p>The game was exciting. The players ran fast and passed the ball. They scored many tries. A try is worth five points. The All Blacks won by three points. Everyone cheered loudly.</p>
+<p>After the game, I felt tired but happy. I learned that rugby is more than just a sport in New Zealand. It is part of the culture.</p>`,
+    zh: [`上周六，我和 Liam 一家看了我的第一场橄榄球比赛。我们去了奥克兰的 Eden Park。那是个有很多人的大体育场。全黑队对阵澳大利亚。`,
+         `比赛前，全黑队跳了 haka。Haka 是毛利战舞。球员们跺脚、呐喊。非常有气势。Liam 告诉我这能让球队强大。`,
+         `比赛很精彩。球员们快速奔跑、传球。他们达阵了很多次。一次达阵值五分。全黑队以三分优势获胜。大家大声欢呼。`,
+         `比赛结束后，我感到疲倦但开心。我明白了橄榄球在新西兰不仅仅是运动，它是文化的一部分。`],
+    keywords: { 'haka': '毛利战舞', 'stadium': '体育场', 'try': '达阵（橄榄球术语）', 'culture': '文化' },
+    quiz: [
+      { q: 'Where was the rugby game?', options: ['Wellington', 'Auckland', 'Christchurch', 'Hamilton'], correct: 1 },
+      { q: 'How many points is a try worth?', options: ['3', '5', '7', '10'], correct: 1 }
+    ]
+  },
+  { id: 's2-a3', stage: 2, title: 'Learning New Words',
+    lexile: 480, words: 160,
+    en: `<p>Learning English in New Zealand is exciting but sometimes hard. Kiwis use many words that are different from American or British English. At first, I did not understand many things.</p>
+<p>For example, when Liam said "sweet as", I thought he wanted something sweet. But it actually means "good" or "no problem". When Aroha said "chur", I had no idea. She told me it means "thanks" or "yes".</p>
+<p>Maori words are also very common here. People say "Kia ora" instead of "hello". The word "whanau" means "family". I write down new words every day in my notebook. My English teacher says this is a great way to learn.</p>
+<p>It feels good to use new words with my friends. They smile and tell me I sound more like a Kiwi.</p>`,
+    zh: [`在新西兰学英语很有趣，但有时也很难。新西兰人用很多和美式或英式英语不一样的词。一开始我不明白很多东西。`,
+         `比如，Liam 说 "sweet as" 时，我以为他想要甜的东西。但其实它的意思是"好"或"没问题"。Aroha 说 "chur" 时，我完全不懂。她告诉我那是"谢谢"或"是的"的意思。`,
+         `毛利语词汇在这里也很常见。人们说 "Kia ora" 而不是 "hello"。"whanau" 这个词意思是"家人"。我每天在笔记本上记下新词。我的英语老师说这是学语言的好方法。`,
+         `用新词和朋友们交流的感觉很好。他们笑着说我听起来更像新西兰人了。`],
+    keywords: { 'sweet as': '不错/没问题（NZ俚语）', 'chur': '谢谢/是的（NZ俚语）', 'Kia ora': '你好（毛利语）', 'whanau': '家人（毛利语）' },
+    quiz: [
+      { q: 'What does "sweet as" mean?', options: ['Something sweet', 'Good or no problem', 'Bad', 'Tired'], correct: 1 },
+      { q: 'What is "whanau"?', options: ['A food', 'Family', 'A game', 'A bird'], correct: 1 }
+    ]
+  },
+  { id: 's2-a4', stage: 2, title: 'A Trip to the Beach',
+    lexile: 460, words: 165,
+    en: `<p>Last weekend, my family went to Mission Bay. It is a popular beach in Auckland. The day was sunny and warm.</p>
+<p>At the beach, we made a sand castle. My little brother Tom was very excited. He carried buckets of water from the sea. The waves were small but the water was cold. I put my feet in for only a minute.</p>
+<p>Lunch time, we ate fish and chips from a shop near the beach. We sat on the grass and watched people swim. Some teenagers were playing volleyball. Their game looked fun.</p>
+<p>In the afternoon, ice cream trucks came. I bought a vanilla ice cream. It melted fast in the sun, but it was delicious. We left at five o'clock. I was sandy and tired, but very happy.</p>`,
+    zh: [`上个周末，我家去了 Mission Bay。它是奥克兰一个很受欢迎的海滩。那天阳光明媚，天气温暖。`,
+         `在海滩，我们做了沙堡。我弟弟 Tom 非常兴奋。他从海里搬来一桶桶水。海浪不大，但水很冷。我把脚伸进去只有一分钟。`,
+         `午饭时间，我们在海滩附近的店里买了炸鱼薯条。我们坐在草地上，看人们游泳。一些少年在打沙滩排球。他们的游戏看起来很有趣。`,
+         `下午，冰淇淋车来了。我买了一个香草冰淇淋。它在阳光下融化得很快，但很好吃。我们五点离开。我满身是沙，很累，但非常开心。`],
+    keywords: { 'popular': '受欢迎的', 'castle': '城堡', 'melt': '融化', 'delicious': '美味的' },
+    quiz: [
+      { q: 'Where did Sam\'s family go?', options: ['Mt Eden', 'Mission Bay', 'Devonport', 'Wellington'], correct: 1 },
+      { q: 'What did they have for lunch?', options: ['Pizza', 'Fish and chips', 'Sandwiches', 'Burgers'], correct: 1 }
+    ]
+  },
+  { id: 's2-a5', stage: 2, title: 'Going to the Library',
+    lexile: 480, words: 150,
+    en: `<p>Our school library is on the second floor. It is quiet and full of books. I go there twice a week to do my homework.</p>
+<p>The librarian is Ms Lee. She is friendly and always smiling. When I came to the library for the first time, she helped me find an English dictionary. She also showed me the new book section. Most books there are easy to read.</p>
+<p>Now I borrow two books every week. I read them at home before sleep. Some books are about animals, others are about young heroes. My favorite is a series about a boy and his dog. They have many adventures together.</p>
+<p>Reading helps me learn new English words. Mum says my English is getting better and better. The library is my favorite place at school.</p>`,
+    zh: [`我们学校图书馆在二楼。这里安静，到处都是书。我每周去那里两次写作业。`,
+         `图书馆员是 Ms Lee。她很友善，总是笑着。我第一次来图书馆时，她帮我找了一本英语词典。她还给我看了新书区。那里的书大多容易读。`,
+         `现在我每周借两本书。我在家睡前读。有些书讲动物，有些讲年轻英雄。我最喜欢的是一套讲一个男孩和他的狗的书。他们一起有很多冒险。`,
+         `读书帮我学新的英语单词。妈妈说我的英语越来越好了。图书馆是我学校最喜欢的地方。`],
+    keywords: { 'librarian': '图书馆员', 'dictionary': '词典', 'adventure': '冒险' },
+    quiz: [
+      { q: 'How often does Sam go to the library?', options: ['Once a week', 'Twice a week', 'Every day', 'Once a month'], correct: 1 },
+      { q: 'What is Sam\'s favorite book about?', options: ['A boy and his dog', 'A girl and her cat', 'Space travel', 'Magic'], correct: 0 }
+    ]
+  },
+  { id: 's2-a6', stage: 2, title: 'Christmas in New Zealand',
+    lexile: 510, words: 170,
+    en: `<p>Christmas in New Zealand is very different from China. First, it happens in summer! While in China people eat hot pot in winter, here in New Zealand we have BBQ outside in December.</p>
+<p>Last Christmas was my first Christmas in New Zealand. Liam invited me to his family BBQ. They cooked sausages, chicken and corn on the grill. We also had pavlova, a special NZ dessert. It is sweet and full of fresh fruit.</p>
+<p>After lunch, we played cricket in the garden. Cricket is a popular game here. The rules are not too hard, but you need to hit the ball with a bat. I was not very good at first, but Liam's grandpa taught me.</p>
+<p>At night, we watched fireworks. People do not wear thick coats in Christmas here. Instead, we wear T-shirts and shorts. It feels strange to celebrate Christmas in summer, but I love it.</p>`,
+    zh: [`新西兰的圣诞节和中国非常不同。首先，它在夏天！中国人冬天吃火锅时，新西兰人十二月在户外烤肉。`,
+         `去年圣诞是我在新西兰的第一个圣诞。Liam 邀请我去他家烧烤。他们在烤架上烤香肠、鸡肉和玉米。我们还吃了帕夫洛娃，一种新西兰特色甜点。它甜甜的，配满新鲜水果。`,
+         `午餐后，我们在花园里打板球。板球在这里很受欢迎。规则不太难，但你要用球棒击球。我开始不太会，但 Liam 的爷爷教了我。`,
+         `晚上，我们看了烟花。这里圣诞节人们不穿厚外套。相反，我们穿 T 恤和短裤。在夏天庆祝圣诞感觉很奇怪，但我喜欢。`],
+    keywords: { 'BBQ': '烧烤', 'pavlova': '帕夫洛娃（蛋糕）', 'cricket': '板球', 'fireworks': '烟花' },
+    quiz: [
+      { q: 'What season is Christmas in New Zealand?', options: ['Summer', 'Winter', 'Spring', 'Autumn'], correct: 0 },
+      { q: 'What is pavlova?', options: ['A meat dish', 'A NZ dessert', 'A drink', 'A sport'], correct: 1 }
+    ]
+  },
+  { id: 's2-a7', stage: 2, title: 'The School Play',
+    lexile: 495, words: 155,
+    en: `<p>Every year, our school puts on a big play. This year, the play is "The Wizard of Oz". I tried for a small part. I was nervous because my English is not perfect yet.</p>
+<p>Mr Chen, the drama teacher, was kind. He said, "Don't worry about your accent. Just speak from your heart." After two auditions, I got the role of a guard. I have only six lines, but I am very proud.</p>
+<p>For three months, we practised after school. Aroha is playing Dorothy. She is a great singer. Liam is the Tin Man. He looks funny in his silver costume.</p>
+<p>The play opens next Friday. My family is coming to watch. I have practised my lines a hundred times in front of the mirror. I am still a little scared, but also very excited. Wish me luck!</p>`,
+    zh: [`每年我们学校都会上演一部大戏。今年的戏是"绿野仙踪"。我试了一个小角色。我紧张，因为我的英语还不完美。`,
+         `Mr Chen，戏剧老师，很友好。他说："别担心你的口音。从心里说就行。"经过两次试镜，我得到了一个守卫的角色。我只有六句台词，但非常自豪。`,
+         `三个月来，我们放学后排练。Aroha 演 Dorothy。她唱歌很棒。Liam 演锡人。他穿着银色服装看起来很搞笑。`,
+         `戏下周五开演。我家人会来看。我已经在镜子前练了一百遍台词。我还是有点害怕，但也非常兴奋。祝我好运！`],
+    keywords: { 'play': '戏剧', 'audition': '试镜', 'role': '角色', 'costume': '服装' },
+    quiz: [
+      { q: 'What part did Sam get?', options: ['Dorothy', 'Tin Man', 'A guard', 'Scarecrow'], correct: 2 },
+      { q: 'How many lines does Sam have?', options: ['Three', 'Six', 'Ten', 'Twenty'], correct: 1 }
+    ]
+  },
+  { id: 's2-a8', stage: 2, title: 'Helping a Friend',
+    lexile: 455, words: 148,
+    en: `<p>Last Wednesday, Aroha was sad at lunch. She did not want to eat. I asked her, "What's wrong?" She did not answer at first.</p>
+<p>After some time, she told me. Her grandma was sick in hospital. Aroha was worried. I did not know what to say. But I sat with her. I gave her my apple.</p>
+<p>The next day, I made her a small card. I drew her smiling and put "You are not alone" inside. Aroha read it and her eyes were wet. She gave me a big hug.</p>
+<p>A week later, Aroha's grandma got better and came home. Aroha brought me a small gift to say thank you. It was a friendship bracelet. I wear it every day now. Being a good friend means staying with people when they are sad.</p>`,
+    zh: [`上周三，Aroha 在午餐时很难过。她不想吃。我问她："怎么了？"她一开始没回答。`,
+         `过了一会儿，她告诉我。她奶奶在医院里生病。Aroha 很担心。我不知道该说什么。但我陪她坐着。我把我的苹果给了她。`,
+         `第二天，我给她做了一张小卡片。我画了她在微笑，里面写"你不孤单"。Aroha 看到，眼眶湿了。她给了我一个大大的拥抱。`,
+         `一周后，Aroha 的奶奶好了，回家了。Aroha 给我带了一份小礼物表示感谢。是一个友谊手链。我现在每天都戴着。当好朋友意味着在别人难过时陪伴他们。`],
+    keywords: { 'sick': '生病的', 'worried': '担心的', 'hug': '拥抱', 'friendship': '友谊' },
+    quiz: [
+      { q: 'Why was Aroha sad?', options: ['She failed a test', 'Her grandma was sick', 'She lost something', 'She was tired'], correct: 1 },
+      { q: 'What did Sam give Aroha at first?', options: ['A card', 'His apple', 'A book', 'Money'], correct: 1 }
+    ]
+  },
+  { id: 's2-a9', stage: 2, title: 'Anzac Day',
+    lexile: 530, words: 170,
+    en: `<p>Anzac Day is a special day in New Zealand. It is on April 25th every year. ANZAC stands for Australian and New Zealand Army Corps. On this day, we remember the soldiers who died in wars.</p>
+<p>This year, my class went to the Anzac Day service at our local park. We had to wake up very early. The service started at six in the morning. It is called a "dawn service" because it begins when the sun rises.</p>
+<p>Many people came. Old soldiers wore their medals. Some had grandsons and granddaughters with them. A man played a special trumpet song called "The Last Post". Then everyone was quiet for one minute. We thought about people who lost their lives.</p>
+<p>At school, we made poppy flowers from red paper. The poppy is the symbol of Anzac Day. We wear them to show respect. Anzac Day is sad, but it is also important. It teaches us about peace.</p>`,
+    zh: [`澳新军团日是新西兰一个特别的日子。每年的 4 月 25 日。ANZAC 代表澳大利亚和新西兰军团。这一天，我们纪念在战争中牺牲的士兵。`,
+         `今年，我们班去了当地公园的澳新军团日纪念仪式。我们必须很早起床。仪式早上六点开始。它叫"黎明仪式"，因为它在日出时开始。`,
+         `很多人来了。老兵戴着勋章。一些人带着孙子孙女。一个男人吹了一首特别的小号曲，叫"最后号角"。然后大家安静一分钟。我们想着失去生命的人。`,
+         `在学校，我们用红纸做了罂粟花。罂粟花是澳新军团日的象征。我们戴着它表示敬意。澳新军团日是悲伤的，但也很重要。它教我们和平的意义。`],
+    keywords: { 'soldier': '士兵', 'dawn': '黎明', 'medal': '勋章', 'poppy': '罂粟花' },
+    quiz: [
+      { q: 'What does ANZAC stand for?', options: ['Australian New Zealand Army Corps', 'A New Zealand Christmas', 'Anzac Native Activity Corps', 'Auckland NZ Animal Care'], correct: 0 },
+      { q: 'What is the symbol of Anzac Day?', options: ['A medal', 'A poppy flower', 'A flag', 'A trumpet'], correct: 1 }
+    ]
+  },
+  { id: 's2-a10', stage: 2, title: 'Joining the Swimming Team',
+    lexile: 470, words: 152,
+    en: `<p>I joined the school swimming team last month. I have been swimming since I was six, so I felt confident. But the team practice was harder than I thought.</p>
+<p>We swim every Tuesday and Thursday at the school pool. Coach Mike pushes us to do more laps each week. At first, my arms hurt the next day. Now my body is getting stronger.</p>
+<p>There are twelve people on the team. We are like a small family. Before each race, we cheer for each other. After practice, we sometimes go for ice cream together.</p>
+<p>Last weekend was my first race. I came third in the fifty-meter freestyle. I was happy with my time. Mum and dad came to watch. They were proud of me. Next month is the regional competition. I want to do my best for our school.</p>`,
+    zh: [`我上个月加入了学校游泳队。我从六岁开始游泳，所以我感到自信。但队伍训练比我想的要难。`,
+         `我们每周二和周四在学校泳池游泳。Mike 教练每周都推我们多游几圈。一开始，我的手臂第二天会疼。现在我的身体越来越强壮。`,
+         `队里有十二个人。我们像一个小家庭。每场比赛前，我们互相加油。训练后，我们有时一起去吃冰淇淋。`,
+         `上周末是我的第一场比赛。我在五十米自由泳中得了第三名。我对自己的成绩很满意。爸爸妈妈来看了。他们为我感到自豪。下个月是地区比赛。我想为学校尽最大努力。`],
+    keywords: { 'confident': '自信的', 'coach': '教练', 'lap': '一圈', 'freestyle': '自由泳' },
+    quiz: [
+      { q: 'When does the swim team practice?', options: ['Monday and Wednesday', 'Tuesday and Thursday', 'Every weekend', 'Friday only'], correct: 1 },
+      { q: 'What place did Sam come in his first race?', options: ['First', 'Second', 'Third', 'Fifth'], correct: 2 }
+    ]
+  },
+
+  /* 阶段 3: 500-700L, 150-250 词 */
+  { id: 's3-a1', stage: 3, title: 'Visiting Auckland',
+    lexile: 620, words: 220,
+    en: `<p>Last weekend, my family and I visited Auckland. Auckland is the biggest city in New Zealand. About 1.6 million people live there. It is known as the "City of Sails" because of the many boats in its harbours.</p>
+<p>We first went up the Sky Tower. The Sky Tower is 328 meters tall. From the top, we could see the whole city, including two oceans. The view was amazing.</p>
+<p>Next, we walked along Queen Street, the main shopping street. There were many shops and cafes. I tried a flat white, which is a popular New Zealand coffee. My dad bought a souvenir made from paua shell. Paua is a special New Zealand shellfish with beautiful colours.</p>
+<p>In the afternoon, we took a ferry to Devonport, a small town across the harbour. The ferry ride took about ten minutes. From Devonport, we walked up Mount Victoria. It is an old volcano. From the top, we had another great view of Auckland.</p>
+<p>We were tired but happy when we got home. Auckland is a beautiful and exciting city to visit.</p>`,
+    zh: [`上周末，我和家人去了奥克兰。奥克兰是新西兰最大的城市。大约有 160 万人住在那里。它被称为"风帆之城"，因为港口里有很多船。`,
+         `我们先上了天空塔。天空塔有 328 米高。从塔顶，我们能看到整座城市，包括两个海洋。景色非常壮观。`,
+         `然后我们沿着皇后街走，那是主要的购物街。有很多商店和咖啡馆。我尝了 flat white，一种新西兰特色咖啡。我爸爸买了一个鲍鱼贝壳做的纪念品。鲍鱼是一种新西兰特有的贝类，颜色很美。`,
+         `下午，我们乘渡轮去了港口对面的小镇 Devonport。渡轮大约十分钟。从 Devonport，我们爬上了 Mount Victoria。它是一座古老的火山。从山顶，我们又一次欣赏到了奥克兰的美景。`,
+         `回到家时我们很累但很开心。奥克兰是一座美丽而充满活力的城市。`],
+    keywords: { 'harbour': '港口', 'souvenir': '纪念品', 'volcano': '火山', 'paua': '鲍鱼' },
+    quiz: [
+      { q: 'Why is Auckland called the "City of Sails"?', options: ['Because of the wind', 'Because of the many boats', 'Because of the airport', 'Because of the buildings'], correct: 1 },
+      { q: 'How long does the ferry to Devonport take?', options: ['Five minutes', 'Ten minutes', 'Twenty minutes', 'One hour'], correct: 1 }
+    ]
+  },
+  { id: 's3-a2', stage: 3, title: 'The Maori Greeting',
+    lexile: 670, words: 210,
+    en: `<p>One thing I find very interesting about New Zealand is the traditional Maori greeting. It is called the hongi. When two people do a hongi, they press their noses and foreheads together. They breathe in at the same time.</p>
+<p>This greeting comes from a Maori belief. They believe that when two people share their breath, they share their life force. In Maori culture, breath is called "ha". When you do a hongi, you become "one people".</p>
+<p>I first saw a hongi when my school had a powhiri. A powhiri is a Maori welcome ceremony. New students and visitors are welcomed in this special way. At first, I was nervous. I had never touched another person's nose before! But my teacher told me it is a great honour.</p>
+<p>When I did the hongi, I felt connected to the Maori culture. The elder smiled at me kindly. After that, I felt like I belonged at the school. The hongi made me feel welcome in a way that a simple handshake could not.</p>`,
+    zh: [`新西兰让我觉得很有意思的一件事是传统的毛利问候。它叫 hongi（碰鼻礼）。两个人行 hongi 时，他们的鼻子和额头互相贴在一起。他们同时吸气。`,
+         `这个问候源自毛利人的信念。他们相信当两个人分享呼吸时，他们就分享了生命力。在毛利文化中，呼吸叫 "ha"。当你行 hongi 时，你和对方就成了"一体"。`,
+         `我第一次看到 hongi 是在学校举行 powhiri 的时候。Powhiri 是毛利欢迎仪式。新学生和访客以这种特殊方式被迎接。一开始我很紧张。我从未碰过别人的鼻子！但老师告诉我这是一种莫大的荣誉。`,
+         `当我行 hongi 时，我感觉与毛利文化相连。那位长者亲切地对我微笑。从那以后，我觉得自己属于这所学校。Hongi 让我感受到一种简单握手无法带来的欢迎。`],
+    keywords: { 'hongi': '碰鼻礼（毛利问候）', 'powhiri': '毛利欢迎仪式', 'ceremony': '仪式', 'honour': '荣誉' },
+    quiz: [
+      { q: 'What do people do in a hongi?', options: ['Shake hands', 'Press noses and foreheads', 'Hug', 'Bow'], correct: 1 },
+      { q: 'What is a powhiri?', options: ['A type of food', 'A welcome ceremony', 'A dance', 'A school'], correct: 1 }
+    ]
+  },
+  { id: 's3-a3', stage: 3, title: 'Tongariro National Park',
+    lexile: 640, words: 225,
+    en: `<p>Last school holiday, my family went to Tongariro National Park in the central North Island. It is one of New Zealand's most famous parks. The park has three large volcanoes: Mount Ruapehu, Mount Ngauruhoe and Mount Tongariro. The Maori people see these mountains as sacred.</p>
+<p>We did a part of the Tongariro Alpine Crossing. It is a famous walking track, almost twenty kilometres long. We only walked five kilometres because it was hard for my little brother.</p>
+<p>The landscape was amazing and different from anything I had seen before. There were red rocks, steam coming out of the ground, and bright green lakes. The lakes get their colour from minerals in the water. My dad said the area looks like the moon.</p>
+<p>A famous movie called "Lord of the Rings" was filmed here. Mount Ngauruhoe was used as Mount Doom in the movie. Our guide told us many fans visit the park because of this.</p>
+<p>The weather changed quickly during our walk. One minute it was sunny, the next minute it was cold and windy. Our guide said you must be ready for all kinds of weather in the mountains.</p>
+<p>It was a tiring but memorable day. I want to come back when I am older to do the full crossing.</p>`,
+    zh: [`上个学期假期，我家去了北岛中部的通加里罗国家公园。它是新西兰最著名的公园之一。公园有三座大火山：鲁阿佩胡山、瑙鲁霍伊山和通加里罗山。毛利人视这些山为圣山。`,
+         `我们走了通加里罗高山步道的一部分。它是一条著名的徒步路线，将近二十公里长。我们只走了五公里，因为对弟弟来说太难。`,
+         `景色令人惊叹，和我之前看到的任何地方都不同。有红色的岩石、地里冒出的蒸汽，还有亮绿色的湖。湖的颜色来自水中的矿物质。我爸爸说这片区域像月球。`,
+         `一部著名的电影"指环王"在这里拍摄。瑙鲁霍伊山在电影中被用作末日山。我们的向导告诉我们，许多影迷因此来这个公园。`,
+         `我们徒步时天气变化很快。前一分钟是晴天，下一分钟就又冷又风大。向导说在山里你必须为各种天气做好准备。`,
+         `这是一个累但难忘的日子。我想等我大一些再来走完整条徒步路线。`],
+    keywords: { 'volcano': '火山', 'sacred': '神圣的', 'landscape': '景观', 'mineral': '矿物质', 'memorable': '难忘的' },
+    quiz: [
+      { q: 'How long is the full Tongariro Alpine Crossing?', options: ['5 km', '10 km', 'Almost 20 km', '50 km'], correct: 2 },
+      { q: 'Which famous movie was filmed here?', options: ['Harry Potter', 'Lord of the Rings', 'Star Wars', 'Frozen'], correct: 1 }
+    ]
+  },
+  { id: 's3-a4', stage: 3, title: 'The Story of Maui',
+    lexile: 660, words: 210,
+    en: `<p>Maui is a famous hero in Maori mythology. There are many legends about him. He was clever and brave, and he often used trickery to help his people.</p>
+<p>One of the most famous stories is about how Maui caught the sun. Long ago, the sun moved across the sky too fast. The days were short, so people did not have enough time to find food or work. Maui decided to do something. He made strong ropes from flax. With his brothers, he climbed to the top of a high mountain. They waited for the sun to rise. When it came up, they threw their ropes and caught it. Maui hit the sun with a magic jawbone until it agreed to slow down. Since then, the days have been longer.</p>
+<p>Another story tells how Maui pulled up the North Island of New Zealand from the sea. Maori people call the North Island "Te Ika a Maui", which means "The Fish of Maui". When you look at a map of New Zealand, you can see that the North Island looks a bit like a fish.</p>
+<p>Maori stories teach important lessons about courage, family, and the natural world.</p>`,
+    zh: [`毛伊是毛利神话中著名的英雄。关于他有许多传说。他聪明又勇敢，常用计谋帮助他的族人。`,
+         `最著名的故事之一是毛伊抓住太阳。很久以前，太阳在天空中移动得太快。白天很短，人们没有足够时间找食物或工作。毛伊决定做点什么。他用亚麻做了结实的绳子。和兄弟们一起，他爬上一座高山。他们等待太阳升起。当它升起时，他们扔出绳子抓住了它。毛伊用一根魔法颚骨打太阳，直到它同意慢下来。从此以后，白天就变长了。`,
+         `另一个故事讲毛伊如何从海里拉起新西兰的北岛。毛利人把北岛叫做 "Te Ika a Maui"，意思是"毛伊的鱼"。当你看新西兰地图时，你能看到北岛有点像一条鱼。`,
+         `毛利故事教导关于勇气、家庭和自然世界的重要道理。`],
+    keywords: { 'mythology': '神话', 'trickery': '计谋', 'flax': '亚麻', 'legend': '传说' },
+    quiz: [
+      { q: 'What did Maui do to the sun?', options: ['He shot it', 'He caught it to slow it down', 'He hid it', 'He made it brighter'], correct: 1 },
+      { q: 'What does "Te Ika a Maui" mean?', options: ['The Fish of Maui', 'The Boat of Maui', 'The Sun of Maui', 'The Family of Maui'], correct: 0 }
+    ]
+  },
+  { id: 's3-a5', stage: 3, title: 'Wellington - The Windy City',
+    lexile: 620, words: 205,
+    en: `<p>Wellington is the capital city of New Zealand. It is also called "Windy Wellington" because it is one of the windiest cities in the world. The wind comes through Cook Strait, the water between the North Island and South Island.</p>
+<p>The city is much smaller than Auckland. About 200,000 people live in central Wellington. But there are many interesting places to visit.</p>
+<p>Te Papa is one of the most popular museums in the country. Its full name is "Te Papa Tongarewa", meaning "container of treasures". It has free entry, so anyone can visit. Inside, you can learn about Maori history, see a giant squid, and experience an earthquake simulator. It is one of my favourite places.</p>
+<p>Another famous place is the Cuba Street area. It is full of small shops, cafes, and street artists. Many young people like to spend their weekends there. There is a famous bucket fountain that splashes water onto people walking past.</p>
+<p>The wind in Wellington can be very strong. Sometimes the airport closes because planes cannot land safely. People in Wellington joke that they don't need to go to the gym - just walking against the wind gives them exercise.</p>`,
+    zh: [`惠灵顿是新西兰的首都。它也被称为"风之惠灵顿"，因为它是世界上最多风的城市之一。风从库克海峡吹来，那是北岛和南岛之间的海域。`,
+         `这个城市比奥克兰小得多。大约 20 万人住在惠灵顿市中心。但有许多有趣的地方可以参观。`,
+         `Te Papa 是该国最受欢迎的博物馆之一。它的全名是 "Te Papa Tongarewa"，意思是"宝藏之容器"。它免费入场，所以谁都可以参观。在里面，你可以了解毛利历史、看巨型乌贼、体验地震模拟器。这是我最喜欢的地方之一。`,
+         `另一个著名的地方是 Cuba Street 区。它充满小商店、咖啡馆和街头艺人。许多年轻人喜欢在那里度周末。那里有一个著名的水桶喷泉，会把水溅到路过的人身上。`,
+         `惠灵顿的风可能非常大。有时机场会关闭，因为飞机无法安全降落。惠灵顿人开玩笑说他们不需要去健身房——只要顶着风走路就够运动了。`],
+    keywords: { 'capital': '首都', 'strait': '海峡', 'museum': '博物馆', 'simulator': '模拟器' },
+    quiz: [
+      { q: 'Why is Wellington called "Windy Wellington"?', options: ['Many windmills', 'One of the windiest cities', 'A famous wind festival', 'Lots of fans'], correct: 1 },
+      { q: 'What does "Te Papa Tongarewa" mean?', options: ['Container of treasures', 'House of culture', 'Window to the past', 'Land of birds'], correct: 0 }
+    ]
+  },
+  { id: 's3-a6', stage: 3, title: 'New Zealand\'s Forests',
+    lexile: 650, words: 215,
+    en: `<p>New Zealand's forests are very special. They are full of trees and plants that grow nowhere else in the world. Some trees are very, very old.</p>
+<p>The most famous tree is the kauri. Kauri trees are giants. They can grow more than fifty meters tall and live for thousands of years. The oldest one, called "Tane Mahuta" or "Lord of the Forest", is over 2,000 years old. It is found in Waipoua Forest in the North Island. Standing next to it makes you feel small.</p>
+<p>Today, kauri trees are in danger. A disease called "kauri dieback" is killing them. The disease spreads through the soil. When you visit a kauri forest, you must clean your shoes at special stations. This stops the disease from spreading.</p>
+<p>Another famous tree is the silver fern. Its leaves are green on top and silver underneath. The silver fern is a symbol of New Zealand. You can see it on rugby uniforms and the back of coins.</p>
+<p>New Zealand also has rainforests called bush. In the bush, you might see native birds like the tui or the wood pigeon, called kereru in Maori. They make loud sounds and are easy to spot if you look carefully.</p>`,
+    zh: [`新西兰的森林非常特别。里面充满了世界其他地方不生长的树木和植物。有些树非常非常古老。`,
+         `最著名的树是贝壳杉。贝壳杉是巨树。它们可以长到超过五十米高，活几千年。最古老的一棵叫 "Tane Mahuta" 或"森林之王"，已经超过 2000 岁。它在北岛的怀波瓦森林里。站在它旁边让你感到自己很渺小。`,
+         `今天，贝壳杉处于危险中。一种叫"贝壳杉枯死病"的疾病正在杀死它们。这种疾病通过土壤传播。当你参观贝壳杉森林时，必须在特殊站点清洗鞋子。这能阻止疾病传播。`,
+         `另一种著名的树是银蕨。它的叶子上面是绿色，下面是银色。银蕨是新西兰的象征。你可以在橄榄球队服和硬币背面看到它。`,
+         `新西兰也有雨林，叫 bush。在 bush 里，你可能会看到原生鸟类，比如 tui（图伊鸟）或木鸽，毛利语叫 kereru。它们叫声大，如果你仔细看就容易发现。`],
+    keywords: { 'kauri': '贝壳杉', 'dieback': '枯死病', 'fern': '蕨类', 'native': '本土的', 'bush': '丛林' },
+    quiz: [
+      { q: 'How old is "Tane Mahuta"?', options: ['200 years', 'Over 2,000 years', '500 years', '10,000 years'], correct: 1 },
+      { q: 'Why do visitors clean their shoes in kauri forests?', options: ['Forest rules of cleanliness', 'To stop the dieback disease', 'Religious reason', 'To respect Maori'], correct: 1 }
+    ]
+  },
+  { id: 's3-a7', stage: 3, title: 'The House System at School',
+    lexile: 600, words: 190,
+    en: `<p>On my first day at the school, the principal told us about the house system. I did not understand what he meant. Later, Aroha explained.</p>
+<p>Every student in the school belongs to one of four houses. The houses are named after famous New Zealanders: Hillary (after Sir Edmund Hillary, the first man to climb Mount Everest), Sheppard (after Kate Sheppard, who helped women get the right to vote), Te Rauparaha (after the famous Maori chief), and Ngata (after Sir Apirana Ngata, a Maori leader).</p>
+<p>I am in Hillary house. Our colour is green. We have a house captain who is in Year 13. His name is Daniel. The captains organise our team for competitions.</p>
+<p>Throughout the year, the houses compete in different events. There are sports days, singing competitions, and quiz nights. When you win something, you earn points for your house. At the end of the year, the house with the most points gets a trophy.</p>
+<p>The house system makes school more fun. I have friends from different year groups because we are in the same house. We help each other and feel proud when our house does well.</p>`,
+    zh: [`我在学校的第一天，校长告诉我们关于学院系统的事。我不明白他的意思。后来 Aroha 解释了。`,
+         `学校每个学生都属于四个学院之一。学院以著名的新西兰人命名：希拉里学院（以爱德蒙·希拉里爵士命名，他是第一个攀登珠穆朗玛峰的人）、谢帕德学院（以凯特·谢帕德命名，她帮女性获得了投票权）、Te Rauparaha 学院（以著名的毛利酋长命名）和 Ngata 学院（以阿皮拉纳·恩加塔爵士命名，一位毛利领袖）。`,
+         `我在希拉里学院。我们的颜色是绿色。我们有一位 13 年级的学院长。他叫 Daniel。学院长为比赛组织我们的队伍。`,
+         `全年里，学院之间在不同的活动中竞争。有运动会、歌唱比赛和知识问答之夜。当你赢得什么时，就为你的学院赢得积分。年末，积分最多的学院得到奖杯。`,
+         `学院系统让学校更有趣。我有不同年级的朋友，因为我们在同一个学院。我们互相帮助，当我们的学院表现好时感到自豪。`],
+    keywords: { 'principal': '校长', 'house': '学院', 'captain': '队长', 'compete': '竞争', 'trophy': '奖杯' },
+    quiz: [
+      { q: 'How many houses does the school have?', options: ['Two', 'Three', 'Four', 'Five'], correct: 2 },
+      { q: 'Who was Sir Edmund Hillary?', options: ['First woman PM of NZ', 'First man to climb Everest', 'A Maori chief', 'A NZ inventor'], correct: 1 }
+    ]
+  },
+  { id: 's3-a8', stage: 3, title: 'Captain Cook\'s Arrival',
+    lexile: 670, words: 225,
+    en: `<p>Captain James Cook was a British explorer. In 1769, he arrived in New Zealand on his ship, the Endeavour. He was not the first European to see New Zealand. A Dutch explorer named Abel Tasman had seen it in 1642. But Cook was the first to map the country.</p>
+<p>When Cook arrived, Maori people had already lived in New Zealand for hundreds of years. They had come from other Pacific islands in big canoes. They called the land "Aotearoa", which means "land of the long white cloud".</p>
+<p>The first meeting between Cook's crew and the Maori was not peaceful. Both sides did not understand each other well. There were misunderstandings, and some people died.</p>
+<p>Over the next year, Cook sailed around both islands. He drew detailed maps and gave English names to many places. He also collected plants and animals to take back to England.</p>
+<p>Today, Cook is a complicated figure in New Zealand history. Some people see him as a great explorer. Others remember that his visit was the start of changes that hurt Maori people. Land was taken, and many died from new diseases.</p>
+<p>At school, we learn both sides of the story. It is important to understand history honestly. We can be proud of New Zealand without ignoring the hard parts of its past.</p>`,
+    zh: [`詹姆斯·库克船长是英国探险家。1769 年，他乘坐他的船 Endeavour 号到达新西兰。他不是第一个看到新西兰的欧洲人。一位名叫阿贝尔·塔斯曼的荷兰探险家在 1642 年看到了它。但库克是第一个绘制该国地图的人。`,
+         `库克到达时，毛利人已经在新西兰生活了几百年。他们乘大独木舟从其他太平洋岛屿来。他们把这片土地叫做 "Aotearoa"，意思是"长白云之乡"。`,
+         `库克船员和毛利人之间的第一次会面并不和平。双方互不理解。出现了误解，一些人死了。`,
+         `在接下来的一年里，库克绕着两个岛屿航行。他画了详细的地图，并给许多地方起了英文名字。他还收集植物和动物带回英国。`,
+         `今天，库克在新西兰历史上是一个复杂的人物。有些人视他为伟大的探险家。其他人记得他的访问是伤害毛利人变化的开始。土地被夺走，许多人死于新疾病。`,
+         `在学校，我们学习故事的两面。诚实地理解历史很重要。我们可以为新西兰自豪，但不忽视它过去艰难的部分。`],
+    keywords: { 'explorer': '探险家', 'canoe': '独木舟', 'misunderstanding': '误解', 'honestly': '诚实地' },
+    quiz: [
+      { q: 'When did Cook arrive in New Zealand?', options: ['1642', '1769', '1840', '1900'], correct: 1 },
+      { q: 'What does "Aotearoa" mean?', options: ['Land of green hills', 'Land of the long white cloud', 'Land of brave people', 'Land of the sun'], correct: 1 }
+    ]
+  },
+
+  /* 阶段 4: 650-800L, 200-300 词 */
+  { id: 's4-a1', stage: 4, title: 'A Science Experiment',
+    lexile: 760, words: 280,
+    en: `<p>In science class today, we did an exciting experiment about chemical reactions. Our teacher, Ms Johnson, divided us into pairs. My partner was Liam.</p>
+<p>The goal was to make a small volcano erupt using common kitchen ingredients. Ms Johnson explained that the reaction between an acid and a base produces carbon dioxide gas, which causes the eruption.</p>
+<p>First, we built a small mountain shape using clay. In the centre, we placed a small plastic bottle. Then we added two tablespoons of baking soda into the bottle. Baking soda is a base. Next, Liam carefully poured vinegar into the bottle. Vinegar is an acid.</p>
+<p>What happened next was amazing! The mixture quickly bubbled up and overflowed like real lava. We added red food colouring to make it look more dramatic. Everyone in the classroom was watching and cheering.</p>
+<p>After the experiment, Ms Johnson asked us to write a short report. We had to describe what we did, what we observed, and what we learned. The chemical equation she showed us was: sodium bicarbonate plus acetic acid produces sodium acetate, water, and carbon dioxide.</p>
+<p>This was my favourite science lesson so far. I learned that chemistry can be both useful and fun. Now I want to try more experiments at home, but my mum says I need to be careful and ask first. Maybe I will become a scientist one day.</p>`,
+    zh: [`今天科学课上，我们做了一个关于化学反应的有趣实验。我们的老师 Ms Johnson 把我们分成两人一组。我的搭档是 Liam。`,
+         `目标是用常见的厨房原料制作一个小火山喷发。Ms Johnson 解释说，酸和碱的反应会产生二氧化碳气体，这就是喷发的原因。`,
+         `首先，我们用黏土做了一个小山形状。在中间，我们放了一个小塑料瓶。然后我们往瓶子里加了两勺小苏打。小苏打是碱。接着，Liam 小心地把醋倒进瓶子里。醋是酸。`,
+         `接下来发生的事真神奇！混合物迅速冒泡溢出，就像真正的熔岩一样。我们加了红色食用色素让它看起来更逼真。教室里的每个人都在看、在欢呼。`,
+         `实验结束后，Ms Johnson 让我们写一份简短报告。我们要描述我们做了什么、观察到什么、学到了什么。她给我们看的化学方程式是：碳酸氢钠加上醋酸，生成醋酸钠、水和二氧化碳。`,
+         `这是我到目前为止最喜欢的科学课。我学到化学既有用又有趣。现在我想在家里做更多实验，但我妈妈说我必须小心，要先问她。也许有一天我会成为科学家。`],
+    keywords: { 'reaction': '反应', 'erupt': '喷发', 'baking soda': '小苏打', 'vinegar': '醋', 'equation': '方程式' },
+    quiz: [
+      { q: 'What gas is produced in the experiment?', options: ['Oxygen', 'Carbon dioxide', 'Hydrogen', 'Nitrogen'], correct: 1 },
+      { q: 'Why did they add red food colouring?', options: ['To make it taste better', 'To make it look like real lava', 'To make it bubble more', 'To slow the reaction'], correct: 1 }
+    ]
+  },
+
+  /* 阶段 5: 750-900L, 300-400 词 */
+  { id: 's5-a1', stage: 5, title: 'Writing a Diary',
+    lexile: 840, words: 360,
+    en: `<p>My English teacher, Mr Brown, asked everyone in the class to start keeping a diary. He said it would help us improve our writing and reflect on our experiences. At first, I thought it was a strange idea. Why would I want to write about my own day?</p>
+<p>However, after a few weeks, I started to enjoy it. Each evening, I sit at my desk and write about what happened during the day. Sometimes I write about ordinary things like what I ate for lunch. Other times, I write about important moments, like when I made a new friend or solved a difficult maths problem.</p>
+<p>Mr Brown showed us some tips for diary writing. First, he said we should write regularly, even if only for ten minutes. Second, we should describe our feelings, not just what happened. Third, he encouraged us to include details about the senses—what we saw, heard, smelled, tasted, and touched.</p>
+<p>One day, I wrote about a hike I did with my family in the Coromandel. I described the smell of pine trees, the sound of water in a stream, and the feeling of mud on my boots. When I read it again later, I could almost relive the experience. That was when I understood why diaries are so valuable.</p>
+<p>My English has improved a lot since I started keeping a diary. I have learned new words, practised different sentence structures, and become more confident in expressing my thoughts. Last week, Mr Brown read part of my diary to the class as an example. I felt proud, even though I was embarrassed at first.</p>
+<p>Now I encourage my younger brother to keep a diary too. He is nine and learning English just like me. I tell him that every day is a story worth writing down.</p>`,
+    zh: [`我的英语老师 Mr Brown 让全班同学开始写日记。他说这能帮助我们提高写作能力、反思自己的经历。一开始，我觉得这是个奇怪的想法。我为什么要写自己的一天呢？`,
+         `然而，几周后，我开始享受它了。每晚，我坐在书桌前，写下白天发生的事情。有时我写一些普通的事，比如午餐吃了什么。有时我写一些重要的时刻，比如交到新朋友或解决了一道难数学题。`,
+         `Mr Brown 给我们讲了一些写日记的技巧。第一，他说我们要规律地写，哪怕只有十分钟。第二，我们要描写感受，而不只是事件。第三，他鼓励我们加入感官细节——看到了什么、听到了什么、闻到了什么、尝到了什么、触摸到了什么。`,
+         `有一天，我写了和家人去 Coromandel 远足的事。我描写了松树的气味、小溪流水的声音，还有靴子上泥巴的触感。后来再读时，我几乎能重新经历那一切。那时我明白了为什么日记如此珍贵。`,
+         `自从我开始写日记，我的英语提高了很多。我学了新词，练习了不同的句型，表达想法也更自信了。上周，Mr Brown 把我日记的一部分作为例子读给全班。我感到自豪，虽然一开始有点尴尬。`,
+         `现在我也鼓励我弟弟写日记。他九岁，和我一样在学英语。我告诉他：每一天都是值得写下的故事。`],
+    keywords: { 'reflect': '反思', 'ordinary': '普通的', 'relive': '重新经历', 'embarrassed': '尴尬的' },
+    quiz: [
+      { q: "What did Mr Brown say about diary writing?", options: ['Write only once a week', 'Write regularly, even briefly', 'Only describe events', 'Use only short words'], correct: 1 },
+      { q: 'What did the writer learn from re-reading the Coromandel diary?', options: ['Mud is dirty', 'Diaries can bring back experiences', 'Pine trees smell bad', 'Hiking is boring'], correct: 1 }
+    ]
+  },
+
+  /* 阶段 6: 850-1000L, 400-500 词 */
+  { id: 's6-a1', stage: 6, title: 'The Kiwi Bird',
+    lexile: 940, words: 460,
+    en: `<p>The kiwi is one of the most unusual birds in the world, and it is the national symbol of New Zealand. People from New Zealand are often called "Kiwis", and this nickname comes from this special bird. However, despite being famous, the kiwi is in serious danger of extinction.</p>
+<p>What makes the kiwi so unique? Unlike most birds, the kiwi cannot fly. Its wings are tiny and hidden under its feathers. Instead, it has strong legs and runs quickly through the forest. Its feathers feel more like fur than typical bird feathers. Some scientists even joke that the kiwi is the closest thing to a mammal that is still technically a bird.</p>
+<p>Kiwis are nocturnal, which means they are active at night. During the day, they sleep in burrows underground. At night, they come out to search for food using their excellent sense of smell. Most birds have a poor sense of smell, but the kiwi's nostrils are at the tip of its long beak. This helps it find worms and insects in the soil.</p>
+<p>Female kiwis lay one of the largest eggs in proportion to their body size of any bird. A kiwi egg can weigh up to twenty percent of the mother's body weight. Imagine if a human mother gave birth to a four-year-old child! The male kiwi usually sits on the egg for about eighty days until it hatches.</p>
+<p>Sadly, kiwi populations have declined dramatically over the past century. Before humans arrived in New Zealand, kiwis had no natural predators. Now, animals brought by people, such as stoats, cats, and dogs, kill thousands of kiwis every year. Habitat loss from deforestation has also made survival harder.</p>
+<p>Fortunately, many New Zealanders are working to save the kiwi. Conservation groups run breeding programmes, where kiwi chicks are raised in safe places until they are big enough to defend themselves. Trapping programmes target the predators that harm kiwis. Some areas have been declared "pest-free zones", where wild kiwis can live safely.</p>
+<p>At my school, we recently raised money for kiwi conservation. We held a bake sale and a sponsored walk. It felt good to help protect this amazing bird. Maybe one day, kiwis will not be endangered anymore.</p>`,
+    zh: [`几维鸟是世界上最不寻常的鸟之一，它是新西兰的国家象征。新西兰人常被称为"Kiwi"，这个昵称就来自这种特殊的鸟。然而，尽管很有名，几维鸟却面临着严重的灭绝危险。`,
+         `什么让几维鸟如此独特？和大多数鸟不同，几维鸟不会飞。它的翅膀很小，藏在羽毛下。相反，它有强壮的腿，能在森林里快速奔跑。它的羽毛感觉更像皮毛，而不是典型的鸟羽。有些科学家甚至开玩笑说，几维鸟是最接近哺乳动物却仍然是鸟的物种。`,
+         `几维鸟是夜行性的，意思是它们晚上活动。白天，它们在地下洞穴里睡觉。晚上，它们出来用极佳的嗅觉觅食。大多数鸟嗅觉很差，但几维鸟的鼻孔长在长喙的尖端。这帮助它在土壤中找到虫子和昆虫。`,
+         `雌性几维鸟产的蛋相对于体型来说是所有鸟类中最大的之一。一个几维蛋的重量可达母鸟体重的百分之二十。想象一下如果一位人类母亲生下一个四岁孩子！雄性几维鸟通常孵蛋大约八十天，直到小鸟孵化。`,
+         `可悲的是，过去一个世纪里几维鸟数量急剧下降。人类到达新西兰之前，几维鸟没有天敌。现在，人类带来的动物，如白鼬、猫和狗，每年杀死数千只几维鸟。森林砍伐造成的栖息地丧失也使生存更加困难。`,
+         `幸运的是，许多新西兰人正在努力拯救几维鸟。保护组织开展繁殖计划，把幼鸟养在安全的地方，直到它们足够大可以自卫。捕猎计划针对那些伤害几维鸟的捕食者。一些地区已被宣布为"无害虫区"，野生几维鸟可以在那里安全生活。`,
+         `在我学校，我们最近为几维鸟保护募款。我们办了烘焙义卖和赞助步行。能帮助保护这种神奇的鸟，感觉真好。也许有一天，几维鸟就不再濒危了。`],
+    keywords: { 'extinction': '灭绝', 'nocturnal': '夜行性的', 'burrow': '洞穴', 'predator': '捕食者', 'conservation': '保护' },
+    quiz: [
+      { q: 'How are kiwi birds different from most birds?', options: ['They can fly higher', 'They cannot fly and have a great sense of smell', 'They live in the sea', 'They are very small'], correct: 1 },
+      { q: 'Which of these is a threat to kiwis?', options: ['Other kiwis', 'Heat', 'Predators like stoats and cats', 'Lack of trees only'], correct: 2 }
+    ]
+  },
+
+  /* 阶段 7: 1000-1150L, 500-600 词 */
+  { id: 's7-a1', stage: 7, title: 'Climate Change in New Zealand',
+    lexile: 1080, words: 560,
+    en: `<p>Climate change is one of the most pressing global issues of our time, and New Zealand is not immune to its effects. Although the country is relatively small and produces only a fraction of global emissions, the consequences of a warming planet are increasingly evident in everyday life.</p>
+<p>New Zealand's geography makes it particularly vulnerable. As a long, narrow nation surrounded by ocean, it is exposed to rising sea levels and increasingly severe weather. Coastal cities like Auckland, Wellington, and Christchurch face the risk of flooding during storms, while rural communities struggle with prolonged droughts.</p>
+<p>The country's iconic glaciers tell a worrying story. The Franz Josef and Fox Glaciers on the West Coast have retreated significantly over the past few decades. Scientists estimate that they have lost more than a kilometre of ice since the early 2000s. Tourists who visited just ten years ago can no longer recognise the landscape.</p>
+<p>Wildlife is also feeling the pressure. Native species, many of which are found nowhere else on Earth, are at risk. Warmer ocean temperatures threaten marine life around the coast, including the rare Maui dolphin. On land, beech forests are being affected by changing weather patterns, which influence the entire ecosystem from insects to native birds.</p>
+<p>The agricultural sector, the backbone of New Zealand's economy, faces significant challenges. Dairy farming, which generates a large portion of the country's export income, is both vulnerable to and a contributor to climate change. Cattle produce methane, a potent greenhouse gas. Farmers are exploring solutions, including changes to feed, breeding cattle that produce less methane, and improving farm management practices.</p>
+<p>The New Zealand government has set ambitious climate targets. The country has committed to becoming carbon neutral by 2050. To achieve this, significant changes will be required across all sectors: transport, energy, agriculture, and industry. Renewable energy already provides about 80 percent of New Zealand's electricity, but reducing emissions from transport remains a major challenge.</p>
+<p>Indigenous knowledge is playing an increasingly important role in climate solutions. Maori communities have managed their land for centuries, and their traditional practices often align with sustainable principles. Concepts like kaitiakitanga, which means guardianship over the natural environment, are being recognised as valuable approaches to environmental protection.</p>
+<p>Young people are leading the way in demanding action. School strikes for climate, inspired by activists around the world, have drawn thousands of students onto the streets of New Zealand cities. They argue that they will inherit the consequences of today's decisions and therefore deserve a voice in shaping the response.</p>
+<p>At my school, we have started several initiatives. We have a recycling programme, planted native trees in the school grounds, and our science teacher has organised a "climate action week" where students learn about renewable energy and sustainable lifestyles. Although these may seem like small actions, they help build awareness and a sense of responsibility.</p>
+<p>Climate change is a complex issue without easy answers, but inaction is not an option. New Zealand has the opportunity, and the responsibility, to be a leader. As young Kiwis, we must continue to learn, speak up, and act for the future we want to inherit.</p>`,
+    zh: [`气候变化是我们这个时代最紧迫的全球问题之一，新西兰也无法置身事外。虽然这个国家相对较小，全球排放量中只占一小部分，但地球变暖的后果在日常生活中越来越明显。`,
+         `新西兰的地理位置使其特别脆弱。作为一个被海洋环绕的狭长国家，它暴露在海平面上升和越来越极端的天气面前。奥克兰、惠灵顿和基督城等沿海城市在暴风雨中面临洪水风险，而农村社区则在长时间干旱中挣扎。`,
+         `该国标志性的冰川讲述着一个令人担忧的故事。西海岸的弗朗茨约瑟夫冰川和福克斯冰川在过去几十年里大幅退缩。科学家估计，自 2000 年代初以来，它们已经损失了超过一公里的冰。十年前来过的游客如今已认不出这片景观。`,
+         `野生动物也感受到压力。本土物种——其中许多仅存于地球上这一片土地——岌岌可危。海洋温度升高威胁着沿海的海洋生物，包括稀有的茂宜海豚。陆地上，山毛榉森林受到气候模式变化的影响，进而影响从昆虫到本地鸟类的整个生态系统。`,
+         `农业部门——新西兰经济的支柱——面临重大挑战。乳制品养殖业贡献了该国大部分出口收入，既容易受气候变化影响，又是气候变化的推动者。牛会产生甲烷，一种强效温室气体。农民正在探索解决方案，包括改变饲料、培育产甲烷较少的牛、改进农场管理实践。`,
+         `新西兰政府制定了雄心勃勃的气候目标。该国承诺在 2050 年前实现碳中和。要实现这一目标，所有领域都需要重大变革：交通、能源、农业和工业。可再生能源已经提供约 80% 的新西兰电力，但减少交通排放仍然是一大挑战。`,
+         `本土知识在气候解决方案中扮演越来越重要的角色。毛利社区管理土地已有数百年历史，他们的传统做法常常与可持续原则相一致。像 kaitiakitanga（对自然环境的守护）这样的概念正被认可为环境保护的宝贵方法。`,
+         `年轻人正引领着行动诉求。受世界各地活动人士启发的"气候罢课"活动，让数千名学生走上新西兰各城市的街头。他们认为他们将承担今天决策的后果，因此理应在塑造应对方案中有发言权。`,
+         `在我学校，我们已经发起了几项倡议。我们有回收计划，在校园种植了本地树木，我们的科学老师组织了"气候行动周"，学生学习可再生能源和可持续生活方式。虽然这些看似小行动，但它们有助于建立意识和责任感。`,
+         `气候变化是一个没有简单答案的复杂问题，但不行动不是选项。新西兰有机会、也有责任成为引领者。作为年轻的新西兰人，我们必须继续学习、发声、为我们想要继承的未来而行动。`],
+    keywords: { 'emissions': '排放', 'glacier': '冰川', 'retreat': '退缩', 'methane': '甲烷', 'kaitiakitanga': '守护精神（毛利语）', 'inherit': '继承' },
+    quiz: [
+      { q: 'What is kaitiakitanga?', options: ['A type of tree', 'Guardianship over the natural environment', 'A government policy', 'A school programme'], correct: 1 },
+      { q: 'Why is the dairy industry significant in climate discussions?', options: ['It uses too much water', 'Cattle produce methane', 'It exports too much milk', 'It employs many people'], correct: 1 }
+    ]
+  },
+
+  /* 阶段 8: 1100-1250L, 600+ 词 */
+  { id: 's8-a1', stage: 8, title: 'Education in New Zealand',
+    lexile: 1190, words: 680,
+    en: `<p>New Zealand's education system has gained international recognition for its progressive approach and its emphasis on student-centred learning. Unlike many countries that focus primarily on rote memorisation and standardised testing, New Zealand schools strive to develop independent thinkers, creative problem-solvers, and culturally aware citizens.</p>
+<p>The structure of the education system follows a relatively clear path. Children typically begin Early Childhood Education at age three, often in a kindergarten or daycare setting. Primary school covers Years 1 to 6 or Years 1 to 8, depending on the school. Secondary school includes Years 9 to 13. Most students complete the National Certificate of Educational Achievement (NCEA), the country's main qualification framework, during the final three years of high school.</p>
+<p>One distinctive feature of the NCEA system is its flexibility. Rather than relying solely on end-of-year examinations, students earn credits through a combination of internal assessments, projects, presentations, and external exams. This approach acknowledges that different learners demonstrate competence in different ways. A student who struggles with traditional tests might excel in a research project or oral presentation.</p>
+<p>The curriculum itself reflects New Zealand's bicultural foundation. Te Reo Maori, the Maori language, is included as an integral part of the national curriculum, and many schools incorporate Maori cultural practices into daily activities. The principle of biculturalism—the recognition that Aotearoa New Zealand has two founding peoples, Maori and Pakeha (those of European descent)—shapes much of the educational philosophy.</p>
+<p>Beyond academic subjects, New Zealand schools place considerable importance on what is often called the "key competencies": thinking; using language, symbols, and texts; managing self; relating to others; and participating and contributing. These are not merely soft skills but are considered essential preparation for life beyond school. Teachers integrate them into all subjects rather than treating them as separate topics.</p>
+<p>Class sizes tend to be moderate, typically around twenty-five to thirty students in secondary schools. This allows teachers to know their students reasonably well and to provide more individualised guidance than would be possible in much larger classes. The relationship between teachers and students is generally informal compared to many Asian countries; students often address teachers by their first names, and the atmosphere encourages open dialogue.</p>
+<p>Extracurricular activities receive significant emphasis. Most students participate in sports, performing arts, debating, or community service. These activities are not considered distractions from academic work but rather integral components of a holistic education. Indeed, many universities and employers value evidence of extracurricular involvement as much as academic transcripts.</p>
+<p>Challenges, of course, exist. Educational equity remains a concern, with measurable gaps between students from different socioeconomic backgrounds and between Maori, Pacific, and other students. Successive governments have attempted to address these disparities through targeted funding, culturally responsive teaching initiatives, and partnership programmes with families and communities. Results have been mixed, and the conversation continues.</p>
+<p>For international students, the transition can be challenging. The expectation of active class participation, the prevalence of project-based assessment, and the relatively informal classroom culture may feel unfamiliar to those accustomed to more structured systems. However, most international students adapt within a few months and come to appreciate the encouragement of independent thought and creative expression.</p>
+<p>What perhaps distinguishes New Zealand education most is its underlying philosophy: that learning is a lifelong endeavour, that every student has unique potential, and that schools should prepare young people not merely for examinations but for thoughtful, engaged participation in society. Whether this philosophy fully translates into practice depends on individual schools and teachers, but the aspiration itself shapes the educational landscape.</p>
+<p>As I navigate my own education in this country, I have come to appreciate both the opportunities and the responsibilities it offers. The system trusts students with more autonomy than I was used to, but also expects them to take that autonomy seriously. It is a learning curve in more ways than one.</p>`,
+    zh: [`新西兰的教育体系因其进步的方法和以学生为中心的学习理念而获得国际认可。与许多主要关注死记硬背和标准化考试的国家不同，新西兰学校致力于培养独立思考者、创造性问题解决者和具有文化意识的公民。`,
+         `教育体系的结构遵循相对清晰的路径。儿童通常在三岁时开始幼儿教育，常常在幼儿园或日托机构。小学涵盖一年级到六年级或一年级到八年级，取决于学校。中学包括九年级到十三年级。大多数学生在高中最后三年完成国家教育成就证书（NCEA），该国主要的资格框架。`,
+         `NCEA 体系的一个独特特点是其灵活性。学生不仅依靠年终考试，还通过内部评估、项目、演讲和外部考试相结合的方式获得学分。这种方法承认不同学习者以不同方式展示能力。在传统考试中挣扎的学生可能在研究项目或口头报告中表现出色。`,
+         `课程本身反映了新西兰的双文化基础。毛利语 Te Reo Maori 是国家课程的有机组成部分，许多学校将毛利文化实践融入日常活动。双文化主义原则——承认 Aotearoa 新西兰有两个建国民族，毛利人和 Pakeha（欧洲后裔）——塑造了大部分教育哲学。`,
+         `除学术科目外，新西兰学校非常重视所谓的"关键能力"：思考；运用语言、符号和文本；自我管理；与他人交往；以及参与和贡献。这些不仅是软技能，更被视为学校之外生活的基本准备。教师将它们融入所有科目，而不是作为单独的话题。`,
+         `班级规模适中，中学通常约二十五到三十名学生。这使教师能够相当好地了解学生，并提供比大得多班级更个性化的指导。师生关系与许多亚洲国家相比通常比较随意；学生经常直呼教师的名字，氛围鼓励开放对话。`,
+         `课外活动受到重视。大多数学生参加运动、表演艺术、辩论或社区服务。这些活动不被视为对学业的干扰，而是整体教育不可或缺的组成部分。事实上，许多大学和雇主与学术成绩单同样重视课外活动的证据。`,
+         `当然，挑战也存在。教育公平仍是一个问题，不同社会经济背景的学生之间，以及毛利、太平洋裔和其他学生之间存在可衡量的差距。历届政府都试图通过定向资助、文化响应式教学倡议以及与家庭和社区的合作项目来解决这些差距。结果好坏参半，对话仍在继续。`,
+         `对国际学生来说，过渡可能很有挑战。课堂积极参与的期望、项目式评估的普遍、相对随意的课堂文化，对习惯于更结构化体系的人来说可能不熟悉。然而，大多数国际学生几个月内就能适应，并开始欣赏对独立思考和创造性表达的鼓励。`,
+         `也许新西兰教育最与众不同的是其根本理念：学习是终身的事业，每个学生都有独特的潜能，学校应该让年轻人不仅为考试，而且为有思想、有参与的社会生活做准备。这种理念是否能完全付诸实践取决于具体学校和教师，但这种愿景本身塑造了教育景观。`,
+         `当我探索自己在这个国家的教育时，我开始欣赏它提供的机会和责任。这个体系赋予学生比我习惯的更多自主权，但也期望他们认真对待这种自主权。从多个方面来说，这都是一段学习曲线。`],
+    keywords: { 'progressive': '进步的', 'rote': '死记硬背的', 'biculturalism': '双文化主义', 'autonomy': '自主权', 'aspiration': '愿景' },
+    quiz: [
+      { q: 'What is a key feature of the NCEA system?', options: ['Only end-of-year exams', 'Flexibility through varied assessments', 'No assessment at all', 'Only oral exams'], correct: 1 },
+      { q: 'What does biculturalism in NZ education refer to?', options: ['Maori and Pakeha as founding peoples', 'Two school systems', 'Two teaching languages worldwide', 'Two grading systems'], correct: 0 }
+    ]
+  },
+];
+
+(async function init() {
+  try {
+    const me = await KIWI.requireAuth('child');
+    currentChild = me;
+    try {
+      const s = await KIWI.api('/api/settings');
+      currentStageId = s.settings?.currentStage || 1;
+    } catch {}
+    renderList();
+  } catch {}
+})();
+
+function renderList() {
+  const stage = KIWI.STAGES[currentStageId - 1];
+  document.getElementById('stage-tag').textContent = `阶段 ${stage.id} · ${stage.cefr}`;
+  document.getElementById('topbar-title').textContent = '📖 分级阅读';
+  document.getElementById('back-btn').setAttribute('href', 'index.html');
+  document.getElementById('back-btn').onclick = null;
+
+  articlesOfStage = ARTICLES.filter(a => a.stage === currentStageId);
+  const content = document.getElementById('content');
+  if (articlesOfStage.length === 0) {
+    content.innerHTML = `
+      <div class="intro">
+        <div class="intro-stage">当前阶段：${stage.name}（${stage.lexile}）</div>
+        蓝思值 ${stage.lexile} · 词汇量 ${stage.cefr}
+      </div>
+      <div class="empty-stage">
+        <div style="font-size:42px;margin-bottom:12px">📚</div>
+        <div style="font-size:14px;margin-bottom:8px">本阶段文章正在编辑中</div>
+        <div style="font-size:12px">下个版本会补充更多内容</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="intro">
+      <div class="intro-stage">当前阶段：${stage.name}（${stage.lexile}）</div>
+      共 ${articlesOfStage.length} 篇精选文章，建议每篇读完答题后保存进度。
+    </div>
+    <div class="article-list">
+      ${articlesOfStage.map(a => `
+        <div class="article-card ${doneArticles.has(a.id) ? 'done' : ''}" onclick="openArticle('${a.id}')">
+          <div class="article-row">
+            <div class="article-icon">📄</div>
+            <div class="article-info">
+              <div class="article-title">${a.title}</div>
+              <div class="article-meta">
+                <span>蓝思 ${a.lexile}L</span>
+                <span>${a.words} 词</span>
+                <span>约 ${Math.ceil(a.words / 60)} 分钟</span>
+              </div>
+            </div>
+            <div class="article-status">${doneArticles.has(a.id) ? '✓' : '›'}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+let showZh = false;
+function openArticle(id) {
+  currentArticle = ARTICLES.find(a => a.id === id);
+  if (!currentArticle) return;
+  readStartTs = Date.now();
+  showZh = false;
+  renderReader();
+}
+
+function renderReader() {
+  const a = currentArticle;
+  const paragraphs = a.en.split('</p>').filter(s => s.trim()).map(s => s.replace(/<p>/, '').trim());
+  const content = document.getElementById('content');
+  document.getElementById('topbar-title').textContent = a.title;
+  document.getElementById('back-btn').setAttribute('href', 'javascript:void(0)');
+  document.getElementById('back-btn').onclick = () => renderList();
+
+  let bodyHtml = '';
+  paragraphs.forEach((p, i) => {
+    let highlighted = p;
+    // 关键词高亮
+    if (a.keywords) {
+      for (const [w, meaning] of Object.entries(a.keywords)) {
+        const re = new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+        highlighted = highlighted.replace(re, `<span class="keyword" title="${meaning}">$&</span>`);
+      }
+    }
+    bodyHtml += `<p>${highlighted}<span class="zh ${showZh ? '' : 'hidden'}">${a.zh[i] || ''}</span></p>`;
+  });
+
+  content.innerHTML = `
+    <div class="reader">
+      <div class="reader-title">${a.title}</div>
+      <div class="reader-meta">
+        <span class="reader-meta-item">蓝思 ${a.lexile}L</span>
+        <span class="reader-meta-item">${a.words} 词</span>
+        <span class="reader-meta-item">阶段 ${a.stage}</span>
+      </div>
+      <div class="toolbar">
+        <button class="tool-btn" onclick="speakArticle()">🔊 朗读全文</button>
+        <button class="tool-btn ${showZh ? 'active' : ''}" onclick="toggleZh()">${showZh ? '隐藏' : '显示'}中文</button>
+      </div>
+      <div class="article-body">${bodyHtml}</div>
+      <div class="actions">
+        <button class="btn-secondary" onclick="renderList()">← 返回列表</button>
+        <button class="btn-primary" onclick="startQuiz()">读完了，做题 →</button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleZh() {
+  showZh = !showZh;
+  renderReader();
+}
+
+function speakArticle() {
+  const text = currentArticle.en.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  KIWI.speak(text, { rate: 0.9 });
+}
+
+let quizAnswers = [];
+let currentQuizIdx = 0;
+function startQuiz() {
+  quizAnswers = [];
+  currentQuizIdx = 0;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const a = currentArticle;
+  const q = a.quiz[currentQuizIdx];
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-title">理解题 ${currentQuizIdx + 1} / ${a.quiz.length}</div>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt, i) => `<button class="quiz-opt" onclick="pickQuiz(${i})">${opt}</button>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function pickQuiz(picked) {
+  const q = currentArticle.quiz[currentQuizIdx];
+  const isCorrect = picked === q.correct;
+  quizAnswers.push({ picked, correct: isCorrect });
+
+  // 显示反馈
+  const buttons = document.querySelectorAll('.quiz-opt');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === picked && !isCorrect) b.classList.add('wrong');
+  });
+
+  const wrap = document.querySelector('.quiz-card');
+  const btnHtml = currentQuizIdx + 1 < currentArticle.quiz.length
+    ? `<button class="btn-primary" onclick="nextQuiz()">下一题 →</button>`
+    : `<button class="btn-primary" onclick="finishArticle()">查看结果 →</button>`;
+  wrap.insertAdjacentHTML('beforeend', `
+    <div style="margin-top:14px;padding:10px 12px;border-radius:6px;font-size:12px;${isCorrect ? 'background:var(--kiwi-light);color:var(--kiwi-dark);border:1px solid #b8d9b6' : 'background:var(--danger-light);color:var(--danger);border:1px solid #f5c0b8'}">
+      ${isCorrect ? '✓ 答对了！' : '✗ 答错了，正确答案已标出。'}
+    </div>
+    <div style="margin-top:10px">${btnHtml}</div>
+  `);
+}
+
+function nextQuiz() {
+  currentQuizIdx += 1;
+  renderQuiz();
+}
+
+async function finishArticle() {
+  const correct = quizAnswers.filter(a => a.correct).length;
+  const total = quizAnswers.length;
+  const score = Math.round(correct / total * 10);
+  const duration = Math.round((Date.now() - readStartTs) / 1000);
+
+  // 上报事件
+  KIWI.reportEvent({
+    module: 'reading',
+    sub: currentArticle.id,
+    correct, total, score,
+    durationSec: duration,
+  });
+
+  doneArticles.add(currentArticle.id);
+
+  // 显示总结
+  const content = document.getElementById('content');
+  const emoji = correct === total ? '🎉' : correct >= total / 2 ? '👍' : '💪';
+  const msg = correct === total ? '全部答对！' : correct >= total / 2 ? '不错！继续加油' : '再读一遍试试';
+  content.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-emoji">${emoji}</div>
+      <div class="summary-title">${msg}</div>
+      <div class="summary-sub">读完《${currentArticle.title}》</div>
+      <div class="summary-score">理解题 ${correct} / ${total} 答对 · 得分 ${score}/10</div>
+      <button class="btn-primary" onclick="renderList()" style="max-width:200px;margin:0 auto;display:block">← 回到文章列表</button>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
