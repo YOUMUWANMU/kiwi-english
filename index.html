@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Kiwi English · 新西兰Year 9生存训练营</title>
+<meta name="description" content="专为赴新西兰Year 9学生设计的英语训练平台">
+<script src="auth.js?v=3.4"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a;
+    --kiwi-light: #e8f5e8;
+    --kiwi-dark: #2a5528;
+    --sky: #2563a8;
+    --sky-light: #e8f0fb;
+    --fern: #5a9e57;
+    --gold: #c8820a;
+    --gold-light: #fef3dc;
+    --bg: #f7f8f5;
+    --surface: #ffffff;
+    --text: #1a1f17;
+    --text-2: #4a5245;
+    --text-3: #7a8475;
+    --border: #dde3d8;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* 顶部导航 */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--kiwi-dark);
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--kiwi);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .phase-badge {
+    background: var(--kiwi-light);
+    color: var(--kiwi-dark);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #b8d9b6;
+  }
+
+  .progress-mini {
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  .logout-mini {
+    background: transparent; border: none; color: var(--text-3);
+    font-size: 16px; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px; line-height: 1;
+  }
+  .logout-mini:hover { color: var(--danger); background: var(--danger-light); }
+
+  /* 英雄区 */
+  .hero {
+    padding: 40px 24px 32px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--kiwi);
+    margin-bottom: 12px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .hero-title em {
+    font-style: normal;
+    color: var(--kiwi);
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--text-2);
+    margin-bottom: 24px;
+  }
+
+  /* 进度条 */
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .timeline-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .timeline-count {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .timeline-track {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 10px;
+  }
+
+  .timeline-seg {
+    height: 6px;
+    border-radius: 3px;
+    flex: 1;
+    min-width: 6px;
+  }
+
+  .seg-done { background: var(--kiwi); }
+  .seg-active { background: var(--fern); opacity: 0.6; }
+  .seg-todo { background: var(--border); }
+
+  .timeline-phases {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+  }
+
+  .phase-item {
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .phase-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-2);
+    display: block;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .phase-time {
+    font-size: 9px;
+    color: var(--text-3);
+  }
+
+  .phase-item.active .phase-name { color: var(--kiwi); }
+  .phase-item.active .phase-time { color: var(--kiwi); font-weight: 600; }
+
+  /* 通关测试 banner */
+  .gate-banner { background:linear-gradient(135deg, var(--gold) 0%, #d49216 100%); color:#fff; border-radius:12px; padding:18px 20px; margin-bottom:18px; display:flex; align-items:center; gap:14px; }
+  .gate-banner-icon { font-size:32px; flex-shrink:0; }
+  .gate-banner-body { flex:1; }
+  .gate-banner-title { font-size:15px; font-weight:700; margin-bottom:2px; }
+  .gate-banner-sub { font-size:12px; opacity:.9; }
+  .gate-banner-btn { background:#fff; color:#a36807; border:none; padding:10px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
+  .gate-banner-btn:hover { background:#fef3dc; }
+
+  .gate-pending-banner { background:var(--kiwi-light); border:1px solid #b8d9b6; color:var(--kiwi-dark); border-radius:12px; padding:14px 18px; margin-bottom:18px; font-size:13px; }
+  .gate-pending-banner strong { font-weight:600; }
+
+  /* 今日话题卡片 */
+  .daily-topic-card {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe7c2 100%);
+    border: 1px solid #f5d89a;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .daily-topic-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(200,130,10,0.12);
+  }
+  .daily-topic-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #a36807;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .daily-topic-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+  .daily-topic-desc {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-bottom: 12px;
+  }
+  .daily-topic-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #7a5a0a;
+    font-weight: 500;
+  }
+
+  .timeline-cefr-row {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+  }
+  .cefr-cell {
+    text-align: center;
+    font-size: 9px;
+    color: var(--text-3);
+  }
+  .cefr-cell.active { color: var(--kiwi); }
+
+  /* 模块网格 */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+
+  .modules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.15s, transform 0.1s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module-card:hover {
+    border-color: var(--kiwi);
+    transform: translateY(-1px);
+  }
+
+  .module-card.primary {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    border-color: var(--kiwi);
+    background: var(--kiwi-light);
+  }
+
+  .module-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .icon-speaking { background: #e8f5e8; }
+  .icon-listening { background: #e8f0fb; }
+  .icon-writing { background: #fef3dc; }
+  .icon-reading { background: #fce8e8; }
+  .icon-subject { background: #e8f5f8; }
+  .icon-culture { background: #f5e8f8; }
+
+  .module-info { flex: 1; }
+
+  .module-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .module-desc {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+
+  .module-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-top: 6px;
+  }
+
+  .tag-hot { background: #fde8e8; color: #c0392b; }
+  .tag-new { background: var(--kiwi-light); color: var(--kiwi-dark); }
+  .tag-locked { background: var(--bg); color: var(--text-3); border: 1px solid var(--border); }
+
+  .module-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .module-progress-fill {
+    height: 100%;
+    background: var(--kiwi);
+    border-radius: 2px;
+  }
+
+  /* 今日任务 */
+  .today-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+
+  .today-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .today-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .today-date {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .task-list { padding: 6px 0; }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.1s;
+  }
+
+  .task-item:last-child { border-bottom: none; }
+  .task-item:hover { background: var(--bg); }
+
+  .task-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-done { background: var(--kiwi); }
+  .dot-active { background: var(--fern); }
+  .dot-todo { background: var(--border); }
+
+  .task-text {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .task-text.done {
+    text-decoration: line-through;
+    color: var(--text-3);
+  }
+
+  .task-duration {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .task-btn {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--kiwi-dark);
+    background: var(--kiwi-light);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* 每日一句 */
+  .daily-phrase {
+    background: var(--kiwi-dark);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 28px;
+    color: white;
+  }
+
+  .daily-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9fd49c;
+    margin-bottom: 10px;
+  }
+
+  .daily-en {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .daily-zh {
+    font-size: 14px;
+    color: #b8d9b6;
+    margin-bottom: 14px;
+  }
+
+  .daily-context {
+    font-size: 12px;
+    color: #7fb87c;
+    background: rgba(255,255,255,0.08);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 3px solid #5a9e57;
+  }
+
+  .daily-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .btn-play {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-play:hover { background: rgba(255,255,255,0.22); }
+
+  .btn-practice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--fern);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-practice:hover { background: var(--kiwi); }
+
+  /* 底部导航 */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 0;
+    text-decoration: none;
+    color: var(--text-3);
+    font-size: 10px;
+    cursor: pointer;
+    transition: color 0.1s;
+  }
+
+  .nav-item.active { color: var(--kiwi); }
+
+  .nav-icon { font-size: 22px; line-height: 1; }
+
+  /* 内容区底部留白 */
+  .content {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px 100px;
+  }
+
+  /* 统计卡片 */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--kiwi-dark);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">🥝</div>
+    Kiwi English
+  </a>
+  <div class="nav-right">
+    <span class="phase-badge" id="user-greeting">第一阶段</span>
+    <button class="logout-mini" onclick="KIWI.logout()" title="退出登录">⏻</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">新西兰 Year 9 生存训练营</div>
+  <h1 class="hero-title">你好，<em>18个月后</em>走进Hamilton的教室</h1>
+  <p class="hero-sub">现在开始练，到那天你就是那个第一个说出"Kia ora!"的中国同学。</p>
+
+  <div class="timeline-card">
+    <div class="timeline-header">
+      <span class="timeline-label">18个月训练路线 · 10阶段</span>
+      <span class="timeline-count" id="timeline-count">已完成 0 / 540 天</span>
+    </div>
+    <div class="timeline-track" id="timeline-track"></div>
+    <div class="timeline-phases" id="timeline-phases"></div>
+    <div class="timeline-cefr-row" id="timeline-cefr-row"></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- 今日一句 -->
+  <div class="daily-phrase">
+    <div class="daily-label">🇳🇿 今日NZ场景用语</div>
+    <div class="daily-en">"Could I sit here, please?"</div>
+    <div class="daily-zh">请问我可以坐这里吗？</div>
+    <div class="daily-context">📍 场景：第一天进食堂，所有位子都有人，你需要问一个同学能否坐旁边。</div>
+    <div class="daily-actions">
+      <button class="btn-play" onclick="speakPhrase()">▶ 听NZ发音</button>
+      <button class="btn-practice" onclick="window.location.href='speaking.html'">🎤 开口练习 →</button>
+    </div>
+  </div>
+
+  <!-- 通关测试 banner（动态填充） -->
+  <div id="gate-banner-slot"></div>
+
+  <!-- 今日话题（动态填充，由 JS 渲染） -->
+  <div id="daily-topic-slot"></div>
+
+  <!-- 统计 -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">3</div>
+      <div class="stat-label">连续打卡天</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">47</div>
+      <div class="stat-label">已学场景句</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">12</div>
+      <div class="stat-label">口语练习次</div>
+    </div>
+  </div>
+
+  <!-- 今日任务 -->
+  <div class="today-card">
+    <div class="today-header">
+      <span class="today-title">今日训练</span>
+      <span class="today-date">第3天 · 生存基础</span>
+    </div>
+    <div class="task-list">
+      <a class="task-item" href="listening.html">
+        <div class="task-dot dot-done"></div>
+        <span class="task-text done">听力：食堂点餐对话</span>
+        <span class="task-duration">✓</span>
+      </a>
+      <a class="task-item" href="speaking.html">
+        <div class="task-dot dot-active"></div>
+        <span class="task-text">口语：练习"Could I sit here?"</span>
+        <button class="task-btn">开始</button>
+      </a>
+      <a class="task-item" href="subject.html">
+        <div class="task-dot dot-todo"></div>
+        <span class="task-text">学科英语：体育课10个指令词</span>
+        <span class="task-duration">~8分钟</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 六大模块 -->
+  <div class="section-title">全部模块</div>
+  <div class="modules-grid">
+
+    <a class="module-card primary" href="speaking.html">
+      <div class="module-icon icon-speaking">🎤</div>
+      <div class="module-info">
+        <div class="module-name">口语陪练</div>
+        <div class="module-desc">AI扮演同学/老师，真实场景对话练习，发音实时反馈</div>
+        <span class="module-tag tag-hot">最重要</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="listening.html">
+      <div class="module-icon icon-listening">🎧</div>
+      <div class="module-info">
+        <div class="module-name">NZ听力</div>
+        <div class="module-desc">今日一听/课堂听写/场景理解/精听训练</div>
+        <span class="module-tag tag-new">新解锁</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="writing.html">
+      <div class="module-icon icon-writing">✏️</div>
+      <div class="module-info">
+        <div class="module-name">写作批改</div>
+        <div class="module-desc">AI批改短文，邮件、日记、Essay</div>
+        <span class="module-tag tag-new">新解锁</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="subject.html">
+      <div class="module-icon icon-subject">📚</div>
+      <div class="module-info">
+        <div class="module-name">学科英语</div>
+        <div class="module-desc">体育/科学/数学/音乐课专用词汇</div>
+        <div class="module-progress"><div class="module-progress-fill" style="width:5%"></div></div>
+      </div>
+    </a>
+
+    <a class="module-card" href="reading.html">
+      <div class="module-icon icon-reading">📖</div>
+      <div class="module-info">
+        <div class="module-name">分级阅读</div>
+        <div class="module-desc">NZ主题文章，从简单开始读</div>
+        <span class="module-tag tag-new">✨ 新解锁</span>
+      </div>
+    </a>
+
+    <a class="module-card" href="culture.html">
+      <div class="module-icon icon-culture">🌿</div>
+      <div class="module-info">
+        <div class="module-name">Kiwi文化</div>
+        <div class="module-desc">毛利文化、NZ俚语、学校规则</div>
+        <span class="module-tag tag-locked">🔒 第3个月解锁</span>
+      </div>
+    </a>
+
+  </div>
+
+</div>
+
+<!-- 底部导航 -->
+<div class="bottom-nav">
+  <div class="nav-item active">
+    <span class="nav-icon">🏠</span>
+    首页
+  </div>
+  <a class="nav-item" href="speaking.html">
+    <span class="nav-icon">🎤</span>
+    口语
+  </a>
+  <a class="nav-item" href="listening.html">
+    <span class="nav-icon">🎧</span>
+    听力
+  </a>
+  <a class="nav-item" href="writing.html">
+    <span class="nav-icon">✏️</span>
+    写作
+  </a>
+  <a class="nav-item" href="child-report.html">
+    <span class="nav-icon">📊</span>
+    报告
+  </a>
+</div>
+
+<script>
+(async function init() {
+  try {
+    const me = await KIWI.requireAuth('any');
+    if (me.type === 'parent') {
+      window.location.href = 'parent.html';
+      return;
+    }
+    if (me.name && me.avatar) {
+      document.getElementById('user-greeting').textContent = me.avatar + ' ' + me.name;
+    }
+    let currentStage = 1;
+    try {
+      const s = await KIWI.api('/api/settings');
+      currentStage = s.settings?.currentStage || 1;
+    } catch {}
+    renderTimeline(currentStage);
+    // 渲染今日话题
+    renderDailyTopic();
+    // 拉取通关门槛状态
+    try {
+      const gate = await KIWI.api('/api/stage-gate');
+      renderGateBanner(gate);
+    } catch {}
+  } catch {}
+})();
+
+function renderGateBanner(gate) {
+  const slot = document.getElementById('gate-banner-slot');
+  if (!slot) return;
+  if (gate.isLastStage) return;
+  const stage = KIWI.STAGES[gate.stageId - 1];
+  const nextStage = KIWI.STAGES[gate.stageId];
+
+  if (gate.canAdvance) {
+    // 测试已通过，等家长批准
+    slot.innerHTML = `
+      <div class="gate-pending-banner">
+        ✅ <strong>${stage.name}</strong> 通关测试已通过！等家长批准就能升入 <strong>${nextStage.name}</strong>。
+      </div>`;
+  } else if (gate.canTakeTest) {
+    // 可以参加测试
+    slot.innerHTML = `
+      <div class="gate-banner">
+        <div class="gate-banner-icon">🎯</div>
+        <div class="gate-banner-body">
+          <div class="gate-banner-title">恭喜！可以参加 ${stage.name} 通关测试</div>
+          <div class="gate-banner-sub">7 题快速测，至少 5 题合格即通关。下一阶段：${nextStage.name}</div>
+        </div>
+        <a class="gate-banner-btn" href="stage-test.html">开始测试 →</a>
+      </div>`;
+  }
+}
+
+/* ========== 今日话题 ========== */
+// 30 个话题，每天循环（dayOfYear % 30）
+const DAILY_TOPICS = [
+  { topic: 'weekend',     title: '和 Aroha 聊聊你的周末',         desc: '周一早上 Aroha 想知道你周末做了什么' },
+  { topic: 'rugby',       title: 'Liam 想聊昨晚的 All Blacks',    desc: '橄榄球迷 Liam 兴奋地分享比赛' },
+  { topic: 'cafe',        title: '在 cafe 点你的第一杯 flat white', desc: 'NZ 的咖啡文化，今天来试试' },
+  { topic: 'library',     title: 'Ms. Lee 推荐适合你的英文书',     desc: '图书馆员会根据你的水平推荐' },
+  { topic: 'hobby',       title: '和 Tama 聊聊你的兴趣',          desc: '游戏 / 篮球 / 画画…他什么都聊' },
+  { topic: 'new_friend',  title: '开学第一天，Jack 主动来找你',    desc: '介绍自己，问问他' },
+  { topic: 'canteen',     title: '食堂找个位子坐下',              desc: 'Liam 在那边，要不要坐过去' },
+  { topic: 'supermarket', title: '在 Countdown 找牛奶',            desc: '问店员奶制品在哪个 aisle' },
+  { topic: 'bus',         title: '上公交问司机',                  desc: '不确定坐哪一路回家' },
+  { topic: 'classroom',   title: '上课没听懂，问老师',            desc: 'Ms. Johnson 的科学课' },
+  { topic: 'birthday',    title: 'Emma 邀请你去她的生日派对',     desc: '问问什么时候、要不要带礼物' },
+  { topic: 'doctor',      title: '发烧了，去看医生',              desc: 'Dr. Wilson 会问你症状' },
+  { topic: 'pe',          title: '体育课分组练习',                desc: 'Mr. Tane 在分队' },
+  { topic: 'homework',    title: '没记作业，找 Ben 借',           desc: '课间快速搞清楚' },
+  { topic: 'club',        title: '报名戏剧社',                    desc: '学姐 Sophie 在招新人' },
+  { topic: 'teacher_chat',title: '作文不会写，找 Mr. Brown 求助', desc: '英语老师办公室时间' },
+  { topic: 'lost',        title: '校园迷路，找保安问',            desc: '找不到图书馆怎么走' },
+  { topic: 'social',      title: 'Aroha 问你喜欢什么音乐',        desc: '聊音乐、动漫、流行文化' },
+  { topic: 'camp',        title: '咨询 school camp 信息',          desc: '三天野营，要带什么' },
+  { topic: 'science',     title: '科学实验，跟 Mr. Park 完成步骤', desc: '量 50ml 溶液…' },
+  { topic: 'weekend',     title: '上周末和这周末都聊一遍',         desc: '换个角度再讲一次' },
+  { topic: 'rugby',       title: 'Liam 想教你 rugby 基本规则',     desc: '什么是 try？什么是 haka？' },
+  { topic: 'hobby',       title: 'Tama 推荐他最喜欢的游戏',        desc: '问他怎么玩、要不要一起' },
+  { topic: 'cafe',        title: '再去咖啡店，这次试 hot chocolate', desc: '换个口味跟 barista 聊聊' },
+  { topic: 'new_friend',  title: '认识 Jack 一个月了，深入聊聊',   desc: '聊他的家人和朋友圈' },
+  { topic: 'library',     title: '上次借的书读完了，借第二本',     desc: '跟 Ms. Lee 分享你的感想' },
+  { topic: 'canteen',     title: 'Liam 介绍 NZ 食堂的招牌菜',      desc: 'Meat pie、sausage roll…' },
+  { topic: 'classroom',   title: 'Math 课上有道题不会',           desc: '问旁边同学怎么算' },
+  { topic: 'social',      title: '聊聊中国的春节',                desc: 'Aroha 好奇你家乡的节日' },
+  { topic: 'supermarket', title: '想买做晚饭的菜',                desc: '问哪里有 fresh vegetables' },
+];
+
+function renderDailyTopic() {
+  const slot = document.getElementById('daily-topic-slot');
+  if (!slot) return;
+  const today = new Date();
+  // dayOfYear 不依赖时区敏感性，简单用 yyyy-mm-dd 字符串 hash
+  const dateStr = today.toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) hash = (hash * 31 + dateStr.charCodeAt(i)) | 0;
+  const idx = Math.abs(hash) % DAILY_TOPICS.length;
+  const t = DAILY_TOPICS[idx];
+  slot.innerHTML = `
+    <div class="daily-topic-card" onclick="window.location.href='speaking.html?topic=${t.topic}'">
+      <div class="daily-topic-head">📌 今日话题</div>
+      <div class="daily-topic-title">${t.title}</div>
+      <div class="daily-topic-desc">${t.desc}</div>
+      <div class="daily-topic-action">🎤 开始聊 →</div>
+    </div>
+  `;
+}
+/* ========== /今日话题 ========== */
+
+function renderTimeline(currentStage) {
+  const stages = KIWI.STAGES;
+  const totalDays = 540;
+  // 累计前 (currentStage-1) 个阶段的天数，作为"已完成"
+  let doneDays = 0;
+  for (let i = 0; i < currentStage - 1; i++) doneDays += stages[i].days;
+
+  document.getElementById('timeline-count').textContent = `阶段 ${currentStage} / 10 · 累计 ${doneDays} / ${totalDays} 天`;
+
+  // 进度条 segments
+  const trackHtml = stages.map((s, i) => {
+    let cls = 'seg-todo';
+    if (i + 1 < currentStage) cls = 'seg-done';
+    else if (i + 1 === currentStage) cls = 'seg-active';
+    return `<div class="timeline-seg ${cls}" style="flex:${s.days}"></div>`;
+  }).join('');
+  document.getElementById('timeline-track').innerHTML = trackHtml;
+
+  // 阶段名 + 月份
+  const phasesHtml = stages.map(s => `
+    <div class="phase-item ${s.id === currentStage ? 'active' : ''}" title="${s.name} (${s.months})">
+      <span class="phase-name">${s.name}</span>
+      <span class="phase-time">${s.months}</span>
+    </div>
+  `).join('');
+  document.getElementById('timeline-phases').innerHTML = phasesHtml;
+
+  // CEFR 行
+  const cefrHtml = stages.map(s => `
+    <div class="cefr-cell ${s.id === currentStage ? 'active' : ''}">${s.cefr}</div>
+  `).join('');
+  document.getElementById('timeline-cefr-row').innerHTML = cefrHtml;
+}
+
+function speakPhrase() {
+  KIWI.speak("Could I sit here, please?", { rate: 0.9 });
+}
+</script>
+</body>
+</html>

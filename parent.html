@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>家长后台 · Kiwi English</title>
+<script src="auth.js?v=3.4"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a; --kiwi-light: #e8f5e8; --kiwi-dark: #2a5528;
+    --sky: #2563a8; --sky-light: #e8f0fb;
+    --fern: #5a9e57;
+    --gold: #c8820a; --gold-light: #fef3dc;
+    --danger: #c0392b; --danger-light: #fde8e8;
+    --bg: #f7f8f5; --surface: #ffffff;
+    --text: #1a1f17; --text-2: #4a5245; --text-3: #7a8475;
+    --border: #dde3d8; --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; }
+  .logo { display:flex; align-items:center; gap:8px; font-weight:600; font-size:15px; color:var(--kiwi-dark); text-decoration:none; }
+  .logo-icon { width:30px; height:30px; background:var(--kiwi); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .role-badge { background:var(--gold-light); color:#7a5a0a; font-size:11px; font-weight:500; padding:3px 8px; border-radius:10px; border:1px solid #f5d89a; }
+  .top-spacer { flex:1; }
+  .logout-btn { background:transparent; border:none; color:var(--text-3); font-size:13px; cursor:pointer; padding:6px 10px; border-radius:var(--radius-sm); }
+  .logout-btn:hover { color:var(--danger); background:var(--danger-light); }
+
+  /* 孩子切换 */
+  .kid-switcher { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; }
+  .kid-switcher::-webkit-scrollbar { display:none; }
+  .kid-chip { display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg); border:1px solid var(--border); border-radius:24px; cursor:pointer; transition:all .15s; flex-shrink:0; }
+  .kid-chip:hover { border-color:var(--fern); }
+  .kid-chip.active { background:var(--kiwi); border-color:var(--kiwi); color:#fff; }
+  .kid-chip-avatar { font-size:22px; line-height:1; }
+  .kid-chip-name { font-size:13px; font-weight:500; }
+  .add-kid-chip { display:flex; align-items:center; gap:6px; padding:8px 14px; background:transparent; border:1px dashed var(--border); border-radius:24px; color:var(--text-3); font-size:13px; cursor:pointer; flex-shrink:0; }
+  .add-kid-chip:hover { border-color:var(--kiwi); color:var(--kiwi-dark); }
+
+  .content { max-width:760px; margin:0 auto; padding:18px 16px 0; }
+
+  /* hero卡片 */
+  .hero-card { background:var(--kiwi-dark); color:#fff; border-radius:var(--radius); padding:22px; margin-bottom:14px; }
+  .hero-row { display:flex; align-items:center; gap:14px; }
+  .hero-avatar { width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:36px; flex-shrink:0; }
+  .hero-name { font-size:18px; font-weight:600; margin-bottom:4px; }
+  .hero-sub { font-size:12px; color:#b8d9b6; }
+  .hero-stats { display:flex; gap:16px; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,.15); }
+  .hero-stat { flex:1; }
+  .hero-stat-num { font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+  .hero-stat-label { font-size:11px; color:#9fd49c; }
+  .streak-badge { background:rgba(248,200,80,.2); color:#f8c850; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; display:inline-flex; align-items:center; gap:3px; margin-top:4px; }
+
+  /* 模块卡片网格 */
+  .modules-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+  @media (max-width: 600px) { .modules-grid { grid-template-columns:1fr; } }
+  .mod-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+  .mod-card-icon { font-size:22px; margin-bottom:6px; }
+  .mod-card-label { font-size:11px; color:var(--text-3); font-weight:500; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+  .mod-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:10px; }
+  .mod-card-stat { display:flex; align-items:baseline; gap:6px; margin-bottom:4px; }
+  .mod-card-num { font-size:20px; font-weight:700; color:var(--kiwi-dark); line-height:1; }
+  .mod-card-unit { font-size:11px; color:var(--text-3); }
+  .mod-card-sub { font-size:11px; color:var(--text-2); margin-top:6px; }
+
+  /* 趋势图卡片 */
+  .panel-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+  .panel-title { font-size:14px; font-weight:600; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .panel-title-sub { font-size:12px; font-weight:400; color:var(--text-3); }
+
+  .trend-chart { height:160px; position:relative; padding-top:10px; }
+  .trend-bars { display:flex; height:130px; align-items:flex-end; gap:8px; padding:0 4px; }
+  .trend-bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .trend-bar { width:100%; max-width:36px; background:var(--kiwi); border-radius:4px 4px 0 0; min-height:2px; position:relative; transition:opacity .15s; }
+  .trend-bar:hover { opacity:.7; }
+  .trend-bar-empty { background:var(--border); }
+  .trend-bar-value { font-size:10px; color:var(--text-3); margin-bottom:2px; }
+  .trend-label { font-size:10px; color:var(--text-3); }
+  .trend-label.today { color:var(--kiwi); font-weight:600; }
+
+  /* 错误列表 */
+  .errors-list { display:flex; flex-direction:column; gap:8px; }
+  .error-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--gold-light); border:1px solid #f5d89a; border-radius:var(--radius-sm); }
+  .error-icon { font-size:14px; flex-shrink:0; }
+  .error-pattern { flex:1; font-size:13px; color:#7a5a0a; font-family:'SF Mono','Menlo',monospace; }
+  .error-count { font-size:12px; font-weight:600; color:#7a5a0a; background:#fff; padding:2px 8px; border-radius:10px; flex-shrink:0; }
+  .empty-msg { text-align:center; padding:24px 12px; color:var(--text-3); font-size:13px; }
+
+  /* 训练设置 */
+  .settings-area { display:flex; flex-direction:column; gap:18px; }
+  .setting-block { display:flex; flex-direction:column; gap:8px; }
+  .setting-label { font-size:13px; font-weight:600; color:var(--text); }
+  .setting-desc { font-size:11px; color:var(--text-3); line-height:1.5; }
+  .setting-options { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:4px; }
+  @media (max-width: 600px) { .setting-options { grid-template-columns:1fr; } }
+  .setting-opt { padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); cursor:pointer; transition:all .15s; }
+  .setting-opt:hover { border-color:var(--fern); }
+  .setting-opt.active { background:var(--kiwi-light); border-color:var(--kiwi); }
+  .setting-opt-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:3px; }
+  .setting-opt.active .setting-opt-title { color:var(--kiwi-dark); }
+  .setting-opt-desc { font-size:11px; color:var(--text-3); line-height:1.4; }
+  .setting-save-row { display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-top:6px; padding-top:14px; border-top:1px solid var(--border); }
+  .setting-save-status { font-size:12px; }
+  .setting-save-btn { padding:9px 18px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; }
+  .setting-save-btn:hover { background:var(--kiwi-dark); }
+
+  /* 阶段下拉 */
+  .stage-select-wrap { display:flex; flex-direction:column; gap:8px; }
+  .stage-select { width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); font-family:inherit; cursor:pointer; -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237a8475%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:10px; padding-right:36px; }
+  .stage-select:focus { outline:none; border-color:var(--kiwi); background-color:#fff; }
+  .curriculum-link { display:inline-block; font-size:12px; color:var(--kiwi); text-decoration:none; font-weight:500; align-self:flex-start; }
+  .curriculum-link:hover { text-decoration:underline; }
+
+  /* 通关进度条 */
+  .warn-tip { font-size:11px; color:#7a5a0a; background:var(--gold-light); border:1px solid #f5d89a; padding:8px 10px; border-radius:6px; margin-top:6px; }
+
+  .gate-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  @media (max-width: 600px) { .gate-grid { grid-template-columns:1fr; } }
+  .gate-item { padding:9px 12px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .gate-item.gate-ok { background:var(--kiwi-light); border-color:#b8d9b6; }
+  .gate-item-label { font-size:12px; color:var(--text-2); font-weight:500; }
+  .gate-item.gate-ok .gate-item-label { color:var(--kiwi-dark); }
+  .gate-item-val { font-size:12px; font-weight:600; color:var(--text-3); }
+  .gate-item.gate-ok .gate-item-val { color:var(--kiwi-dark); }
+
+  .gate-summary { font-size:12px; padding:10px 12px; border-radius:var(--radius-sm); margin-top:10px; }
+  .gate-summary-ok { background:var(--kiwi-light); border:1px solid #b8d9b6; color:var(--kiwi-dark); font-weight:500; }
+  .gate-summary-pending { background:var(--bg); border:1px solid var(--border); color:var(--text-3); }
+
+  .advance-card { background:var(--gold-light); border:2px solid var(--gold); border-radius:var(--radius-sm); padding:14px; margin-top:12px; }
+
+  /* 补习期卡片 */
+  .remediation-card { background:#f0e8fb; border:1px solid #d4c2eb; border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:12px; }
+  .remediation-card.remediation-urgent { background:#fbe8e8; border-color:#f5c0c0; }
+  .remediation-title { font-size:13px; font-weight:600; color:#5d4a85; margin-bottom:4px; }
+  .remediation-card.remediation-urgent .remediation-title { color:var(--danger); }
+  .remediation-sub { font-size:12px; color:var(--text-2); line-height:1.5; }
+
+  /* 原版书打卡 */
+  .panel-sub { font-size:12px; color:var(--text-3); line-height:1.5; margin:0 0 12px; }
+  .book-list { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .book-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+  .book-icon { font-size:18px; flex-shrink:0; }
+  .book-meta { flex:1; min-width:0; }
+  .book-title { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .book-sub { font-size:11px; color:var(--text-3); margin-top:2px; }
+  .book-count { font-size:11px; color:var(--kiwi); font-weight:500; background:var(--kiwi-light); padding:2px 8px; border-radius:10px; flex-shrink:0; }
+  .book-del { background:transparent; border:none; color:var(--text-3); font-size:14px; cursor:pointer; padding:4px 6px; flex-shrink:0; }
+  .book-del:hover { color:var(--danger); }
+  .add-book-btn { width:100%; padding:11px; background:transparent; border:1.5px dashed var(--border); border-radius:8px; color:var(--text-2); font-size:13px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .add-book-btn:hover { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi); }
+  /* 添加书 modal */
+  .book-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; padding:20px; }
+  .book-modal.show { display:flex; }
+  .book-modal-card { background:var(--surface); border-radius:16px; max-width:420px; width:100%; padding:22px; }
+  .book-modal-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:14px; }
+  .book-field { margin-bottom:12px; }
+  .book-field-label { display:block; font-size:12px; color:var(--text-2); margin-bottom:5px; font-weight:500; }
+  .book-field-input, .book-field-select { width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:7px; font-size:13px; font-family:inherit; background:var(--bg); color:var(--text); box-sizing:border-box; }
+  .book-field-input:focus, .book-field-select:focus { outline:none; border-color:var(--kiwi); }
+  .book-modal-actions { display:flex; gap:8px; margin-top:18px; }
+  .book-modal-btn { flex:1; padding:11px; border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit; border:none; font-weight:600; }
+  .book-modal-btn-primary { background:var(--kiwi); color:white; }
+  .book-modal-btn-secondary { background:transparent; border:1px solid var(--border); color:var(--text-2); }
+  /* Tab 切换 */
+  .book-tabs { display:flex; gap:6px; margin-bottom:14px; border-bottom:1px solid var(--border); }
+  .book-tab { flex:1; background:transparent; border:none; padding:9px; font-size:12px; cursor:pointer; color:var(--text-3); font-family:inherit; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .book-tab.active { color:var(--kiwi); border-bottom-color:var(--kiwi); font-weight:600; }
+  .book-tab:hover:not(.active) { color:var(--text-2); }
+  /* 推荐书单 */
+  .book-rec-hint { font-size:11px; color:var(--text-2); line-height:1.6; margin-bottom:10px; padding:8px 10px; background:var(--bg); border-radius:6px; }
+  .book-rec-list { max-height:380px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+  .book-rec-card { padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.12s; }
+  .book-rec-card:hover { border-color:var(--kiwi); background:var(--kiwi-light); }
+  .book-rec-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .book-rec-title { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; flex:1; min-width:0; }
+  .book-rec-lexile { font-size:10px; color:var(--text-3); font-weight:500; background:white; padding:2px 8px; border-radius:8px; flex-shrink:0; white-space:nowrap; }
+  .book-rec-author { font-size:11px; color:var(--text-3); margin-top:2px; }
+  .book-rec-award { font-size:10px; color:var(--gold); font-weight:600; margin-top:3px; }
+  .book-rec-blurb { font-size:11px; color:var(--text-2); margin-top:5px; line-height:1.5; }
+  .book-rec-why { font-size:10px; color:var(--kiwi-dark); margin-top:3px; line-height:1.5; font-style:italic; }
+  .advance-card-title { font-size:14px; font-weight:600; color:#7a5a0a; margin-bottom:4px; }
+  .advance-card-sub { font-size:12px; color:#7a5a0a; margin-bottom:10px; line-height:1.5; }
+  .advance-btn { width:100%; padding:11px; background:var(--gold); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; }
+  .advance-btn:hover { background:#a36807; }
+
+  /* 模块分布 */
+  .distribution { display:flex; height:32px; border-radius:8px; overflow:hidden; background:var(--bg); margin-bottom:10px; }
+  .dist-seg { display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:500; transition:opacity .15s; }
+  .dist-seg:hover { opacity:.85; }
+  .dist-listening { background:var(--sky); }
+  .dist-speaking { background:var(--kiwi); }
+  .dist-writing { background:var(--gold); }
+  .dist-legend { display:flex; gap:14px; font-size:11px; color:var(--text-2); flex-wrap:wrap; }
+  .dist-legend-item { display:flex; align-items:center; gap:5px; }
+  .dist-dot { width:9px; height:9px; border-radius:50%; }
+
+  .loading-screen { text-align:center; padding:60px 20px; color:var(--text-3); }
+
+  /* 添加孩子弹窗 */
+  .modal-mask { display:none; position:fixed; inset:0; background:rgba(26,31,23,0.6); z-index:50; align-items:center; justify-content:center; padding:16px; }
+  .modal-mask.show { display:flex; }
+  .modal { background:var(--surface); border-radius:var(--radius); padding:22px; max-width:380px; width:100%; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-size:16px; font-weight:600; margin-bottom:14px; }
+  .field { margin-bottom:12px; }
+  .field-label { font-size:12px; font-weight:500; color:var(--text-2); margin-bottom:6px; }
+  input[type=text] { width:100%; padding:11px 14px; font-size:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); outline:none; font-family:inherit; color:var(--text); }
+  input:focus { border-color:var(--kiwi); background:#fff; }
+  .avatar-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+  .avatar-btn { aspect-ratio:1; border:2px solid var(--border); border-radius:50%; background:var(--bg); font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .avatar-btn.selected { border-color:var(--kiwi); background:var(--kiwi-light); }
+  .pin-row { display:flex; gap:8px; justify-content:center; }
+  .pin-box { width:46px; height:50px; border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-size:20px; font-weight:600; background:var(--bg); }
+  .modal-actions { display:flex; gap:8px; margin-top:14px; }
+  .btn-cancel { flex:1; padding:11px; background:var(--bg); border:1px solid var(--border); color:var(--text-2); border-radius:var(--radius-sm); font-size:14px; cursor:pointer; }
+  .btn-submit { flex:1; padding:11px; background:var(--kiwi); color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; }
+  .error-msg { color:var(--danger); font-size:13px; background:var(--danger-light); border:1px solid #f5c0b8; padding:9px 12px; border-radius:var(--radius-sm); margin-bottom:12px; display:none; }
+  .error-msg.show { display:block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="logo" href="parent.html">
+    <div class="logo-icon">🥝</div>
+    Kiwi English
+  </a>
+  <span class="role-badge">家长视角</span>
+  <div class="top-spacer"></div>
+  <button class="logout-btn" onclick="KIWI.logout()">退出</button>
+</div>
+
+<div class="kid-switcher" id="kid-switcher"></div>
+
+<div class="content" id="content">
+  <div class="loading-screen">加载中…</div>
+</div>
+
+<!-- 添加孩子弹窗 -->
+<div class="modal-mask" id="add-kid-modal">
+  <div class="modal">
+    <div class="modal-title">添加新孩子</div>
+    <div class="error-msg" id="add-kid-error"></div>
+    <div class="field">
+      <div class="field-label">选一个头像</div>
+      <div class="avatar-grid" id="avatar-grid"></div>
+    </div>
+    <div class="field">
+      <div class="field-label">孩子的名字</div>
+      <input type="text" id="add-kid-name" placeholder="比如：明明" maxlength="20">
+    </div>
+    <div class="field">
+      <div class="field-label">设置 4 位 PIN</div>
+      <div class="pin-row">
+        <input class="pin-box" data-idx="0" inputmode="numeric" maxlength="1" type="password">
+        <input class="pin-box" data-idx="1" inputmode="numeric" maxlength="1" type="password">
+        <input class="pin-box" data-idx="2" inputmode="numeric" maxlength="1" type="password">
+        <input class="pin-box" data-idx="3" inputmode="numeric" maxlength="1" type="password">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddKidModal()">取消</button>
+      <button class="btn-submit" onclick="submitAddKid()">添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AVATARS = ['🦊','🐱','🐶','🐼','🐻','🐯','🐰','🦁','🐸','🐧','🦄','🐨'];
+let currentUser = null;
+let currentChildId = null;
+let selectedAvatar = null;
+
+async function init() {
+  try {
+    currentUser = await KIWI.requireAuth('parent');
+  } catch { return; }
+
+  renderKidSwitcher();
+  if (currentUser.children && currentUser.children.length > 0) {
+    currentChildId = currentUser.children[0].id;
+    await loadKidStats(currentChildId);
+  } else {
+    showNoKidsHint();
+  }
+}
+
+function renderKidSwitcher() {
+  const switcher = document.getElementById('kid-switcher');
+  const kids = currentUser.children || [];
+  let html = kids.map(k =>
+    `<div class="kid-chip ${k.id === currentChildId ? 'active' : ''}" onclick="switchKid('${k.id}')">
+      <div class="kid-chip-avatar">${k.avatar}</div>
+      <div class="kid-chip-name">${escHtml(k.name)}</div>
+    </div>`
+  ).join('');
+  html += `<div class="add-kid-chip" onclick="openAddKidModal()">+ 添加孩子</div>`;
+  switcher.innerHTML = html;
+}
+
+async function switchKid(id) {
+  currentChildId = id;
+  renderKidSwitcher();
+  await loadKidStats(id);
+}
+
+function showNoKidsHint() {
+  document.getElementById('content').innerHTML = `
+    <div class="loading-screen" style="padding:80px 20px">
+      <div style="font-size:42px;margin-bottom:14px">👶</div>
+      <div style="font-size:14px;color:var(--text-2);margin-bottom:18px">还没有添加孩子<br>点上方"+ 添加孩子"开始</div>
+    </div>`;
+}
+
+async function loadKidStats(childId) {
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="loading-screen">加载学习数据…</div>`;
+  try {
+    const data = await KIWI.api('/api/stats?child=' + encodeURIComponent(childId));
+    renderDashboard(data);
+  } catch (e) {
+    content.innerHTML = `<div class="loading-screen">加载失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderDashboard(data) {
+  const { child, progress, trend, topErrors, derived } = data;
+  const totalSessions = progress.listening.sessions + progress.speaking.sessions + progress.writing.sessions;
+  const last7Minutes = trend.reduce((s, d) => s + (d.minutes || 0), 0);
+  const last7Sessions = trend.reduce((s, d) => s + (d.sessions || 0), 0);
+  const todayMinutes = trend[trend.length - 1].minutes;
+
+  // 模块占比
+  const lsRatio = totalSessions ? progress.listening.sessions / totalSessions : 0;
+  const spRatio = totalSessions ? progress.speaking.sessions / totalSessions : 0;
+  const wrRatio = totalSessions ? progress.writing.sessions / totalSessions : 0;
+
+  // 趋势图最大值
+  const maxMinutes = Math.max(...trend.map(d => d.minutes || 0), 1);
+
+  document.getElementById('content').innerHTML = `
+    <div class="hero-card">
+      <div class="hero-row">
+        <div class="hero-avatar">${child.avatar}</div>
+        <div>
+          <div class="hero-name">${escHtml(child.name)}</div>
+          <div class="hero-sub">今天 ${todayMinutes || 0} 分钟 · 累计 ${Math.round(progress.totalMinutes)} 分钟</div>
+          ${progress.streak.current > 0 ? `<div class="streak-badge">🔥 连续打卡 ${progress.streak.current} 天</div>` : ''}
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">${last7Minutes}</div>
+          <div class="hero-stat-label">近7天分钟</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">${last7Sessions}</div>
+          <div class="hero-stat-label">近7天次数</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">${progress.streak.bestStreak || 0}</div>
+          <div class="hero-stat-label">最高连续天数</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modules-grid">
+      <div class="mod-card">
+        <div class="mod-card-icon">🎧</div>
+        <div class="mod-card-label">听力</div>
+        <div class="mod-card-title">课堂指令 / 场景对话</div>
+        <div class="mod-card-stat">
+          <div class="mod-card-num">${progress.listening.sessions}</div>
+          <div class="mod-card-unit">次练习</div>
+        </div>
+        <div class="mod-card-sub">${derived.listeningAcc !== null ? `准确率 ${derived.listeningAcc}%` : '暂无数据'}</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-card-icon">🎤</div>
+        <div class="mod-card-label">口语</div>
+        <div class="mod-card-title">AI 角色对话</div>
+        <div class="mod-card-stat">
+          <div class="mod-card-num">${progress.speaking.sessions}</div>
+          <div class="mod-card-unit">次对话</div>
+        </div>
+        <div class="mod-card-sub">${progress.speaking.turns} 轮交流</div>
+      </div>
+      <div class="mod-card">
+        <div class="mod-card-icon">✏️</div>
+        <div class="mod-card-label">写作</div>
+        <div class="mod-card-title">AI 批改</div>
+        <div class="mod-card-stat">
+          <div class="mod-card-num">${progress.writing.sessions}</div>
+          <div class="mod-card-unit">篇作文</div>
+        </div>
+        <div class="mod-card-sub">${derived.writingAvg !== null ? `平均 ${derived.writingAvg} 分` : '暂无数据'}</div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">📈 近7天训练时长 <span class="panel-title-sub">单位：分钟</span></div>
+      <div class="trend-chart">
+        <div class="trend-bars">
+          ${trend.map((d, i) => {
+            const h = d.minutes > 0 ? Math.max(4, (d.minutes / maxMinutes) * 110) : 2;
+            const isToday = i === trend.length - 1;
+            return `<div class="trend-bar-col">
+              ${d.minutes > 0 ? `<div class="trend-bar-value">${d.minutes}</div>` : ''}
+              <div class="trend-bar ${d.minutes === 0 ? 'trend-bar-empty' : ''}" style="height:${h}px"></div>
+              <div class="trend-label ${isToday ? 'today' : ''}">${labelOf(d.date, isToday)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">📊 模块训练分布 <span class="panel-title-sub">累计 ${totalSessions} 次</span></div>
+      ${totalSessions > 0 ? `
+        <div class="distribution">
+          ${lsRatio > 0 ? `<div class="dist-seg dist-listening" style="width:${lsRatio * 100}%">${Math.round(lsRatio * 100)}%</div>` : ''}
+          ${spRatio > 0 ? `<div class="dist-seg dist-speaking" style="width:${spRatio * 100}%">${Math.round(spRatio * 100)}%</div>` : ''}
+          ${wrRatio > 0 ? `<div class="dist-seg dist-writing" style="width:${wrRatio * 100}%">${Math.round(wrRatio * 100)}%</div>` : ''}
+        </div>
+        <div class="dist-legend">
+          <div class="dist-legend-item"><div class="dist-dot dist-listening"></div>听力 ${progress.listening.sessions}次</div>
+          <div class="dist-legend-item"><div class="dist-dot dist-speaking"></div>口语 ${progress.speaking.sessions}次</div>
+          <div class="dist-legend-item"><div class="dist-dot dist-writing"></div>写作 ${progress.writing.sessions}次</div>
+        </div>
+      ` : '<div class="empty-msg">还没有训练数据，让孩子开始练习吧</div>'}
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">⚠️ 高频写作错误 <span class="panel-title-sub">Top 5</span></div>
+      ${topErrors && topErrors.length > 0 ? `
+        <div class="errors-list">
+          ${topErrors.map(e => `
+            <div class="error-row">
+              <span class="error-icon">📝</span>
+              <span class="error-pattern">${escHtml(e.pattern)}</span>
+              <span class="error-count">${e.count} 次</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<div class="empty-msg">还没有写作记录，没法分析错误</div>'}
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">⚙️ 训练设置 <span class="panel-title-sub">仅家长可改</span></div>
+      <div id="settings-area" class="settings-area"><div class="empty-msg">加载中…</div></div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-title">📚 原版书打卡 <span class="panel-title-sub">读完一本书就来打卡</span></div>
+      <div class="panel-sub">系统内文章数量有限，孩子读真实原版书才能持续累积阅读量。每本书可折算为多篇文章计入通关进度。</div>
+      <div id="booklog-area"><div class="empty-msg">加载中…</div></div>
+    </div>
+  `;
+
+  loadAndRenderSettings(child.id);
+  loadAndRenderBookLog(child.id);
+}
+
+async function loadAndRenderSettings(childId) {
+  try {
+    const data = await KIWI.api('/api/settings?child=' + encodeURIComponent(childId));
+    renderSettings(childId, data.settings);
+  } catch (e) {
+    document.getElementById('settings-area').innerHTML = `<div class="empty-msg">加载失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderSettings(childId, settings) {
+  const area = document.getElementById('settings-area');
+  area.innerHTML = `
+    <div class="setting-block">
+      <div class="setting-label">🗣️ AI 说话时文本提示</div>
+      <div class="setting-desc">控制 AI 角色回复时是否同时显示英文文本。仅语音模式像微信语音一样，强化听力训练。</div>
+      <div class="setting-options" data-key="aiTextMode">
+        <div class="setting-opt ${settings.aiTextMode === 'show' ? 'active' : ''}" data-val="show">
+          <div class="setting-opt-title">📝 文字 + 语音</div>
+          <div class="setting-opt-desc">同时显示英文文本和语音</div>
+        </div>
+        <div class="setting-opt ${settings.aiTextMode === 'audio_only' ? 'active' : ''}" data-val="audio_only">
+          <div class="setting-opt-title">🔊 仅语音</div>
+          <div class="setting-opt-desc">只听不看（像微信语音）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-block">
+      <div class="setting-label">⌨️ 孩子回复方式</div>
+      <div class="setting-desc">控制孩子如何回复 AI。强制语音模式可以最有效地训练开口能力。</div>
+      <div class="setting-options" data-key="replyMode">
+        <div class="setting-opt ${settings.replyMode === 'text' ? 'active' : ''}" data-val="text">
+          <div class="setting-opt-title">⌨️ 仅文本</div>
+          <div class="setting-opt-desc">只能打字回复</div>
+        </div>
+        <div class="setting-opt ${settings.replyMode === 'voice' ? 'active' : ''}" data-val="voice">
+          <div class="setting-opt-title">🎤 仅语音</div>
+          <div class="setting-opt-desc">必须按住麦克风说话（强制开口）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-block">
+      <div class="setting-label">📍 当前训练阶段</div>
+      <div class="setting-desc" id="stage-setting-desc">加载中…</div>
+      <div class="stage-select-wrap" id="stage-gate-area"></div>
+    </div>
+
+    <div class="setting-save-row">
+      <span class="setting-save-status" id="setting-status"></span>
+      <button class="setting-save-btn" onclick="saveSettings('${childId}')">保存设置</button>
+    </div>
+  `;
+
+  // 选项点击切换
+  area.querySelectorAll('.setting-options').forEach(group => {
+    group.querySelectorAll('.setting-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        group.querySelectorAll('.setting-opt').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
+    });
+  });
+
+  // 异步加载阶段进度
+  renderStageBlock(childId, settings);
+}
+
+async function renderStageBlock(childId, settings) {
+  const descEl = document.getElementById('stage-setting-desc');
+  const area = document.getElementById('stage-gate-area');
+  if (!descEl || !area) return;
+
+  // 没初始化过：显示下拉选起点
+  if (!settings.stageInitialized) {
+    descEl.textContent = '首次设定可任选起点（根据线下测试结果）。设定后，只能通过通关测试 + 家长批准逐阶段推进。';
+    area.innerHTML = `
+      <select class="stage-select" data-key="currentStage" id="initial-stage-select">
+        ${KIWI.STAGES.map(s => `
+          <option value="${s.id}" ${settings.currentStage === s.id ? 'selected' : ''}>
+            阶段 ${s.id} · ${s.name}（${s.months} · ${s.cefr} · 蓝思 ${s.lexile}）
+          </option>
+        `).join('')}
+      </select>
+      <a class="curriculum-link" href="curriculum.html?stage=${settings.currentStage || 1}" target="_blank">查看 18 个月完整学习计划 →</a>
+      <div class="warn-tip">⚠️ 起始阶段只能设定一次（点保存生效），之后阶段只能按顺序推进。</div>
+    `;
+    return;
+  }
+
+  // 已初始化：显示当前阶段 + 通关门槛进度
+  try {
+    const gate = await KIWI.api('/api/stage-gate?child=' + encodeURIComponent(childId));
+    const stage = KIWI.STAGES[gate.stageId - 1];
+    descEl.innerHTML = `孩子当前在 <strong>阶段 ${gate.stageId} · ${stage.name}</strong>。阶段只能按顺序推进，孩子完成通关测试后家长批准即可进入下一阶段。`;
+
+    const weakAreaLabels = { listening: '听力', reading: '阅读', speaking: '口语', writing: '写作' };
+
+    // 补习提示
+    let remediationCard = '';
+    if (gate.remediation && gate.remediation.count > 0) {
+      const wa = gate.remediation.currentWeakArea;
+      const waLabel = weakAreaLabels[wa] || wa || '某项';
+      remediationCard = `
+        <div class="remediation-card ${gate.needsParentHelp ? 'remediation-urgent' : ''}">
+          <div class="remediation-title">
+            ${gate.needsParentHelp ? '⚠️' : '🔄'} 补习期 · 第 ${gate.remediation.count} 次
+          </div>
+          <div class="remediation-sub">
+            上次测试未通过，系统识别的短板是 <strong>${waLabel}</strong>。建议孩子在 ${waLabel} 模块多加练习后再测一次。
+            ${gate.needsParentHelp
+              ? '<br><strong>已补习 ' + gate.remediation.count + ' 次，建议你直接陪孩子聊聊，看是基础问题还是阶段难度问题。</strong>'
+              : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    area.innerHTML = `
+      ${remediationCard}
+      ${renderGateChecklist(gate)}
+      ${gate.canAdvance ? `
+        <div class="advance-card">
+          <div class="advance-card-title">🎉 ${stage.name} 通关测试通过！</div>
+          <div class="advance-card-sub">测试 ${gate.lastTest.passedCount} / ${gate.lastTest.total} 题合格（要求 ${gate.lastTest.required} 题）。可以推进到下一阶段。</div>
+          <button class="advance-btn" onclick="approveAdvance('${childId}')">✅ 批准升入阶段 ${gate.stageId + 1}</button>
+        </div>
+      ` : ''}
+      ${gate.needsParentHelp && !gate.canAdvance ? `
+        <div class="advance-card" style="background:var(--sky-light);border-color:var(--sky)">
+          <div class="advance-card-title" style="color:var(--sky)">🛟 紧急通道：强制升阶</div>
+          <div class="advance-card-sub" style="color:var(--sky)">孩子已补习 ${gate.remediation.count} 次仍未通过。如果你判断孩子能力其实够了（比如线下测试结果好），可以强制升阶。</div>
+          <button class="advance-btn" style="background:var(--sky)" onclick="forceAdvance('${childId}')">强制升入阶段 ${gate.stageId + 1}</button>
+        </div>
+      ` : ''}
+      <a class="curriculum-link" href="curriculum.html?stage=${gate.stageId}" target="_blank">查看 18 个月完整学习计划 →</a>
+    `;
+  } catch (e) {
+    area.innerHTML = `<div style="font-size:12px;color:var(--text-3)">加载阶段数据失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderGateChecklist(gate) {
+  const items = [
+    { label: '🎧 听力训练', c: gate.checks.listening, unit: '次' },
+    { label: '🎤 口语训练', c: gate.checks.speaking, unit: '次' },
+    { label: '✏️ 写作训练', c: gate.checks.writing, unit: '篇' },
+    { label: '📖 阅读训练', c: gate.checks.reading, unit: '篇' },
+    { label: '🎯 听力准确率', c: gate.checks.listeningAcc, unit: '%' },
+    { label: '📝 写作平均分', c: gate.checks.writingScore, unit: '' },
+  ];
+  return `
+    <div class="gate-grid">
+      ${items.map(it => {
+        const cur = it.c.current === null ? '—' : (typeof it.c.current === 'number' ? Math.round(it.c.current * 10) / 10 : it.c.current);
+        return `
+          <div class="gate-item ${it.c.ok ? 'gate-ok' : ''}">
+            <div class="gate-item-label">${it.c.ok ? '✓' : '○'} ${it.label}</div>
+            <div class="gate-item-val">${cur}${it.unit} / ${it.c.required}${it.unit}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="gate-summary ${gate.canTakeTest ? 'gate-summary-ok' : 'gate-summary-pending'}">
+      ${gate.canTakeTest
+        ? `✓ 训练量和质量都达标，孩子可以参加通关测试`
+        : `○ 训练量或质量未达标，孩子继续练习中（系统会持续追踪）`}
+    </div>
+  `;
+}
+
+/* ========== 推荐书单：10 阶段 × 10 本经典 ========== */
+// 数组格式：[title, author, lexile, award, blurb, why, defaultCount]
+// award: 'NM'=Newbery Medal, 'NH'=Newbery Honor, 'CM'=Caldecott Medal, 'CH'=Caldecott Honor, ''=经典
+const BOOK_RECOMMENDATIONS = {
+  1: [ /* 200-400L · 早期读者 */
+    ['Frog and Toad Are Friends', 'Arnold Lobel', 350, 'CH', '青蛙和蟾蜍五个温馨友谊小故事', '简单重复句式 · 早期读者经典入门', 3],
+    ['Green Eggs and Ham', 'Dr. Seuss', 210, '', '只用 50 个单词写成的童趣押韵故事', '极简词汇 + 押韵 · Dr. Seuss 入门首选', 2],
+    ['Are You My Mother?', 'P.D. Eastman', 330, '', '小鸟孵化后到处找妈妈', '反复句式自然记单词', 2],
+    ['Mr Putter and Tabby Pour the Tea', 'Cynthia Rylant', 360, '', '老爷爷和老猫 Tabby 的温暖日常', '日常生活词汇 · 适合阅读自信建立', 3],
+    ['Nate the Great', 'Marjorie Sharmat', 340, '', '小侦探 Nate 解决朋友的小谜题', '故事感强 · 开始接触章节书', 3],
+    ['Mercy Watson to the Rescue', 'Kate DiCamillo', 360, '', '会冲咖啡的小猪 Mercy 的爆笑日常', '插画丰富 · 短章节有趣', 3],
+    ['Click Clack Moo: Cows That Type', 'Doreen Cronin', 380, 'CH', '会打字的奶牛跟农场主谈判加薪', '幽默故事 + 简单句', 2],
+    ['Amelia Bedelia', 'Peggy Parish', 380, '', '总是把比喻当真的搞笑保姆', '一语双关让孩子玩味英语', 3],
+    ['The Cat in the Hat', 'Dr. Seuss', 430, '', '一只爱玩的大花猫闯入小朋友家', '韵律阅读 · 全美儿童入门必读', 3],
+    ['Henry and Mudge: The First Book', 'Cynthia Rylant', 460, '', 'Henry 与他的大狗 Mudge 的故事', '友谊主题 · 系列书有 20+ 本可续读', 3],
+  ],
+  2: [ /* 400-550L · 入门章节书 */
+    ['Junie B. Jones and the Stupid Smelly Bus', 'Barbara Park', 380, '', '幼儿园小淘气 Junie 的开学第一天', '幽默 + 校园题材 · 30+ 本系列', 4],
+    ['Magic Tree House #1: Dinosaurs Before Dark', 'Mary Pope Osborne', 380, '', '兄妹俩通过魔法树屋穿越到恐龙时代', '冒险 + 科普 · 60+ 本系列', 4],
+    ['Cam Jansen and the Mystery of the Stolen Diamonds', 'David Adler', 430, '', '过目不忘的小侦探破解案件', '推理思维 · 短章节有节奏感', 4],
+    ['Marvin Redpost: Kidnapped at Birth?', 'Louis Sachar', 450, '', '小男孩怀疑自己是被绑架的王子', 'Holes 作者的低龄系列 · 想象力丰富', 4],
+    ['Pinky and Rex', 'James Howe', 470, '', '最好的朋友 Pinky 和 Rex 的友情故事', '男孩女孩都喜欢 · 鼓励真诚友谊', 4],
+    ['Mercy Watson Fights Crime', 'Kate DiCamillo', 480, '', '小猪 Mercy 误打误撞抓住小偷', '续读 Mercy 系列 · 词汇升级', 4],
+    ['Owl Diaries #1: Eva\'s Treetop Festival', 'Rebecca Elliott', 500, '', '小猫头鹰 Eva 的日记', '日记体 · 适合女孩入门', 4],
+    ['The Stories Julian Tells', 'Ann Cameron', 500, 'NH', '黑人小男孩 Julian 跟弟弟的趣事', 'Newbery Honor · 多元背景温情', 4],
+    ['A to Z Mysteries: The Absent Author', 'Ron Roy', 520, '', '26 本以字母排序的儿童推理故事', '系列完整 · 推理思维启蒙', 4],
+    ['Encyclopedia Brown, Boy Detective', 'Donald Sobol', 540, '', '小百科破解各种小镇谜题', '互动式推理 · 读者参与解谜', 5],
+  ],
+  3: [ /* 500-650L · 中级章节书 */
+    ['The Boxcar Children #1', 'Gertrude Chandler Warner', 540, '', '四兄妹孤儿在废弃车厢里建家', '冒险 + 兄妹情 · 经久不衰', 4],
+    ['Mercy Watson: Princess in Disguise', 'Kate DiCamillo', 510, '', '小猪扮公主万圣节闹笑话', '继续 Mercy 系列', 4],
+    ['The Chalk Box Kid', 'Clyde Robert Bulla', 580, '', '内向男孩用粉笔画出花园', '艺术 + 心灵成长', 4],
+    ['Babe: The Gallant Pig', 'Dick King-Smith', 600, '', '小猪 Babe 想当牧羊犬', '电影原著 · 励志', 5],
+    ['Because of Winn-Dixie', 'Kate DiCamillo', 610, 'NH', '小女孩和流浪狗 Winn-Dixie 改变小镇', 'Newbery Honor · 友情和宽容', 5],
+    ['Sarah, Plain and Tall', 'Patricia MacLachlan', 660, 'NM', '草原上的孩子等来了新妈妈', 'Newbery Medal 1986 · 温情家庭', 4],
+    ['The Tales of Despereaux', 'Kate DiCamillo', 670, 'NM', '勇敢小老鼠拯救公主', 'Newbery Medal 2004 · 童话色彩', 5],
+    ['Ralph S. Mouse', 'Beverly Cleary', 670, '', '会开摩托车的老鼠 Ralph 的故事', '幽默幻想 · 经典作家', 4],
+    ['Charlotte\'s Web', 'E.B. White', 680, 'NH', '蜘蛛 Charlotte 救小猪 Wilbur 的友谊', 'Newbery Honor 1953 · 美国童年必读', 5],
+    ['The Cricket in Times Square', 'George Selden', 780, 'NH', '蟋蟀 Chester 闯进纽约地铁', 'Newbery Honor 1961 · 城市温情', 5],
+  ],
+  4: [ /* 600-750L · 经典 Newbery 1 */
+    ['Holes', 'Louis Sachar', 660, 'NM', '少年在沙漠营地挖洞解开家族诅咒', 'Newbery Medal 1999 · 巧妙叙事', 6],
+    ['Number the Stars', 'Lois Lowry', 670, 'NM', '二战丹麦小女孩帮邻居犹太朋友逃亡', 'Newbery Medal 1990 · 历史 + 勇气', 5],
+    ['Kira-Kira', 'Cynthia Kadohata', 740, 'NM', '日裔家庭在美国南方的姐妹故事', 'Newbery Medal 2005 · 亚裔背景温情', 5],
+    ['From the Mixed-Up Files of Mrs. Basil E. Frankweiler', 'E.L. Konigsburg', 700, 'NM', '兄妹离家出走躲在大都会博物馆', 'Newbery Medal 1968 · 解谜冒险', 6],
+    ['How to Eat Fried Worms', 'Thomas Rockwell', 720, '', '男孩打赌一周吃 15 条虫子', '童趣搞怪 · 男孩最爱', 4],
+    ['A Wrinkle in Time', 'Madeleine L\'Engle', 740, 'NM', '小女孩穿越时空寻找父亲', 'Newbery Medal 1963 · 科幻经典', 6],
+    ['The Westing Game', 'Ellen Raskin', 750, 'NM', '16 个继承人解谜怪老头遗嘱', 'Newbery Medal 1979 · 高难度推理', 6],
+    ['Walk Two Moons', 'Sharon Creech', 770, 'NM', '13 岁女孩跟外祖父寻找母亲', 'Newbery Medal 1995 · 情感深度', 6],
+    ['Tuck Everlasting', 'Natalie Babbitt', 770, '', '女孩遇到永生的家庭', '生命与永恒的哲学童话', 5],
+    ['Mrs. Frisby and the Rats of NIMH', 'Robert C. O\'Brien', 790, 'NM', '田鼠妈妈联手智能老鼠救子', 'Newbery Medal 1972 · 反乌托邦', 6],
+  ],
+  5: [ /* 700-850L · 经典 Newbery 2 */
+    ['Bridge to Terabithia', 'Katherine Paterson', 810, 'NM', '童年好友与想象王国 Terabithia', 'Newbery Medal 1978 · 友情 + 失去', 5],
+    ['Maniac Magee', 'Jerry Spinelli', 820, 'NM', '神奇少年跨越种族分隔的小镇', 'Newbery Medal 1991 · 美国种族议题', 6],
+    ['The Egypt Game', 'Zilpha Keatley Snyder', 800, 'NH', '六个孩子玩埃及游戏卷入悬案', 'Newbery Honor · 想象力 + 友谊', 5],
+    ['The Witch of Blackbird Pond', 'Elizabeth George Speare', 850, 'NM', '殖民地少女被指为女巫', 'Newbery Medal 1959 · 历史小说', 6],
+    ['Julie of the Wolves', 'Jean Craighead George', 860, 'NM', '因纽特女孩在北极荒野中跟狼群生活', 'Newbery Medal 1973 · 自然与生存', 5],
+    ['The View from Saturday', 'E.L. Konigsburg', 870, 'NM', '4 个聪明孩子组成知识竞赛队', 'Newbery Medal 1997 · 多线叙事', 6],
+    ['The Hundred Dresses', 'Eleanor Estes', 870, 'NH', '波兰移民女孩 100 条想象的裙子', 'Newbery Honor 1945 · 反霸凌经典', 4],
+    ['Crispin: The Cross of Lead', 'Avi', 780, 'NM', '中世纪英格兰孤儿少年的冒险', 'Newbery Medal 2003 · 历史冒险', 5],
+    ['Mr. Popper\'s Penguins', 'Atwater', 910, 'NH', '油漆匠收到一只企鹅做宠物', 'Newbery Honor 1939 · 经典轻喜剧', 4],
+    ['Stuart Little', 'E.B. White', 920, '', '老鼠般大的小男孩 Stuart 的冒险', 'Charlotte\'s Web 作者的早期经典', 5],
+  ],
+  6: [ /* 800-950L · 经典 Newbery 3 */
+    ['Roll of Thunder, Hear My Cry', 'Mildred D. Taylor', 920, 'NM', '美国南方黑人家庭 1930s 的抗争', 'Newbery Medal 1977 · 种族与家庭', 6],
+    ['A Single Shard', 'Linda Sue Park', 920, 'NM', '12 世纪韩国孤儿学陶瓷艺', 'Newbery Medal 2002 · 亚洲历史', 5],
+    ['Bud, Not Buddy', 'Christopher Paul Curtis', 950, 'NM', '大萧条时期黑人男孩寻找父亲', 'Newbery Medal 2000 · 大萧条历史', 6],
+    ['The Slave Dancer', 'Paula Fox', 970, 'NM', '少年被掳上贩奴船', 'Newbery Medal 1974 · 沉重历史', 6],
+    ['Joey Pigza Loses Control', 'Jack Gantos', 990, 'NH', '多动症少年与失踪父亲', 'Newbery Honor 2001 · 心理题材', 6],
+    ['When You Reach Me', 'Rebecca Stead', 750, 'NM', '少女收到神秘字条引出时空之谜', 'Newbery Medal 2010 · 科幻悬疑', 5],
+    ['Carry On, Mr. Bowditch', 'Jean Lee Latham', 920, 'NM', '自学航海科学的少年传记', 'Newbery Medal 1956 · 真实人物励志', 5],
+    ['Lincoln: A Photobiography', 'Russell Freedman', 1020, 'NM', '林肯总统的影像传记', 'Newbery Medal 1988 · 历史科普', 5],
+    ['Caddie Woodlawn', 'Carol Ryrie Brink', 950, 'NM', '边疆 11 岁假小子的童年', 'Newbery Medal 1936 · 美国边疆生活', 5],
+    ['The Hero and the Crown', 'Robin McKinley', 920, 'NM', '公主屠龙拯救王国', 'Newbery Medal 1985 · 奇幻冒险', 6],
+  ],
+  7: [ /* 900-1050L · 经典 Newbery 4 */
+    ['Hatchet', 'Gary Paulsen', 1020, 'NH', '13 岁少年坠机后在荒野求生 54 天', 'Newbery Honor 1988 · 生存小说经典', 6],
+    ['Island of the Blue Dolphins', 'Scott O\'Dell', 1000, 'NM', '印第安女孩孤岛求生 18 年', 'Newbery Medal 1961 · 真实事件改编', 6],
+    ['The Phantom Tollbooth', 'Norton Juster', 1000, '', '无聊男孩穿越神奇国度', '语言文字游戏的奇幻杰作', 6],
+    ['The High King', 'Lloyd Alexander', 1010, 'NM', 'Prydain 编年史最终篇', 'Newbery Medal 1969 · 史诗奇幻', 6],
+    ['A Year Down Yonder', 'Richard Peck', 1030, 'NM', '城市女孩到乡下姥姥家住一年', 'Newbery Medal 2001 · 怀旧温情', 5],
+    ['Dead End in Norvelt', 'Jack Gantos', 1010, 'NM', '少年帮老太太们写讣告的暑假', 'Newbery Medal 2012 · 黑色幽默', 6],
+    ['Moon Over Manifest', 'Clare Vanderpool', 1010, 'NM', '12 岁女孩在外婆家寻父亲过去', 'Newbery Medal 2011 · 多时间线', 6],
+    ['Sounder', 'William H. Armstrong', 900, 'NM', '黑人男孩与忠犬 Sounder', 'Newbery Medal 1970 · 沉重黑人主题', 5],
+    ['Shiloh', 'Phyllis Reynolds Naylor', 890, 'NM', '男孩救出被虐待的小猎犬', 'Newbery Medal 1992 · 道德两难', 5],
+    ['Out of the Dust', 'Karen Hesse', 940, 'NM', '诗体小说讲沙尘暴年代少女', 'Newbery Medal 1998 · 诗歌体新颖', 5],
+  ],
+  8: [ /* 1000-1100L · 高级 */
+    ['Up a Road Slowly', 'Irene Hunt', 1090, 'NM', '少女从童年到成年的心灵成长', 'Newbery Medal 1967 · 成长经典', 6],
+    ['Adam of the Road', 'Elizabeth Janet Gray', 1100, 'NM', '13 世纪英格兰吟游诗人男孩', 'Newbery Medal 1943 · 中世纪历史', 6],
+    ['Smoky the Cow Horse', 'Will James', 1090, 'NM', '西部野马的传奇一生', 'Newbery Medal 1927 · 早期 Newbery', 6],
+    ['The Witch of Blackbird Pond', 'Elizabeth George Speare', 850, 'NM', '殖民地少女被指为女巫', 'Newbery Medal 1959 · 历史小说', 6],
+    ['The Trumpeter of Krakow', 'Eric Kelly', 1140, 'NM', '15 世纪波兰家族保护宝物传说', 'Newbery Medal 1929 · 历史奇幻', 6],
+    ['Mr. Lemoncello\'s Library', 'Chris Grabenstein', 720, '', '12 个孩子在豪华图书馆解谜', '高难度文字解谜 · 现代经典', 5],
+    ['The Witch of Blackbird Pond', 'Elizabeth Speare', 850, 'NM', '殖民地少女被指为女巫', 'Newbery Medal 1959 · 历史经典', 6],
+    ['Killing Mr. Griffin', 'Lois Duncan', 1080, '', '5 个少年策划绑架老师', '心理悬疑 · 青少年经典', 6],
+    ['Onion John', 'Joseph Krumgold', 1100, 'NM', '小镇上少年与流浪汉的友谊', 'Newbery Medal 1960 · 经典温情', 6],
+    ['... and Now Miguel', 'Joseph Krumgold', 1100, 'NM', '新墨西哥牧羊家庭少年成长', 'Newbery Medal 1954 · 移民史诗', 6],
+  ],
+  9: [ /* 1050-1150L · 学术阶段 */
+    ['The Story of Mankind', 'Hendrik Van Loon', 1100, 'NM', '人类文明史科普叙事', 'Newbery Medal 1922 · 史上第一本 Newbery', 7],
+    ['Hitty: Her First Hundred Years', 'Rachel Field', 1110, 'NM', '木娃娃 Hitty 的百年漂泊记', 'Newbery Medal 1930 · 经典玩偶视角', 6],
+    ['A Visit to William Blake\'s Inn', 'Nancy Willard', 1110, 'NM', '诗人小屋里的奇幻夜谈', 'Newbery Medal 1982 · 史上唯一获奖诗集', 4],
+    ['Thimble Summer', 'Elizabeth Enright', 1190, 'NM', '威斯康星农场少女的夏天', 'Newbery Medal 1939 · 田园经典', 6],
+    ['Young Fu of the Upper Yangtze', 'Elizabeth Lewis', 1180, 'NM', '20 世纪初重庆铜匠学徒男孩', 'Newbery Medal 1933 · 中国背景罕见', 7],
+    ['Dobry', 'Monica Shannon', 1190, 'NM', '保加利亚乡村少年成为雕塑家', 'Newbery Medal 1935 · 巴尔干风土', 6],
+    ['M.C. Higgins, the Great', 'Virginia Hamilton', 1170, 'NM', '阿巴拉契亚黑人少年保卫家园', 'Newbery Medal 1975 · 文学性强', 7],
+    ['Animal Farm', 'George Orwell', 1170, '', '动物起义后建立的"平等"农场', '20 世纪政治寓言经典', 6],
+    ['Shen of the Sea', 'Arthur Bowie Chrisman', 1130, 'NM', '16 个中国民间故事', 'Newbery Medal 1926 · 中国题材', 6],
+    ['Tales from Silver Lands', 'Charles Finger', 1230, 'NM', '南美洲印第安神话故事集', 'Newbery Medal 1925 · 神话集', 7],
+  ],
+  10: [ /* 1150-1250L · Year 10 冲刺 */
+    ['The Voyages of Doctor Dolittle', 'Hugh Lofting', 1340, 'NM', '会说动物语言的医生环球冒险', 'Newbery Medal 1923 · 想象力丰富', 8],
+    ['Invincible Louisa', 'Cornelia Meigs', 1280, 'NM', 'Little Women 作者 Alcott 传记', 'Newbery Medal 1934 · 文学家传记', 7],
+    ['Gay-Neck', 'Dhan Gopal Mukerji', 1290, 'NM', '印度信鸽 Gay-Neck 一战中飞行', 'Newbery Medal 1928 · 印度题材', 7],
+    ['Daniel Boone', 'James Daugherty', 1290, 'NM', '美国边疆英雄 Daniel Boone 传记', 'Newbery Medal 1940 · 美国西部史诗', 7],
+    ['The Cat Who Went to Heaven', 'Elizabeth Coatsworth', 1240, 'NM', '日本画家收养的猫赢得佛祖恩典', 'Newbery Medal 1931 · 佛教寓言', 6],
+    ['M.C. Higgins, the Great', 'Virginia Hamilton', 1170, 'NM', '阿巴拉契亚黑人少年保卫家园', 'Newbery Medal 1975 · 文学性极强', 7],
+    ['Animal Farm', 'George Orwell', 1170, '', '动物起义后建立的"平等"农场', '20 世纪政治寓言经典', 6],
+    ['Lord of the Flies', 'William Golding', 770, '', '男孩们孤岛上的人性堕落', '蓝思偏低但题材深 · Year 10 必读', 7],
+    ['To Kill a Mockingbird', 'Harper Lee', 870, '', '南方小镇黑人冤案与童年观察', '蓝思偏低但议题深 · NCEA 常考', 8],
+    ['The Hobbit', 'J.R.R. Tolkien', 1000, '', 'Bilbo Baggins 的史诗冒险', '蓝思偏低但词汇华丽 · 奇幻入门', 8],
+  ],
+};
+
+const AWARD_LABEL = { NM: '🏆 Newbery Medal', NH: '🥈 Newbery Honor', CM: '🎨 Caldecott Medal', CH: '🎨 Caldecott Honor' };
+const BUY_LINKS = ['Whitcoulls', 'Amazon NZ', 'Book Depository', 'Kindle (e-book)'];
+/* ========== /推荐书单 ========== */
+
+/* ========== 原版书打卡 ========== */
+async function loadAndRenderBookLog(childId) {
+  const area = document.getElementById('booklog-area');
+  if (!area) return;
+  try {
+    const r = await KIWI.api('/api/book-log?child=' + encodeURIComponent(childId));
+    renderBookLog(childId, r.books || []);
+  } catch (e) {
+    area.innerHTML = `<div class="empty-msg">加载失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderBookLog(childId, books) {
+  const area = document.getElementById('booklog-area');
+  const KIND_LABEL = { novel: '📕 小说', journal: '📰 杂志', article: '📄 短文' };
+  const total = books.reduce((s, b) => s + (b.countAsArticles || 0), 0);
+  const listHtml = books.length === 0
+    ? '<div class="empty-msg">还没有打卡记录</div>'
+    : `<div class="book-list">${books.map(b => `
+        <div class="book-row">
+          <div class="book-icon">${(KIND_LABEL[b.kind] || '📚').slice(0, 2)}</div>
+          <div class="book-meta">
+            <div class="book-title">${escHtml(b.title)}</div>
+            <div class="book-sub">${escHtml(b.author || '佚名')}${b.lexile ? ' · ' + b.lexile + 'L' : ''} · ${new Date(b.finishedAt).toLocaleDateString()}</div>
+          </div>
+          <div class="book-count">+${b.countAsArticles} 篇</div>
+          <button class="book-del" onclick="deleteBookLog('${childId}', '${b.id}', '${escHtml(b.title).replace(/'/g, "\\'")}')">✕</button>
+        </div>`).join('')}</div>`;
+  area.innerHTML = `
+    ${listHtml}
+    ${books.length > 0 ? `<div style="font-size:12px;color:var(--text-3);margin-bottom:10px">已读 ${books.length} 本 · 累计 ${total} 篇阅读量</div>` : ''}
+    <button class="add-book-btn" onclick="showAddBookModal('${childId}')">+ 打卡一本读完的书</button>
+  `;
+}
+
+function showAddBookModal(childId) {
+  document.getElementById('book-modal-childId').value = childId;
+  document.getElementById('book-modal-title').value = '';
+  document.getElementById('book-modal-author').value = '';
+  document.getElementById('book-modal-lexile').value = '';
+  document.getElementById('book-modal-kind').value = 'novel';
+  document.getElementById('book-modal-count').value = '5';
+  // 默认显示推荐 tab
+  switchBookTab('rec');
+  document.getElementById('book-modal').classList.add('show');
+  // 异步取当前孩子的阶段，按阶段渲染推荐书单
+  loadRecBooksForChild(childId);
+}
+
+async function loadRecBooksForChild(childId) {
+  let stage = 1;
+  try {
+    const r = await KIWI.api('/api/stage-gate?child=' + encodeURIComponent(childId));
+    stage = r.stageId || 1;
+  } catch {}
+  document.getElementById('book-modal-stage').value = stage;
+  document.getElementById('book-rec-stage-label').textContent = `阶段 ${stage} · ${KIWI.STAGES[stage-1].name}`;
+  renderRecBookList(stage);
+}
+
+function renderRecBookList(stage) {
+  const books = BOOK_RECOMMENDATIONS[stage] || [];
+  const slot = document.getElementById('book-rec-list');
+  if (!slot) return;
+  slot.innerHTML = books.map((b, idx) => {
+    const [title, author, lexile, award, blurb, why, count] = b;
+    const awardHtml = award ? `<div class="book-rec-award">${AWARD_LABEL[award] || award}</div>` : '';
+    return `
+      <div class="book-rec-card" onclick="selectRecBook(${stage}, ${idx})">
+        <div class="book-rec-top">
+          <div class="book-rec-title">${escHtml(title)}</div>
+          <div class="book-rec-lexile">${lexile}L · ${count}篇</div>
+        </div>
+        <div class="book-rec-author">${escHtml(author)}</div>
+        ${awardHtml}
+        <div class="book-rec-blurb">${escHtml(blurb)}</div>
+        <div class="book-rec-why">💡 ${escHtml(why)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectRecBook(stage, idx) {
+  const b = BOOK_RECOMMENDATIONS[stage][idx];
+  const [title, author, lexile, award, blurb, why, count] = b;
+  // 自动填入表单 + 切到手动 tab 让家长确认
+  document.getElementById('book-modal-title').value = title;
+  document.getElementById('book-modal-author').value = author;
+  document.getElementById('book-modal-lexile').value = lexile;
+  document.getElementById('book-modal-kind').value = 'novel';
+  document.getElementById('book-modal-count').value = count;
+  switchBookTab('manual');
+}
+
+function switchBookTab(tab) {
+  document.querySelectorAll('.book-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('book-tab-rec').style.display = tab === 'rec' ? 'block' : 'none';
+  document.getElementById('book-tab-manual').style.display = tab === 'manual' ? 'block' : 'none';
+}
+
+function closeBookModal(e) {
+  if (e && e.target.id !== 'book-modal') return;
+  document.getElementById('book-modal').classList.remove('show');
+}
+
+function onBookKindChange() {
+  const kind = document.getElementById('book-modal-kind').value;
+  // 切换 kind 时给出折算建议
+  const def = kind === 'novel' ? 5 : (kind === 'journal' ? 2 : 1);
+  document.getElementById('book-modal-count').value = def;
+}
+
+async function submitBookLog() {
+  const childId = document.getElementById('book-modal-childId').value;
+  const title = document.getElementById('book-modal-title').value.trim();
+  const author = document.getElementById('book-modal-author').value.trim();
+  const lexile = document.getElementById('book-modal-lexile').value.trim();
+  const kind = document.getElementById('book-modal-kind').value;
+  const countAsArticles = parseInt(document.getElementById('book-modal-count').value, 10);
+  if (!title) { alert('请填写书名'); return; }
+  if (!countAsArticles || countAsArticles < 1 || countAsArticles > 20) { alert('折算篇数 1-20'); return; }
+  try {
+    await KIWI.api('/api/book-log', {
+      method: 'POST',
+      body: JSON.stringify({ childId, title, author, lexile: lexile ? parseInt(lexile, 10) : null, kind, countAsArticles })
+    });
+    closeBookModal();
+    await loadAndRenderBookLog(childId);
+    // 也刷新通关进度，因为阅读 sessions 涨了
+    await loadKidStats(childId);
+  } catch (e) {
+    alert('打卡失败：' + e.message);
+  }
+}
+
+async function deleteBookLog(childId, bookId, bookTitle) {
+  if (!confirm(`确认删除「${bookTitle}」的打卡记录？阅读量会相应减少。`)) return;
+  try {
+    await KIWI.api('/api/book-log', {
+      method: 'DELETE',
+      body: JSON.stringify({ childId, bookId })
+    });
+    await loadAndRenderBookLog(childId);
+    await loadKidStats(childId);
+  } catch (e) {
+    alert('删除失败：' + e.message);
+  }
+}
+/* ========== /原版书打卡 ========== */
+
+async function approveAdvance(childId) {
+  if (!confirm('确认升入下一阶段？此操作不可撤销。')) return;
+  try {
+    const r = await KIWI.api('/api/settings/advance-stage', {
+      method: 'POST',
+      body: JSON.stringify({ childId })
+    });
+    alert('✅ 已升入阶段 ' + r.newStage);
+    await loadKidStats(childId);
+  } catch (e) {
+    alert('升阶失败：' + e.message);
+  }
+}
+
+async function forceAdvance(childId) {
+  if (!confirm('⚠️ 强制升阶：即使孩子未通过通关测试也升入下一阶段。此操作不可撤销，确认吗？')) return;
+  try {
+    const r = await KIWI.api('/api/settings/advance-stage', {
+      method: 'POST',
+      body: JSON.stringify({ childId, confirm: true })
+    });
+    alert('✅ 已强制升入阶段 ' + r.newStage);
+    await loadKidStats(childId);
+  } catch (e) {
+    alert('强制升阶失败：' + e.message);
+  }
+}
+
+async function saveSettings(childId) {
+  const statusEl = document.getElementById('setting-status');
+  const settings = {};
+  // 卡片选项
+  document.querySelectorAll('#settings-area .setting-options').forEach(group => {
+    const key = group.dataset.key;
+    const active = group.querySelector('.setting-opt.active');
+    if (active) settings[key] = active.dataset.val;
+  });
+  // 下拉框（currentStage 等数值字段）
+  document.querySelectorAll('#settings-area select[data-key]').forEach(sel => {
+    settings[sel.dataset.key] = parseInt(sel.value, 10);
+  });
+
+  statusEl.textContent = '保存中…';
+  statusEl.style.color = 'var(--text-3)';
+  try {
+    await KIWI.api('/api/settings', {
+      method: 'POST',
+      body: JSON.stringify({ childId, settings })
+    });
+    statusEl.textContent = '✓ 已保存';
+    statusEl.style.color = 'var(--kiwi)';
+    setTimeout(() => { statusEl.textContent = ''; }, 2000);
+  } catch (e) {
+    statusEl.textContent = '失败：' + e.message;
+    statusEl.style.color = 'var(--danger)';
+  }
+}
+
+function labelOf(dateStr, isToday) {
+  if (isToday) return '今天';
+  const d = new Date(dateStr);
+  const wk = ['日','一','二','三','四','五','六'][d.getDay()];
+  return '周' + wk;
+}
+
+/* ===== 添加孩子弹窗 ===== */
+function openAddKidModal() {
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = AVATARS.map(a =>
+    `<button class="avatar-btn" data-avatar="${a}" onclick="pickAvatar(this)">${a}</button>`
+  ).join('');
+  selectedAvatar = null;
+  document.getElementById('add-kid-name').value = '';
+  document.querySelectorAll('#add-kid-modal .pin-box').forEach(b => b.value = '');
+  document.getElementById('add-kid-error').classList.remove('show');
+  document.getElementById('add-kid-modal').classList.add('show');
+}
+function closeAddKidModal() {
+  document.getElementById('add-kid-modal').classList.remove('show');
+}
+function pickAvatar(btn) {
+  document.querySelectorAll('#add-kid-modal .avatar-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAvatar = btn.dataset.avatar;
+}
+async function submitAddKid() {
+  const name = document.getElementById('add-kid-name').value.trim();
+  const pin = Array.from(document.querySelectorAll('#add-kid-modal .pin-box')).map(b => b.value).join('');
+  const err = document.getElementById('add-kid-error');
+  err.classList.remove('show');
+  if (!selectedAvatar) { err.textContent = '请选头像'; err.classList.add('show'); return; }
+  if (!name) { err.textContent = '请填名字'; err.classList.add('show'); return; }
+  if (pin.length !== 4) { err.textContent = '请设置4位PIN'; err.classList.add('show'); return; }
+
+  try {
+    const r = await KIWI.api('/api/auth/add-child', {
+      method: 'POST',
+      body: JSON.stringify({ name, avatar: selectedAvatar, pin })
+    });
+    // 刷新user信息
+    currentUser = await KIWI.api('/api/auth/me');
+    currentChildId = r.id;
+    renderKidSwitcher();
+    closeAddKidModal();
+    await loadKidStats(r.id);
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.add('show');
+  }
+}
+
+/* 弹窗内 PIN 联动 */
+document.querySelectorAll('#add-kid-modal .pin-box').forEach((box, idx, arr) => {
+  box.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    if (e.target.value && idx < arr.length - 1) arr[idx + 1].focus();
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus();
+  });
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+init();
+</script>
+<!-- 添加原版书打卡 modal -->
+<div class="book-modal" id="book-modal" onclick="closeBookModal(event)">
+  <div class="book-modal-card" onclick="event.stopPropagation()">
+    <div class="book-modal-title">📚 打卡一本读完的书</div>
+    <input type="hidden" id="book-modal-childId" />
+    <input type="hidden" id="book-modal-stage" />
+
+    <!-- Tab 切换 -->
+    <div class="book-tabs">
+      <button type="button" class="book-tab active" data-tab="rec" onclick="switchBookTab('rec')">📋 从推荐书单选</button>
+      <button type="button" class="book-tab" data-tab="manual" onclick="switchBookTab('manual')">✍️ 手动输入</button>
+    </div>
+
+    <!-- 推荐书单 tab -->
+    <div class="book-tab-pane book-tab-rec" id="book-tab-rec">
+      <div class="book-rec-hint">下面是适合 <strong id="book-rec-stage-label">阶段 1</strong> 的 10 本经典书，点选自动填入。<br><span style="color:var(--text-3)">📍 NZ 购买渠道：${BUY_LINKS.join(' / ')}</span></div>
+      <div class="book-rec-list" id="book-rec-list"></div>
+    </div>
+
+    <!-- 手动输入 tab -->
+    <div class="book-tab-pane book-tab-manual" id="book-tab-manual" style="display:none">
+      <div class="book-field">
+        <label class="book-field-label">书名 <span style="color:var(--danger)">*</span></label>
+        <input class="book-field-input" id="book-modal-title" placeholder="例如：Holes / Wonder / The Giver" maxlength="120" />
+      </div>
+      <div class="book-field">
+        <label class="book-field-label">作者（可选）</label>
+        <input class="book-field-input" id="book-modal-author" placeholder="例如：Louis Sachar" maxlength="80" />
+      </div>
+      <div class="book-field">
+        <label class="book-field-label">蓝思值（可选，如 880L 就填 880）</label>
+        <input class="book-field-input" id="book-modal-lexile" type="number" min="0" max="2000" placeholder="例如：880" />
+      </div>
+      <div class="book-field">
+        <label class="book-field-label">类型</label>
+        <select class="book-field-select" id="book-modal-kind" onchange="onBookKindChange()">
+          <option value="novel">📕 长篇小说（默认折算 5 篇）</option>
+          <option value="journal">📰 杂志 / NZ School Journal（默认折算 2 篇）</option>
+          <option value="article">📄 短文 / 新闻报道（默认折算 1 篇）</option>
+        </select>
+      </div>
+      <div class="book-field">
+        <label class="book-field-label">折算为多少篇文章 <span style="color:var(--text-3)">(1-20)</span></label>
+        <input class="book-field-input" id="book-modal-count" type="number" min="1" max="20" value="5" />
+      </div>
+      <div class="book-modal-actions">
+        <button class="book-modal-btn book-modal-btn-secondary" onclick="closeBookModal()">取消</button>
+        <button class="book-modal-btn book-modal-btn-primary" onclick="submitBookLog()">✓ 打卡</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

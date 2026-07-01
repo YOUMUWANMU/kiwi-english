@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>口语陪练 · Kiwi English</title>
+<script src="auth.js?v=3.4"></script>
+<style>
+  :root {
+    --kiwi: #3d7a3a;
+    --kiwi-light: #e8f5e8;
+    --kiwi-dark: #2a5528;
+    --sky: #2563a8;
+    --fern: #5a9e57;
+    --gold: #c8820a;
+    --gold-light: #fef3dc;
+    --bg: #f7f8f5;
+    --surface: #ffffff;
+    --text: #1a1f17;
+    --text-2: #4a5245;
+    --text-3: #7a8475;
+    --border: #dde3d8;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --danger: #c0392b;
+    --danger-light: #fde8e8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* 顶部栏 */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    font-size: 20px;
+    text-decoration: none;
+    color: var(--text-2);
+    line-height: 1;
+  }
+
+  .topbar-info { flex: 1; }
+
+  .topbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .topbar-sub {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .scenario-badge {
+    background: var(--kiwi-light);
+    color: var(--kiwi-dark);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 1px solid #b8d9b6;
+    white-space: nowrap;
+  }
+
+  /* 场景选择 */
+  .scenario-picker {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+
+  .scenario-picker::-webkit-scrollbar { display: none; }
+
+  .scenario-chip {
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg);
+    color: var(--text-2);
+    flex-shrink: 0;
+  }
+
+  .scenario-chip.active {
+    background: var(--kiwi);
+    border-color: var(--kiwi);
+    color: white;
+  }
+
+  /* 自由聊 chip：金色高亮 */
+  .scenario-chip.free-chip {
+    background: linear-gradient(135deg, var(--gold, #c8820a) 0%, #d49216 100%);
+    color: white;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .scenario-chip.free-chip:hover { filter: brightness(1.05); }
+  .scenario-chip.free-chip.active {
+    background: linear-gradient(135deg, #a36807 0%, #b97a08 100%);
+  }
+  .scenario-divider {
+    width: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin: 2px 4px;
+  }
+
+  /* AI角色卡 */
+  .role-card {
+    margin: 12px 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .role-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: var(--kiwi-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .role-info { flex: 1; }
+
+  .role-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .role-desc {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 1px;
+  }
+
+  .role-accent {
+    font-size: 11px;
+    color: var(--kiwi);
+    background: var(--kiwi-light);
+    padding: 2px 7px;
+    border-radius: 8px;
+  }
+
+  /* 任务提示 */
+  .task-hint {
+    margin: 8px 16px 0;
+    background: var(--gold-light);
+    border: 1px solid #f5d89a;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #7a5a0a;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .hint-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* 对话区 */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg {
+    display: flex;
+    gap: 8px;
+    max-width: 85%;
+  }
+
+  .msg.ai { align-self: flex-start; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--kiwi-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    align-self: flex-end;
+  }
+
+  .msg-user-avatar {
+    background: var(--sky);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .msg-body { display: flex; flex-direction: column; gap: 4px; }
+
+  .msg-bubble {
+    padding: 10px 13px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .msg.ai .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--kiwi);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg-zh {
+    font-size: 11px;
+    color: var(--text-3);
+    padding: 0 4px;
+  }
+
+  .msg.user .msg-zh { text-align: right; color: #a0c09e; }
+
+  /* 开始对话卡片（解决浏览器自动播放策略） */
+  .start-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    max-width: 380px;
+    margin: 40px auto;
+  }
+  .start-card-avatar { font-size: 56px; margin-bottom: 12px; }
+  .start-card-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .start-card-desc { font-size: 13px; color: var(--text-3); line-height: 1.5; margin-bottom: 22px; padding: 0 8px; }
+  .start-card-btn {
+    background: var(--kiwi);
+    color: white;
+    border: none;
+    padding: 13px 32px;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 2px 8px rgba(61,122,58,.25);
+  }
+  .start-card-btn:hover { background: var(--kiwi-dark); }
+  .start-card-btn:active { transform: scale(0.98); }
+
+  /* 发音反馈 */
+  .feedback-card {
+    margin: 0 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    flex-shrink: 0;
+    display: none;
+  }
+
+  .feedback-card.show { display: block; }
+
+  .feedback-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .feedback-score {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .score-good { color: var(--kiwi); }
+  .score-ok { color: var(--gold); }
+  .score-try { color: var(--danger); }
+
+  .feedback-items {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .feedback-item {
+    font-size: 12px;
+    color: var(--text-2);
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: var(--bg);
+  }
+
+  .feedback-item.good { background: var(--kiwi-light); color: var(--kiwi-dark); }
+  .feedback-item.warn { background: var(--gold-light); color: #7a5a0a; }
+
+  /* 输入区 */
+  .input-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .text-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 9px 14px;
+    font-size: 14px;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+
+  .text-input:focus { border-color: var(--kiwi); background: white; }
+
+  .text-input::placeholder { color: var(--text-3); }
+
+  .btn-record {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: var(--kiwi);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .btn-record:hover { background: var(--kiwi-dark); }
+  .btn-record.recording { background: var(--danger); animation: pulse 1s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  .btn-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: var(--kiwi);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .btn-send:hover { background: var(--kiwi-dark); }
+  .btn-send:disabled { background: var(--border); cursor: not-allowed; }
+
+  /* 快捷词 */
+  .quick-phrases {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .quick-phrases::-webkit-scrollbar { display: none; }
+
+  .quick-btn {
+    white-space: nowrap;
+    padding: 5px 11px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 12px;
+    color: var(--text-2);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.1s;
+  }
+
+  .quick-btn:hover {
+    background: var(--kiwi-light);
+    border-color: var(--kiwi);
+    color: var(--kiwi-dark);
+  }
+
+  /* 正在输入指示 */
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 10px 13px;
+  }
+
+  .typing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-3);
+    animation: typing 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-4px); }
+  }
+
+  /* 加载遮罩 */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(247,248,245,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    display: none;
+  }
+
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--kiwi);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 无API提示 */
+  .no-api-banner {
+    margin: 8px 16px 0;
+    background: var(--danger-light);
+    border: 1px solid #f5c0b8;
+    border-radius: var(--radius-sm);
+    padding: 9px 13px;
+    font-size: 12px;
+    color: #8a2a20;
+    flex-shrink: 0;
+    display: none;
+  }
+
+  /* 按住录音 */
+  .voice-row { display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:8px; }
+  .btn-hold-record {
+    width:100%; padding:14px 20px; background:var(--kiwi); color:#fff; border:none; border-radius:24px;
+    font-size:15px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    user-select:none; touch-action:none; transition:background .15s, transform .1s;
+  }
+  .btn-hold-record:hover { background:var(--kiwi-dark); }
+  .btn-hold-record.recording { background:var(--danger); transform:scale(1.02); animation:recordPulse 1.2s ease-in-out infinite; }
+  .btn-hold-record.cancel-zone { background:#7a8475; }
+  .btn-hold-record .hold-icon { font-size:20px; }
+  @keyframes recordPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.35); }
+    50%      { box-shadow: 0 0 0 12px rgba(192,57,43,0); }
+  }
+  .voice-hint { font-size:11px; color:var(--text-3); }
+  .voice-hint.recording { color:var(--danger); font-weight:500; }
+  .voice-hint.cancel-zone { color:var(--danger); }
+
+  /* AI回复隐藏文本时的占位 */
+  .msg-audio-only .msg-bubble { background:var(--bg); border-style:dashed; color:var(--text-3); font-style:italic; cursor:pointer; }
+  .msg-audio-only .msg-bubble:hover { background:var(--kiwi-light); border-color:var(--kiwi); color:var(--kiwi-dark); }
+  .msg-replay-icon { font-size:14px; margin-right:6px; }
+  .msg-expand-btn {
+    background:transparent; border:none; color:var(--text-3); font-size:11px; padding:2px 4px;
+    cursor:pointer; text-decoration:underline;
+  }
+  .msg-expand-btn:hover { color:var(--kiwi); }
+
+  /* 自由聊角色选择 modal */
+  .free-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .free-modal.show { display: flex; }
+  .free-modal-card { background: var(--surface); border-radius: 16px; max-width: 460px; width: 100%; padding: 24px; max-height: 90vh; overflow-y: auto; }
+  .free-modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .free-modal-sub { font-size: 12px; color: var(--text-3); line-height: 1.5; margin-bottom: 18px; }
+  .free-role-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  @media (max-width: 480px) { .free-role-grid { grid-template-columns: 1fr 1fr; } }
+  .free-role-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .free-role-card:hover { border-color: var(--kiwi); background: var(--kiwi-light); transform: translateY(-2px); }
+  .free-role-avatar { font-size: 32px; margin-bottom: 6px; }
+  .free-role-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .free-role-desc { font-size: 10px; color: var(--text-3); }
+  .free-modal-close { width: 100%; padding: 11px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); font-size: 13px; cursor: pointer; font-family: inherit; }
+  .free-modal-close:hover { background: var(--bg); }
+</style>
+</head>
+<body>
+
+<!-- 顶部 -->
+<div class="topbar">
+  <a class="back-btn" href="index.html">←</a>
+  <div class="topbar-info">
+    <div class="topbar-title">口语陪练</div>
+    <div class="topbar-sub">AI扮演NZ同学 · 真实场景对话</div>
+  </div>
+  <span class="scenario-badge" id="current-badge">🏫 食堂</span>
+</div>
+
+<!-- 场景选择 -->
+<div class="scenario-picker">
+  <div class="scenario-chip free-chip" data-scenario="free" onclick="openFreeChat()">💬 自由聊</div>
+  <div class="scenario-divider"></div>
+  <div class="scenario-chip active" data-scenario="canteen" onclick="switchScenario(this)">🍱 食堂</div>
+  <div class="scenario-chip" data-scenario="classroom" onclick="switchScenario(this)">📚 课堂求助</div>
+  <div class="scenario-chip" data-scenario="pe" onclick="switchScenario(this)">⚽ 体育课</div>
+  <div class="scenario-chip" data-scenario="social" onclick="switchScenario(this)">👋 课间社交</div>
+  <div class="scenario-chip" data-scenario="science" onclick="switchScenario(this)">🔬 科学</div>
+  <div class="scenario-chip" data-scenario="lost" onclick="switchScenario(this)">🗺️ 问路</div>
+  <div class="scenario-chip" data-scenario="library" onclick="switchScenario(this)">📖 借书</div>
+  <div class="scenario-chip" data-scenario="homework" onclick="switchScenario(this)">📝 借作业</div>
+  <div class="scenario-chip" data-scenario="club" onclick="switchScenario(this)">🎭 社团</div>
+  <div class="scenario-chip" data-scenario="teacher_chat" onclick="switchScenario(this)">🍎 找老师</div>
+  <div class="scenario-chip" data-scenario="camp" onclick="switchScenario(this)">⛺ 露营</div>
+  <div class="scenario-chip" data-scenario="supermarket" onclick="switchScenario(this)">🛒 超市</div>
+  <div class="scenario-chip" data-scenario="bus" onclick="switchScenario(this)">🚌 公交</div>
+  <div class="scenario-chip" data-scenario="cafe" onclick="switchScenario(this)">☕ 咖啡店</div>
+  <div class="scenario-chip" data-scenario="doctor" onclick="switchScenario(this)">👩‍⚕️ 看医生</div>
+  <div class="scenario-chip" data-scenario="new_friend" onclick="switchScenario(this)">🤝 交朋友</div>
+  <div class="scenario-chip" data-scenario="weekend" onclick="switchScenario(this)">🌅 聊周末</div>
+  <div class="scenario-chip" data-scenario="hobby" onclick="switchScenario(this)">🎨 兴趣</div>
+  <div class="scenario-chip" data-scenario="birthday" onclick="switchScenario(this)">🎂 生日派对</div>
+  <div class="scenario-chip" data-scenario="rugby" onclick="switchScenario(this)">🏉 橄榄球</div>
+</div>
+
+<!-- AI角色卡 -->
+<div class="role-card">
+  <div class="role-avatar" id="role-avatar">😊</div>
+  <div class="role-info">
+    <div class="role-name" id="role-name">Liam · 同班同学</div>
+    <div class="role-desc" id="role-desc">Year 9学生，友善，喜欢橄榄球</div>
+  </div>
+  <span class="role-accent">🇺🇸 美式发音</span>
+</div>
+
+<!-- 任务提示 -->
+<div class="task-hint">
+  <span class="hint-icon">🎯</span>
+  <span id="task-text">任务：你刚进食堂，找不到座位。用英语向Liam询问是否可以坐旁边。试着用 "Could I..." 或 "Is this seat taken?" 开始。</span>
+</div>
+
+<!-- API配置提示 -->
+<div class="no-api-banner" id="no-api-banner">
+  ⚠️ 需要配置 Cloudflare Worker URL 才能启用AI对话。现在使用演示模式。
+</div>
+
+<!-- 对话区 -->
+<div class="chat-area" id="chat-area">
+  <!-- 首条消息由 JS 在 init 完成后渲染，保证按 settings 显示 -->
+</div>
+
+<!-- 发音反馈 -->
+<div class="feedback-card" id="feedback-card">
+  <div class="feedback-title">
+    <span>发音反馈</span>
+    <span class="feedback-score score-good" id="feedback-score">很好！</span>
+  </div>
+  <div class="feedback-items" id="feedback-items"></div>
+</div>
+
+<!-- 输入区 -->
+<div class="input-area">
+  <div class="input-row" id="text-input-row">
+    <input class="text-input" id="text-input" placeholder="用英语回复Liam..." />
+    <button class="btn-send" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+  <div class="voice-row" id="voice-row" style="display:none">
+    <button class="btn-hold-record" id="hold-record-btn">
+      <span class="hold-icon">🎤</span>
+      <span class="hold-text">按住说英语</span>
+    </button>
+    <div class="voice-hint" id="voice-hint">松开发送 · 上滑取消</div>
+  </div>
+  <div class="quick-phrases">
+    <button class="quick-btn" onclick="usePhrase(this)">Could I sit here?</button>
+    <button class="quick-btn" onclick="usePhrase(this)">Is this seat taken?</button>
+    <button class="quick-btn" onclick="usePhrase(this)">Sorry, I don't understand.</button>
+    <button class="quick-btn" onclick="usePhrase(this)">Could you say that again?</button>
+    <button class="quick-btn" onclick="usePhrase(this)">I'm new here.</button>
+    <button class="quick-btn" onclick="usePhrase(this)">Thanks a lot!</button>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = {
+  canteen: {
+    badge: '🏫 食堂',
+    avatar: '😊',
+    roleName: 'Liam · 同班同学',
+    roleDesc: 'Year 9学生，友善，喜欢橄榄球',
+    task: '任务：你刚进食堂，找不到座位。用英语向Liam询问是否可以坐旁边。试着用 "Could I..." 或 "Is this seat taken?" 开始。',
+    firstMsg: "Hey! You look a bit lost. You new here?",
+    firstMsgZh: "嘿！你看起来有点迷茫。你是新来的吗？",
+    quickPhrases: ['Could I sit here?','Is this seat taken?','I\'m new here.','What\'s good here?','Thanks a lot!','Sorry, could you repeat that?'],
+    systemPrompt: `You are Liam, a friendly Year 9 student at a New Zealand secondary school. You're talking to a new Chinese student in the school canteen. Speak standard American English vocabulary and phrasing - "awesome"/"cool" instead of "brilliant", "yeah" is fine. You may occasionally drop in one local NZ touch (e.g. "sweet as", or greeting with "Kia ora") as a one-off cultural flavour, not as your main style. Keep sentences short and clear since the student is learning English. After 2-3 exchanges, gently encourage them and help them if they struggle. Always respond in English only. Keep responses to 1-3 sentences.`
+  },
+  classroom: {
+    badge: '📚 课堂',
+    avatar: '👩‍🏫',
+    roleName: 'Ms. Johnson · 科学老师',
+    roleDesc: '亲切但认真，喜欢学生提问',
+    task: '任务：科学课上，老师刚说了实验步骤，但你没听清。用英语向老师请求重复说明。',
+    firstMsg: "Okay class, so for today's experiment you'll need to first collect your equipment from the bench. Any questions so far?",
+    firstMsgZh: "好了同学们，今天的实验你们首先要从台子上取设备。到目前为止有问题吗？",
+    quickPhrases: ['Sorry, could you repeat that?','I don\'t quite understand.','What does "collect" mean?','Could you speak more slowly?','Which bench?','Thank you, Ms. Johnson.'],
+    systemPrompt: `You are Ms. Johnson, a friendly science teacher at a New Zealand secondary school. You're speaking to a new Chinese student who is still learning English. Speak standard American English vocabulary and phrasing throughout. Use clear, patient language. Praise their effort to ask questions. Use simple vocabulary to explain science concepts. Keep responses supportive and educational. Always respond in English only. 1-3 sentences max.`
+  },
+  pe: {
+    badge: '⚽ 体育课',
+    avatar: '🏃',
+    roleName: 'Mr. Tane · 体育老师',
+    roleDesc: '精力充沛，毛利裔老师，很鼓励学生',
+    task: '任务：体育课要开始了，老师在说规则，你需要听懂并按指令行动。试着回应老师的指令。',
+    firstMsg: "Right, everyone get into groups of four! Come on, move it! You there, join that group over there.",
+    firstMsgZh: "好，大家四人一组！快点！你，加入那边那组。",
+    quickPhrases: ['Okay!','Which group?','Sorry, how many people?','Got it!','Can I join your group?','I don\'t understand the rules.'],
+    systemPrompt: `You are Mr. Tane, an energetic PE teacher of Maori descent at a NZ school. Speak standard American English vocabulary and phrasing for your instructions. You're encouraging and patient with students who don't speak English well. Use action words clearly: "run", "jump", "line up", "partner up". As a deliberate, occasional cultural touch (not your main style), you may use one Maori phrase like "kia kaha" (be strong) with a brief translation - keep this rare and clearly flagged as a cultural note, not your everyday speech. Keep responses short and directive. Always in English. 1-2 sentences.`
+  },
+  social: {
+    badge: '👋 社交',
+    avatar: '🙋‍♀️',
+    roleName: 'Aroha · 同班同学',
+    roleDesc: 'Year 9女生，好奇，喜欢音乐和漫画',
+    task: '任务：课间休息，Aroha主动来找你聊天。试着用英语和她聊聊你的兴趣爱好。',
+    firstMsg: "Hey, you're the new student from China, right? I'm Aroha. What kind of music do you like?",
+    firstMsgZh: "嘿，你就是从中国来的新同学对吧？我叫Aroha。你喜欢什么音乐？",
+    quickPhrases: ['I like pop music.','Do you know BTS?','I also like anime.','What about you?','That\'s so cool!','I don\'t know that band.'],
+    systemPrompt: `You are Aroha, a curious and friendly Year 9 student at a NZ school. You're interested in the new Chinese student and want to be friends. Talk about music, anime, food, school. Use natural American teen English - "yeah", "awesome", "that's so cool", "really?", "for sure". Help them when they struggle by suggesting words. Keep it fun and encouraging. English only. 1-2 sentences, casual tone.`
+  },
+  science: {
+    badge: '🔬 科学',
+    avatar: '👨‍🔬',
+    roleName: 'Mr. Park · 科学老师',
+    roleDesc: '严谨但耐心，喜欢解释原理',
+    task: '任务：科学实验课，你的搭档在指导你操作。试着理解实验步骤并正确回应。',
+    firstMsg: "Okay, so first we need to measure 50 milliliters of the solution. Can you see the measuring cylinder?",
+    firstMsgZh: "好，首先我们需要量取50毫升溶液。你能看到量筒吗？",
+    quickPhrases: ['Yes, I can see it.','How much? 50 ml?','What is a cylinder?','Should I pour it?','Is this correct?','What comes next?'],
+    systemPrompt: `You are a science lab partner (a Year 9 NZ student) helping a new Chinese student with a chemistry experiment. Speak standard American English vocabulary and phrasing. Give clear step-by-step instructions. Use simple science vocabulary and explain terms when needed. Be patient and check understanding often ("Does that make sense?", "Got it?"). Keep the experiment moving forward safely. English only. Short, clear sentences.`
+  },
+  lost: {
+    badge: '🗺️ 问路',
+    avatar: '👴',
+    roleName: 'Gordon · 学校保安',
+    roleDesc: '和蔼的老伯伯，很乐意帮助学生',
+    task: '任务：你在学校迷路了，找不到图书馆。向保安叔叔问路。',
+    firstMsg: "Hello there! You look a bit lost, young man. Are you alright?",
+    firstMsgZh: "你好！小伙子你看起来有点迷惑。还好吗？",
+    quickPhrases: ['Excuse me.','Where is the library?','I\'m lost.','Could you help me?','How do I get there?','Thank you very much!'],
+    systemPrompt: `You are Gordon, a kind elderly school security guard at a NZ school. Speak standard American English vocabulary and phrasing. You help a new Chinese student find their way around the school. Give simple, clear directions using landmarks: "turn left", "go past the gym", "it's next to the office". Use friendly, simple English - "no problem", "don't worry about it". Be patient and offer to walk them there if they're confused. English only. Keep directions simple and short.`
+  },
+
+  /* ====== 新增 14 个场景（v3.0） ====== */
+  library: {
+    badge: '📖 借书',
+    avatar: '👩‍🏫',
+    roleName: 'Ms. Lee · 图书馆员',
+    roleDesc: '温柔耐心，喜欢推荐书',
+    task: '任务：你想借一本英文书读，去问图书馆员推荐适合你水平的书。',
+    firstMsg: "Welcome to the library! Are you looking for something specific today?",
+    firstMsgZh: "欢迎来到图书馆！今天在找什么特别的书吗？",
+    quickPhrases: ['I\'m looking for a book.', 'Can you recommend one?', 'My English is not great yet.', 'I like adventure stories.', 'How long can I borrow it?', 'Thank you!'],
+    systemPrompt: `You are Ms. Lee, a warm and patient school librarian at a NZ school. Help the new Chinese student find a book that matches their English level. Ask gentle questions about their interests (animals, adventure, mystery, sports). Recommend specific books like "Holes" or "Wonder" if their English is OK, or graded readers if just starting. Use American English, simple and encouraging. English only, 1-2 sentences.`
+  },
+  homework: {
+    badge: '📝 借作业',
+    avatar: '🧑‍🎓',
+    roleName: 'Ben · 同班同学',
+    roleDesc: '友好可靠的同学',
+    task: '任务：你昨天没记下数学作业。课间找 Ben 借作业本看看。',
+    firstMsg: "Hey, what's up? Why do you look so worried?",
+    firstMsgZh: "嘿，怎么了？你为什么看起来这么担心？",
+    quickPhrases: ['I missed the homework.', 'Can I borrow yours?', 'I\'ll give it back today.', 'Which questions did we do?', 'Sorry, my English is slow.', 'Thanks so much.'],
+    systemPrompt: `You are Ben, a friendly Year 9 classmate at a NZ school. The new Chinese student forgot to write down today's homework. Help them out willingly. Mention specific homework details (e.g., "page 42, questions 1-5"). Use casual American English ("sure thing", "no worries", "yeah"). Be encouraging about their English. English only, short and natural.`
+  },
+  club: {
+    badge: '🎭 社团',
+    avatar: '🎤',
+    roleName: 'Sophie · 学姐',
+    roleDesc: 'Year 13 学姐，戏剧社负责人',
+    task: '任务：你想加入戏剧社。去找 Sophie 报名，问问需要什么。',
+    firstMsg: "Hi! Are you here to sign up for drama club?",
+    firstMsgZh: "嗨！你是来报名戏剧社的吗？",
+    quickPhrases: ['Yes, I want to join.', 'When do you meet?', 'I\'ve never acted before.', 'Is it OK if my English is not perfect?', 'What plays do you do?', 'Sounds great!'],
+    systemPrompt: `You are Sophie, a cheerful Year 13 student leading the drama club at a NZ school. A new Chinese student wants to join. Be welcoming. Mention practical info: meets Wednesdays after school, current play is "The Wizard of Oz", no acting experience needed. Reassure them about their English. Use upbeat American English. English only, 1-2 sentences.`
+  },
+  teacher_chat: {
+    badge: '🍎 找老师',
+    avatar: '👨‍🏫',
+    roleName: 'Mr. Brown · 英语老师',
+    roleDesc: '认真负责的英语老师',
+    task: '任务：你的英语作文不会写。课后去办公室找 Mr. Brown 求助。',
+    firstMsg: "Hi, come on in! What can I help you with?",
+    firstMsgZh: "你好，请进！我能帮你什么忙吗？",
+    quickPhrases: ['I need help with the essay.', 'I don\'t understand the topic.', 'Can you explain again?', 'My grammar is bad.', 'Should I start with examples?', 'Thank you for your time.'],
+    systemPrompt: `You are Mr. Brown, a patient and supportive English teacher at a NZ school. The new Chinese student needs help with a writing assignment. Ask what they're stuck on. Give concrete, actionable tips ("start with a clear sentence", "use 'because' to explain", "give one example"). Be warm and never criticize. Use clear American English. English only, 1-2 sentences.`
+  },
+  camp: {
+    badge: '⛺ 露营',
+    avatar: '🥾',
+    roleName: 'Ms. Wright · 老师',
+    roleDesc: '组织 school camp 的老师',
+    task: '任务：学校组织三天野营。去咨询要带什么、有什么活动。',
+    firstMsg: "Oh great, you're interested in camp! Do you have any questions?",
+    firstMsgZh: "太好了，你对露营感兴趣！有什么问题吗？",
+    quickPhrases: ['What do I need to bring?', 'When does it start?', 'What will we do?', 'Is the food OK?', 'I\'ve never camped before.', 'Sounds fun!'],
+    systemPrompt: `You are Ms. Wright, a friendly NZ teacher organising a 3-day school camp (Year 9 trip to a forest area). The new Chinese student is asking about it. Cover practical things: dates, what to pack (sleeping bag, raincoat, sturdy shoes), activities (hiking, kayaking, campfire), food (provided, can accommodate dietary needs). Use warm encouraging American English. English only, 1-2 sentences.`
+  },
+  supermarket: {
+    badge: '🛒 超市',
+    avatar: '🧑‍💼',
+    roleName: 'Shop Assistant · 店员',
+    roleDesc: '友好的 Countdown 店员',
+    task: '任务：你在 Countdown 超市，找不到牛奶。问店员在哪里。',
+    firstMsg: "Hi there! Can I help you find anything?",
+    firstMsgZh: "你好！需要帮你找什么吗？",
+    quickPhrases: ['Where is the milk?', 'Do you have soy milk?', 'How much is this?', 'Where can I pay?', 'Is this on sale?', 'Thanks for your help.'],
+    systemPrompt: `You are a friendly shop assistant at Countdown (a NZ supermarket). A new Chinese student needs help finding items. Give clear directions ("aisle 5, on your left", "back of the store, near the bakery"). Mention NZ context naturally (prices in dollars, common NZ brands like Anchor milk). Use casual American English. English only, 1-2 sentences.`
+  },
+  bus: {
+    badge: '🚌 公交',
+    avatar: '🧔',
+    roleName: 'Bus Driver · 司机',
+    roleDesc: '繁忙但耐心的公交司机',
+    task: '任务：你要从学校坐公交回家，但不确定坐哪一路。上车问司机。',
+    firstMsg: "Morning! Where are you heading to?",
+    firstMsgZh: "早上好！你要去哪里？",
+    quickPhrases: ['I\'m going to Newmarket.', 'How much is the fare?', 'How long does it take?', 'When is the next stop?', 'Can you tell me when to get off?', 'Cheers!'],
+    systemPrompt: `You are a friendly NZ bus driver. A new Chinese student is figuring out the bus. Give clear info: fare ($3-4 for a short trip, use AT HOP card), approximate journey time, when to push the bell button to signal a stop. Use casual American English with light NZ flavor ("cheers", "no worries"). English only, 1-2 sentences.`
+  },
+  cafe: {
+    badge: '☕ 咖啡店',
+    avatar: '👨‍🍳',
+    roleName: 'Barista · 咖啡师',
+    roleDesc: '热情的咖啡师',
+    task: '任务：你想试试 NZ 的招牌咖啡 flat white。点一杯并问问区别。',
+    firstMsg: "Hey, what can I get for you today?",
+    firstMsgZh: "嘿，今天想喝什么？",
+    quickPhrases: ['One flat white, please.', 'What\'s the difference with latte?', 'Can I have it with oat milk?', 'For here, please.', 'How much is that?', 'Thank you!'],
+    systemPrompt: `You are a friendly NZ barista. A new Chinese student wants to try a flat white (NZ's signature coffee). Briefly explain it (smaller than latte, stronger coffee flavor, velvety milk). Offer milk options. Total around $5-6. Be welcoming and patient. Use American English. English only, 1-2 sentences.`
+  },
+  doctor: {
+    badge: '👩‍⚕️ 看医生',
+    avatar: '🩺',
+    roleName: 'Dr. Wilson · GP医生',
+    roleDesc: '温柔专业的家庭医生',
+    task: '任务：你发烧三天了。去找家庭医生，描述症状。',
+    firstMsg: "Hi, come on in. What seems to be the problem today?",
+    firstMsgZh: "你好，请进。今天哪里不舒服？",
+    quickPhrases: ['I have a fever.', 'My throat hurts.', 'It started three days ago.', 'I feel very tired.', 'Do I need medicine?', 'Should I stay home from school?'],
+    systemPrompt: `You are Dr. Wilson, a kind and professional NZ GP. A new Chinese student is describing symptoms. Ask follow-up questions clearly: temperature? appetite? headache? Reassure them. Give simple advice (rest, fluids, paracetamol if fever, return if not better in 2 days). Use simple American English vocabulary. English only, 1-2 sentences.`
+  },
+  new_friend: {
+    badge: '🤝 交朋友',
+    avatar: '😄',
+    roleName: 'Jack · 同班同学',
+    roleDesc: '外向爱聊天的同学',
+    task: '任务：开学第一天，旁边的同学主动跟你打招呼。聊聊你的来历。',
+    firstMsg: "Hey, I haven't seen you before. Are you new here?",
+    firstMsgZh: "嘿，我之前没见过你。你是新来的吗？",
+    quickPhrases: ['Yes, I just moved.', 'I\'m from China.', 'It\'s my first day.', 'What\'s your name?', 'What do you like doing?', 'Nice to meet you!'],
+    systemPrompt: `You are Jack, an outgoing Year 9 student at a NZ school. You just noticed a new student and want to make them feel welcome. Be curious but not overwhelming. Ask about: where they're from, what they're into, if they've made friends yet. Share a bit about yourself (love basketball, have a dog). Use friendly American English ("for real?", "no way!", "that's sick"). English only, 1-2 sentences.`
+  },
+  weekend: {
+    badge: '🌅 聊周末',
+    avatar: '🙋‍♀️',
+    roleName: 'Aroha · 同班同学',
+    roleDesc: 'Year 9女生，好奇',
+    task: '任务：周一早上，Aroha 问你周末做了什么。聊聊你的周末。',
+    firstMsg: "Morning! How was your weekend?",
+    firstMsgZh: "早上好！你周末过得怎么样？",
+    quickPhrases: ['It was good.', 'I went to the beach.', 'I stayed home.', 'I did my homework.', 'What about you?', 'Sounds fun!'],
+    systemPrompt: `You are Aroha, a friendly Year 9 student. It's Monday morning and you're catching up with the new Chinese student about the weekend. Share your own weekend story (went to the movies, played netball, had a sleepover). Ask follow-up questions. Use casual American English ("oh nice", "for real?", "that's awesome"). English only, 1-2 sentences.`
+  },
+  hobby: {
+    badge: '🎨 兴趣',
+    avatar: '🎮',
+    roleName: 'Tama · 同班同学',
+    roleDesc: '游戏迷 + 篮球迷',
+    task: '任务：午饭时同学想知道你喜欢什么。聊聊你的兴趣爱好。',
+    firstMsg: "Hey bro, do you play any video games?",
+    firstMsgZh: "嘿哥们，你玩电子游戏吗？",
+    quickPhrases: ['Yes, I love games.', 'I play Minecraft.', 'I also like basketball.', 'What do you play?', 'I draw too.', 'Do you want to play together?'],
+    systemPrompt: `You are Tama, a Year 9 Kiwi student who loves gaming and basketball. You're chatting with the new Chinese student during lunch. Share your favorites (Fortnite, Minecraft, NBA), ask theirs. Use casual American English with teen vibes ("bro", "for sure", "sick"). Be inclusive and excited to find common interests. English only, 1-2 sentences.`
+  },
+  birthday: {
+    badge: '🎂 生日',
+    avatar: '🎉',
+    roleName: 'Emma · 同班同学',
+    roleDesc: '邀请你参加生日的同学',
+    task: '任务：Emma 邀请你下周六去她家参加生日派对。问问详细信息。',
+    firstMsg: "Hey, I'm having a birthday party this Saturday. Do you want to come?",
+    firstMsgZh: "嘿，我这周六开生日派对。你想来吗？",
+    quickPhrases: ['Yes, I\'d love to!', 'What time?', 'Where is it?', 'Should I bring a gift?', 'What should I wear?', 'How many people?'],
+    systemPrompt: `You are Emma, a friendly Year 9 student inviting the new Chinese student to your birthday party. Share details: Saturday 2pm-5pm, at your house in Mt Eden, casual clothes, no need for big gift (just bring something small or nothing). Mention there'll be games, pizza, cake. Use cheerful American English. English only, 1-2 sentences.`
+  },
+  rugby: {
+    badge: '🏉 橄榄球',
+    avatar: '😊',
+    roleName: 'Liam · 同班同学',
+    roleDesc: '橄榄球迷，热情分享',
+    task: '任务：Liam 兴奋地跟你聊昨晚 All Blacks 的比赛。你看了吗？',
+    firstMsg: "Dude, did you see the All Blacks game last night? It was epic!",
+    firstMsgZh: "兄弟，你看昨晚 All Blacks 的比赛了吗？太精彩了！",
+    quickPhrases: ['No, I missed it.', 'What\'s the score?', 'Who scored the try?', 'I don\'t really know rugby.', 'Can you explain a try?', 'Sounds exciting!'],
+    systemPrompt: `You are Liam, a Year 9 Kiwi student obsessed with rugby. You're sharing your excitement about the All Blacks game with the new Chinese student. If they don't know rugby, explain basics simply (try = 5 points, run with ball to score line). Drop NZ rugby names (Beauden Barrett, haka). Be patient, excited, and educational. Use American English with rugby-specific terms. English only, 1-2 sentences.`
+  },
+  /* ====== /新增 ====== */
+
+  /* ====== 自由聊：开放话题，由 AI 主动找话题 ====== */
+  free: {
+    badge: '💬 自由聊',
+    avatar: '😊',  // 由角色选择动态替换
+    roleName: 'Liam · 同班同学',  // 由角色选择动态替换
+    roleDesc: '想跟你随便聊聊',
+    task: '任务：和朋友自由聊天。不设固定话题，AI 会根据你的回复深入或换话题。放松，多说几句！',
+    firstMsg: "Hey! Good to see you. What's been on your mind lately?",
+    firstMsgZh: "嘿！很高兴见到你。最近在想什么？",
+    quickPhrases: ['Nothing much.', 'School is busy.', 'I miss my hometown.', 'What about you?', 'Tell me something.', 'I don\'t know what to talk about.'],
+    systemPrompt: `You are a friendly Year 9 Kiwi student having a casual chat with Sam (a new Chinese student). This is open conversation - no specific task.
+
+ADAPTATION (CRITICAL):
+- If Sam writes short/simple sentences (under 5 words, basic vocab), respond at A2 level - simple words, short sentences.
+- If Sam writes longer or more complex English, respond at B1-B2 level - richer vocab, varied sentence patterns.
+- Match their energy: if quiet, be gentle; if chatty, be expressive.
+
+STYLE:
+- Use natural American English with light Kiwi flavor (occasional "sweet as", "yeah nah", "chur")
+- Share your own little stories to model fuller responses
+- Ask follow-up questions about what Sam just said
+- If Sam seems stuck, suggest a new topic naturally ("Hey, by the way, do you play any sports?", "What's your favorite food?")
+- Topics: school day, hobbies, food, family back home, NZ culture, weekend, dreams, music, movies, sports
+
+NEVER:
+- Lecture or correct grammar
+- Say "Let me know if you need help" - just have fun
+- Use complex idioms unless Sam shows they can handle them
+
+English only. 1-3 sentences, conversational tone.`
+  }
+};
+
+let currentScenario = 'canteen';
+let conversationHistory = [];
+let isWaitingForAI = false;
+let currentSettings = { aiTextMode: 'show', replyMode: 'voice' };
+let currentUserType = 'child';
+let sessionStartTs = Date.now();
+let sessionTurns = 0;
+
+// 初始化：检查登录 + 拉取设置 + 应用UI + 显示开始卡片
+(async function init() {
+  try {
+    const me = await KIWI.requireAuth('any');
+    currentUserType = me.type;
+    // 拉取这个孩子的训练设置（家长账号则全部默认）
+    if (me.type === 'child' && KIWI.WORKER_URL) {
+      try {
+        const r = await KIWI.api('/api/settings');
+        currentSettings = r.settings || currentSettings;
+      } catch {}
+    }
+    applySettingsToUI();
+
+    // 处理 URL 参数 ?topic=xxx（来自首页"今日话题"卡片）
+    const urlParams = new URLSearchParams(window.location.search);
+    const topicParam = urlParams.get('topic');
+    if (topicParam && SCENARIOS[topicParam]) {
+      currentScenario = topicParam;
+      // 同步 chip 高亮 + 顶部信息
+      document.querySelectorAll('.scenario-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.scenario === topicParam);
+      });
+      const s = SCENARIOS[topicParam];
+      document.getElementById('current-badge').textContent = s.badge;
+      document.getElementById('role-avatar').textContent = s.avatar;
+      document.getElementById('role-name').textContent = s.roleName;
+      document.getElementById('role-desc').textContent = s.roleDesc;
+      document.getElementById('task-text').textContent = s.task;
+      updateQuickPhrases(s.quickPhrases);
+    }
+
+    // 显示"开始对话"卡片，等用户点击触发首条消息和 TTS
+    // 不直接渲染：浏览器自动播放策略要求用户先交互才能播放声音
+    showStartCard();
+  } catch (e) {
+    // requireAuth已经跳转，这里不用处理
+  }
+})();
+
+function applySettingsToUI() {
+  const textRow = document.getElementById('text-input-row');
+  const voiceRow = document.getElementById('voice-row');
+  const mode = currentSettings.replyMode;
+  if (mode === 'text') {
+    textRow.style.display = 'flex';
+    voiceRow.style.display = 'none';
+  } else {
+    // voice（默认）
+    textRow.style.display = 'none';
+    voiceRow.style.display = 'flex';
+  }
+}
+
+function showStartCard() {
+  const chatArea = document.getElementById('chat-area');
+  conversationHistory = [];
+  const s = SCENARIOS[currentScenario];
+  const isAudioOnly = currentSettings.aiTextMode === 'audio_only';
+  chatArea.innerHTML = `
+    <div class="start-card">
+      <div class="start-card-avatar">${s.avatar}</div>
+      <div class="start-card-title">准备好和 ${s.roleName || 'AI 同学'} 聊聊吗？</div>
+      <div class="start-card-desc">${isAudioOnly ? '🔊 仅语音模式：仔细听 ' + (s.roleName || 'TA') + ' 说什么，再按住麦克风回答' : '📝 文字 + 语音模式：能看英文也能听语音'}</div>
+      <button class="start-card-btn" onclick="startConversation()">▶ 开始对话</button>
+    </div>
+  `;
+}
+
+function startConversation() {
+  // 这是用户主动点击，speechSynthesis 此时有了用户交互上下文，后续都能正常播放
+  renderFirstMessage();
+}
+
+function renderFirstMessage() {
+  // 清空 chat 区，按当前 settings 重新渲染首条
+  const chatArea = document.getElementById('chat-area');
+  chatArea.innerHTML = '';
+  conversationHistory = [];
+  const s = SCENARIOS[currentScenario];
+  addAIMessage(s.firstMsg, s.firstMsgZh, false);
+  conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+}
+
+// 保留兼容旧名（switchScenario里会调用）
+function rerenderFirstMessage() {
+  renderFirstMessage();
+}
+
+function switchScenario(chip) {
+  document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  const scenario = chip.dataset.scenario;
+  // 切换前若有对话历史，上报一次会话事件
+  if (sessionTurns > 0) reportSpeakingSession();
+  currentScenario = scenario;
+  const s = SCENARIOS[scenario];
+  document.getElementById('current-badge').textContent = s.badge;
+  document.getElementById('role-avatar').textContent = s.avatar;
+  document.getElementById('role-name').textContent = s.roleName;
+  document.getElementById('role-desc').textContent = s.roleDesc;
+  document.getElementById('task-text').textContent = s.task;
+  document.getElementById('text-input').placeholder = '用英语回复...';
+  updateQuickPhrases(s.quickPhrases);
+  document.getElementById('feedback-card').classList.remove('show');
+  conversationHistory = [];
+  sessionStartTs = Date.now();
+  sessionTurns = 0;
+  document.getElementById('chat-area').innerHTML = '';
+  addAIMessage(s.firstMsg, s.firstMsgZh, /*alreadyInHistory*/false);
+  conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+}
+
+/* ========== 自由聊 ========== */
+function openFreeChat() {
+  document.getElementById('free-modal').classList.add('show');
+}
+function closeFreeModal(e) {
+  if (e && e.target.id !== 'free-modal') return;
+  document.getElementById('free-modal').classList.remove('show');
+}
+
+// 角色人设映射：用于自由聊时把角色信息塞进 system prompt
+const FREE_CHAT_ROLE_HINTS = {
+  Liam:  'You are Liam — a friendly Year 9 boy at a NZ school, into rugby and gaming.',
+  Aroha: 'You are Aroha — a curious Year 9 girl at a NZ school, into music and anime.',
+  Tama:  'You are Tama — a chill Year 9 Kiwi boy, into video games and basketball.',
+  Emma:  'You are Emma — a cheerful Year 9 girl who loves throwing parties and chatting.',
+  Jack:  'You are Jack — an outgoing Year 9 boy, into basketball and dogs.',
+  Ben:   'You are Ben — a reliable Year 9 boy at a NZ school, studious and friendly.'
+};
+
+function startFreeChat(roleName, avatar, desc) {
+  closeFreeModal();
+  // 把 SCENARIOS.free 的字段动态替换为所选角色
+  const freeScene = SCENARIOS.free;
+  freeScene.roleName = roleName + ' · 同班同学';
+  freeScene.roleDesc = desc;
+  freeScene.avatar = avatar;
+  // 把 system prompt 的角色锚点替换为具体角色
+  const baseHint = FREE_CHAT_ROLE_HINTS[roleName] || `You are ${roleName}, a friendly Year 9 student at a NZ school.`;
+  freeScene.systemPrompt = baseHint + `
+
+This is an OPEN-ENDED chat with Sam (a new Chinese student) — no specific task.
+
+ADAPTATION (CRITICAL):
+- If Sam writes short/simple sentences (under 5 words, basic vocab), respond at A2 level — simple words, short sentences.
+- If Sam writes longer or more complex English, respond at B1-B2 level — richer vocab, varied sentence patterns.
+- Match their energy: if quiet, be gentle; if chatty, be expressive.
+
+STYLE:
+- Use natural American English with light Kiwi flavor (occasional "sweet as", "yeah nah", "chur")
+- Share your own little stories to model fuller responses
+- Ask follow-up questions about what Sam just said
+- If Sam seems stuck or replies very briefly, suggest a new topic ("Hey, by the way, do you play any sports?", "What do you usually eat for breakfast in China?")
+- Topics: school day, hobbies, food, family back home, NZ culture, weekend, dreams, music, movies, sports
+
+NEVER:
+- Lecture or correct grammar
+- Say things like "Let me know if you need help" — just have fun
+- Use complex idioms unless Sam shows they can handle them
+
+English only. 1-3 sentences, conversational tone.`;
+  // 首句也根据角色微调
+  const firstMsgPool = [
+    `Hey! Good to see you. How's your day going?`,
+    `Hi there! What have you been up to today?`,
+    `Hey, what's up? Anything interesting happen today?`,
+    `Yo! How's everything?`,
+  ];
+  freeScene.firstMsg = firstMsgPool[Math.floor(Math.random() * firstMsgPool.length)];
+  freeScene.firstMsgZh = '';  // 自由聊不显示翻译，鼓励猜
+
+  // 切换到 free 场景
+  document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.scenario-chip.free-chip').classList.add('active');
+  if (sessionTurns > 0) reportSpeakingSession();
+  currentScenario = 'free';
+  document.getElementById('current-badge').textContent = freeScene.badge;
+  document.getElementById('role-avatar').textContent = freeScene.avatar;
+  document.getElementById('role-name').textContent = freeScene.roleName;
+  document.getElementById('role-desc').textContent = freeScene.roleDesc;
+  document.getElementById('task-text').textContent = freeScene.task;
+  document.getElementById('text-input').placeholder = '用英语回复...';
+  updateQuickPhrases(freeScene.quickPhrases);
+  document.getElementById('feedback-card').classList.remove('show');
+  conversationHistory = [];
+  sessionStartTs = Date.now();
+  sessionTurns = 0;
+  document.getElementById('chat-area').innerHTML = '';
+  // 用户点击了角色卡 = 用户交互，可以直接渲染+自动播放
+  addAIMessage(freeScene.firstMsg, freeScene.firstMsgZh, false);
+  conversationHistory.push({ role: 'assistant', content: freeScene.firstMsg });
+}
+/* ========== /自由聊 ========== */
+
+function updateQuickPhrases(phrases) {
+  const container = document.querySelector('.quick-phrases');
+  container.innerHTML = phrases.map(p =>
+    `<button class="quick-btn" onclick="usePhrase(this)">${p}</button>`
+  ).join('');
+}
+
+function usePhrase(btn) {
+  if (currentSettings.replyMode === 'text') {
+    document.getElementById('text-input').value = btn.textContent;
+    document.getElementById('text-input').focus();
+  } else {
+    // 语音模式下，点快捷词直接发送（辅助用途）
+    sendUserText(btn.textContent);
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('text-input');
+  const text = input.value.trim();
+  if (!text || isWaitingForAI) return;
+  input.value = '';
+  await sendUserText(text);
+}
+
+async function sendUserText(text) {
+  if (!text || isWaitingForAI) return;
+  addUserMessage(text);
+  sessionTurns += 1;
+  await getAIResponse(text);
+}
+
+document.getElementById('text-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function addUserMessage(text) {
+  const chatArea = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `
+    <div class="msg-avatar msg-user-avatar">我</div>
+    <div class="msg-body">
+      <div class="msg-bubble">${escHtml(text)}</div>
+    </div>`;
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  conversationHistory.push({ role: 'user', content: text });
+  analyzePronunciation(text);
+}
+
+function addTypingIndicator() {
+  const chatArea = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  const s = SCENARIOS[currentScenario];
+  div.innerHTML = `
+    <div class="msg-avatar">${s.avatar}</div>
+    <div class="msg-body">
+      <div class="msg-bubble">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>`;
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function getAIResponse(userText) {
+  isWaitingForAI = true;
+  addTypingIndicator();
+  const s = SCENARIOS[currentScenario];
+
+  if (!KIWI.WORKER_URL) {
+    await new Promise(r => setTimeout(r, 1200));
+    removeTypingIndicator();
+    const demoReplies = getDemoReply(currentScenario, userText);
+    addAIMessage(demoReplies.en, demoReplies.zh);
+    isWaitingForAI = false;
+    return;
+  }
+
+  try {
+    const data = await KIWI.api('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        system: s.systemPrompt,
+        messages: conversationHistory,
+        max_tokens: 150
+      })
+    });
+    removeTypingIndicator();
+    const reply = data.content?.[0]?.text || "Sorry, could you say that again?";
+    addAIMessage(reply, '');
+    conversationHistory.push({ role: 'assistant', content: reply });
+    speakText(reply);
+  } catch (e) {
+    removeTypingIndicator();
+    const demoReplies = getDemoReply(currentScenario, userText);
+    addAIMessage(demoReplies.en, demoReplies.zh);
+  }
+  isWaitingForAI = false;
+}
+
+function getDemoReply(scenario, userText) {
+  const replies = {
+    canteen: [
+      { en: "Yes, of course! Sit down, mate. I'm Liam, by the way. Have you just started here?", zh: "当然可以！坐下吧。顺便说一下我是Liam。你刚开始在这里上学吗？" },
+      { en: "Brilliant! Where are you from? China? That's really cool!", zh: "太好了！你从哪里来？中国？那真的很棒！" },
+      { en: "No worries! The pies here are pretty good. You should try one.", zh: "没关系！这里的肉馅饼很好吃。你应该试试。" }
+    ],
+    classroom: [
+      { en: "Of course! Take your time. We need to heat the solution to 80 degrees first.", zh: "当然！慢慢来。我们首先需要把溶液加热到80度。" },
+      { en: "No problem at all. It's great that you asked!", zh: "完全没问题。你能提问很好！" }
+    ],
+    pe: [
+      { en: "Good work! Now get ready to run to that cone and back. Go!", zh: "干得好！现在准备跑到那个锥形桩然后跑回来。开始！" },
+      { en: "Kia kaha! That means be strong! Come on, you've got this!", zh: "Kia kaha！意思是要坚强！加油，你能行！" }
+    ],
+    social: [
+      { en: "Oh really? That's brilliant! Do you like anime too? I love Demon Slayer!", zh: "哦真的吗？太酷了！你也喜欢动漫吗？我超爱《鬼灭之刃》！" },
+      { en: "Really? That's so good! Hey, do you want to hang out at lunch tomorrow?", zh: "真的吗？太好了！嘿，明天午餐时间你想一起玩吗？" }
+    ],
+    science: [
+      { en: "Yes, that's right! Now carefully pour the solution into the beaker.", zh: "对了！现在小心地把溶液倒入烧杯里。" },
+      { en: "Good job! Make sure you wear your safety goggles at all times.", zh: "做得好！确保你一直戴着安全护目镜。" }
+    ],
+    lost: [
+      { en: "Not to worry! The library? Go straight down this hall, turn left at the gym, and it's the big building on your right.", zh: "没事的！图书馆？沿这条走廊直走，在体育馆那里左转，就是右边那栋大楼。" },
+      { en: "No trouble at all! Just follow me, I'll show you the way.", zh: "没问题！跟我来，我带你去。" }
+    ]
+  };
+  const list = replies[scenario] || replies.canteen;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+let _aiMsgCounter = 0;
+function addAIMessage(enText, zhText, _alreadyInHistory) {
+  const chatArea = document.getElementById('chat-area');
+  const s = SCENARIOS[currentScenario];
+  const mode = currentSettings.aiTextMode;
+  const msgId = 'ai-msg-' + (++_aiMsgCounter);
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.dataset.en = enText;
+  div.dataset.zh = zhText || '';
+
+  let bubbleInner = '';
+  if (mode === 'show') {
+    bubbleInner = `<div class="msg-bubble">${escHtml(enText)}</div>
+      ${zhText ? `<div class="msg-zh">${escHtml(zhText)}</div>` : ''}`;
+  } else { // audio_only：纯语音，像微信语音
+    bubbleInner = `
+      <div class="msg-bubble" onclick="replayMessage('${msgId}')">
+        <span class="msg-replay-icon">🔊</span>点击重放
+      </div>`;
+  }
+
+  div.id = msgId;
+  div.innerHTML = `
+    <div class="msg-avatar">${s.avatar}</div>
+    <div class="msg-body">${bubbleInner}</div>`;
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  speakText(enText);
+}
+
+function replayMessage(msgId) {
+  const div = document.getElementById(msgId);
+  if (!div) return;
+  speakText(div.dataset.en);
+}
+
+function analyzePronunciation(text) {
+  const words = text.trim().split(/\s+/);
+  const goodPoints = [];
+  const tips = [];
+  if (words.length >= 3) goodPoints.push('句子长度不错，继续保持！');
+  if (text.includes('Could') || text.includes('Please') || text.includes('Sorry')) {
+    goodPoints.push('礼貌用语使用正确 👍');
+  }
+  if (/\bcool\b/i.test(text)) {
+    tips.push('🌏 文化小知识：新西兰本地人也常说 "sweet as" 表示"挺好/没问题"');
+  }
+  if (/\b(hi|hello)\b/i.test(text)) {
+    tips.push('🌏 文化小知识：新西兰学校里同学间也会用毛利语问候 "Kia ora"');
+  }
+  const card = document.getElementById('feedback-card');
+  const scoreEl = document.getElementById('feedback-score');
+  const itemsEl = document.getElementById('feedback-items');
+  const score = goodPoints.length > 0 ? '很好！' : '继续练习';
+  const scoreClass = goodPoints.length > 0 ? 'score-good' : 'score-ok';
+  scoreEl.textContent = score;
+  scoreEl.className = `feedback-score ${scoreClass}`;
+  let html = '';
+  goodPoints.forEach(p => { html += `<div class="feedback-item good">✓ ${p}</div>`; });
+  tips.forEach(t => { html += `<div class="feedback-item warn">${t}</div>`; });
+  if (html === '') { html = '<div class="feedback-item">你的回答很自然，继续对话吧！</div>'; }
+  itemsEl.innerHTML = html;
+  card.classList.add('show');
+}
+
+function speakText(text) {
+  KIWI.speak(text, { rate: 0.92 });
+}
+
+/* ============ 按住录音（Web Speech Recognition） ============ */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isHolding = false;
+let holdStartY = 0;
+let recognizedText = '';
+let cancelRecording = false;
+
+function initRecognition() {
+  if (!SpeechRecognition) return null;
+  const rec = new SpeechRecognition();
+  rec.lang = 'en-US';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  rec.onresult = (e) => {
+    let finalT = '';
+    for (let i = 0; i < e.results.length; i++) {
+      finalT += e.results[i][0].transcript;
+    }
+    recognizedText = finalT;
+    document.getElementById('voice-hint').textContent = '识别中：' + (recognizedText || '...');
+  };
+  rec.onerror = (e) => {
+    console.warn('语音识别错误:', e.error);
+  };
+  return rec;
+}
+
+const holdBtn = document.getElementById('hold-record-btn');
+const voiceHint = document.getElementById('voice-hint');
+
+function startHold(e) {
+  if (isWaitingForAI || isHolding) return;
+  e.preventDefault();
+  if (!SpeechRecognition) {
+    alert('当前浏览器不支持语音识别。建议用 Chrome 或 Safari。');
+    return;
+  }
+  isHolding = true;
+  recognizedText = '';
+  cancelRecording = false;
+  holdStartY = (e.touches ? e.touches[0].clientY : e.clientY);
+  holdBtn.classList.add('recording');
+  holdBtn.querySelector('.hold-text').textContent = '正在录音…';
+  voiceHint.classList.add('recording');
+  voiceHint.textContent = '识别中...（松开发送 · 上滑取消）';
+  recognition = initRecognition();
+  if (recognition) {
+    try { recognition.start(); } catch (e) { console.warn(e); }
+  }
+}
+
+function moveHold(e) {
+  if (!isHolding) return;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY);
+  const dy = holdStartY - y;
+  if (dy > 50) {
+    cancelRecording = true;
+    holdBtn.classList.add('cancel-zone');
+    voiceHint.classList.add('cancel-zone');
+    voiceHint.textContent = '↑ 松开取消';
+  } else {
+    cancelRecording = false;
+    holdBtn.classList.remove('cancel-zone');
+    voiceHint.classList.remove('cancel-zone');
+    voiceHint.textContent = '识别中...（松开发送 · 上滑取消）';
+  }
+}
+
+function endHold(e) {
+  if (!isHolding) return;
+  if (e) e.preventDefault();
+  isHolding = false;
+  holdBtn.classList.remove('recording', 'cancel-zone');
+  holdBtn.querySelector('.hold-text').textContent = '按住说英语';
+  voiceHint.classList.remove('recording', 'cancel-zone');
+  voiceHint.textContent = '松开发送 · 上滑取消';
+  if (recognition) {
+    try { recognition.stop(); } catch (e) {}
+  }
+  // 等识别结果稳定后再决定
+  setTimeout(() => {
+    if (cancelRecording) {
+      voiceHint.textContent = '已取消';
+      setTimeout(() => { voiceHint.textContent = '松开发送 · 上滑取消'; }, 1200);
+      return;
+    }
+    const text = recognizedText.trim();
+    if (!text) {
+      voiceHint.textContent = '没听清，再试一次';
+      setTimeout(() => { voiceHint.textContent = '松开发送 · 上滑取消'; }, 1500);
+      return;
+    }
+    sendUserText(text);
+  }, 200);
+}
+
+holdBtn.addEventListener('mousedown', startHold);
+holdBtn.addEventListener('touchstart', startHold, { passive: false });
+window.addEventListener('mousemove', moveHold);
+window.addEventListener('touchmove', moveHold, { passive: false });
+window.addEventListener('mouseup', endHold);
+window.addEventListener('touchend', endHold);
+window.addEventListener('touchcancel', endHold);
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+speechSynthesis.onvoiceschanged = () => {};
+
+/* 事件上报 */
+function reportSpeakingSession() {
+  const duration = Math.round((Date.now() - sessionStartTs) / 1000);
+  KIWI.reportEvent({
+    module: 'speaking',
+    sub: currentScenario,
+    turns: sessionTurns,
+    durationSec: duration,
+  });
+  sessionStartTs = Date.now();
+  sessionTurns = 0;
+}
+
+window.addEventListener('beforeunload', () => {
+  if (sessionTurns > 0) reportSpeakingSession();
+});
+
+// 初始化首条AI消息（会在applySettingsToUI后被rerender）
+(function pushInitialMsg() {
+  const s = SCENARIOS[currentScenario];
+  conversationHistory.push({ role: 'assistant', content: s.firstMsg });
+})();
+</script>
+<!-- 自由聊角色选择 modal -->
+<div class="free-modal" id="free-modal" onclick="closeFreeModal(event)">
+  <div class="free-modal-card" onclick="event.stopPropagation()">
+    <div class="free-modal-title">💬 选个聊天对象</div>
+    <div class="free-modal-sub">任意角色，开放话题。AI 会根据你的英语水平自动调整难度。</div>
+    <div class="free-role-grid">
+      <div class="free-role-card" onclick="startFreeChat('Liam', '😊', '同班同学，喜欢橄榄球')">
+        <div class="free-role-avatar">😊</div>
+        <div class="free-role-name">Liam</div>
+        <div class="free-role-desc">同班 · 橄榄球</div>
+      </div>
+      <div class="free-role-card" onclick="startFreeChat('Aroha', '🙋‍♀️', '同班同学，喜欢音乐')">
+        <div class="free-role-avatar">🙋‍♀️</div>
+        <div class="free-role-name">Aroha</div>
+        <div class="free-role-desc">同班 · 音乐</div>
+      </div>
+      <div class="free-role-card" onclick="startFreeChat('Tama', '🎮', '同班同学，游戏迷')">
+        <div class="free-role-avatar">🎮</div>
+        <div class="free-role-name">Tama</div>
+        <div class="free-role-desc">同班 · 游戏</div>
+      </div>
+      <div class="free-role-card" onclick="startFreeChat('Emma', '🎉', '热情爱聊天')">
+        <div class="free-role-avatar">🎉</div>
+        <div class="free-role-name">Emma</div>
+        <div class="free-role-desc">同班 · 派对</div>
+      </div>
+      <div class="free-role-card" onclick="startFreeChat('Jack', '😄', '外向活泼')">
+        <div class="free-role-avatar">😄</div>
+        <div class="free-role-name">Jack</div>
+        <div class="free-role-desc">同班 · 篮球</div>
+      </div>
+      <div class="free-role-card" onclick="startFreeChat('Ben', '🧑‍🎓', '认真可靠的同学')">
+        <div class="free-role-avatar">🧑‍🎓</div>
+        <div class="free-role-name">Ben</div>
+        <div class="free-role-desc">同班 · 学习</div>
+      </div>
+    </div>
+    <button class="free-modal-close" onclick="closeFreeModal()">取消</button>
+  </div>
+</div>
+
+</body>
+</html>
